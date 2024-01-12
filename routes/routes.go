@@ -5,11 +5,23 @@ import (
 	"gorm.io/gorm"
 	"hrsale/controllers"
 	"hrsale/middleware"
+	"io/ioutil"
+	"net/http"
 )
+
+func ServeHTML(c echo.Context) error {
+	htmlData, err := ioutil.ReadFile("index.html")
+	if err != nil {
+		return err
+	}
+	return c.HTML(http.StatusOK, string(htmlData))
+}
 
 func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.Use(Logger())
 	secretKey := []byte(middleware.GetSecretKeyFromEnv())
+	e.GET("/", ServeHTML)
+
 	e.POST("/admin/signup", controllers.RegisterAdminHR(db, secretKey))
 	e.POST("/admin/signin", controllers.SignInAdmin(db, secretKey))
 	e.GET("/verify", controllers.VerifyEmail(db))
