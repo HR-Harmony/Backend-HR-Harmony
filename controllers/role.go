@@ -197,9 +197,10 @@ func GetRoleByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Respond with the role details
 		successResponse := helper.Response{
-			Code:  http.StatusOK,
-			Error: false,
-			Role:  &role,
+			Code:    http.StatusOK,
+			Message: "Role retrieved successfully",
+			Error:   false,
+			Role:    &role,
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
