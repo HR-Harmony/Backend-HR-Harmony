@@ -36,7 +36,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.DELETE("/departments/:id", controllers.DeleteDepartmentByIDByAdmin(db, secretKey))
 
 	//Employee Admin
-	e.POST("/employees", controllers.CreateEmployeeAccountByAdmin(db, secretKey))
+	e.POST("/admin/employees", controllers.CreateEmployeeAccountByAdmin(db, secretKey))
 
 	//Employee Login
 	e.POST("/employee/signin", controllers.EmployeeLogin(db, secretKey))

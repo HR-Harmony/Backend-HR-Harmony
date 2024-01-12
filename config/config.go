@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/joho/godotenv" // Import godotenv
-	"gorm.io/driver/mysql"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres" // Change the driver to PostgreSQL
 	"gorm.io/gorm"
 	"hrsale/models"
 	"os"
@@ -29,8 +29,8 @@ func InitializeDatabase() (*gorm.DB, error) {
 	dbConfig.Password = os.Getenv("DB_PASSWORD")
 	dbConfig.DBName = os.Getenv("DB_NAME")
 
-	dsn := dbConfig.Username + ":" + dbConfig.Password + "@tcp(" + dbConfig.Host + ":" + strconv.Itoa(dbConfig.Port) + ")/" + dbConfig.DBName + "?parseTime=true"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	dsn := "user=" + dbConfig.Username + " password=" + dbConfig.Password + " dbname=" + dbConfig.DBName + " host=" + dbConfig.Host + " port=" + strconv.Itoa(dbConfig.Port) + " sslmode=disable TimeZone=UTC"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}

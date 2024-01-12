@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HR Harmony API Documentation</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        pre {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        #navbar {
+            position: fixed;
+            width: 250px;
+            height: 100%;
+            overflow-y: scroll;
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        #content {
+            margin-left: 300px;
+        }
+
+        .nav-link {
+            color: #2F4F4F !important;
+        }
+
+        .nav-link:hover {
+            color: #FF6347 !important;
+        }
+
+        #endpoint a {
+            color: #2F4F4F;
+        }
+
+        #endpoint a:hover {
+            color: #FF6347;
+        }
+
+        .anchor:before {
+            content: "";
+            display: block;
+            height: 70px; /* sesuaikan dengan tinggi navbar Anda */
+            margin: -70px 0 0; /* nilainya harus negatif dan sama dengan height */
+        }
+    </style>
+</head>
+
+<body data-spy="scroll" data-target="#navbar" data-offset="50">
+<div class="container-fluid">
+    <div class="row">
+        <nav id="navbar" class="bd-sidebar">
+            <h1 class="my-4">List API</h1>
+            <ul class="nav flex-column">
+                <!-- Admin -->
+                <li class="nav-item"><a class="nav-link" href="#endpoint">Endpoint</a></li>
+                <li class="nav-item"><a class="nav-link" href="#RegisterAdmin">Register Admin HR Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="#LoginAdmin">Login Admin HR Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateShift">Create Shift Admin HR</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewShifts">View List Shift</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewShiftsByID">View List Shift By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditShiftsByID">Edit List Shift By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteShiftsByID">Delete List Shift By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateRoles">Create Roles</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewRoles">View List Roles</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewRolesByID">View List Roles By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditRolesByID">Edit List Roles By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteRolesByID">Delete List Roles By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateDepartments">Create Departments</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewDepartments">View List Departements</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewDepartmentsByID">View List Departements By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditDepartmentsByID">Edit List Departements By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteDepartmentsByID">Delete List Departements By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateEmployeeAccount">Create New Employee Account</a></li>
+
+                <!-- Employee -->
+                <li class="nav-item"><a class="nav-link" href="#LoginEmployee">Login Employee Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ProfileEmployee">Profile Employee Account</a></li>
+
+                <li class="nav-item"><a class="nav-link" href=""></a></li>
+                <li class="nav-item"><a class="nav-link" href=""></a></li>
+                <li class="nav-item"><a class="nav-link" href=""></a></li>
+            </ul>
+        </nav>
+        <div id="content" class="col">
+            <h1 class="my-4">HR Harmony API Documentation</h1>
+            <div id="endpoint" class="anchor">
+                <h2 class="my-4">Endpoint</h2>
+                <p><a href="https://destimate.uc.r.appspot.com/">https://destimate.uc.r.appspot.com/</a></p>
+            </div>
+
+            <div id="RegisterAdmin" class="card mb-4">
+                <div class="card-body">
+                    <h2>Register Admin HR</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/signup</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+   {
+        "first_name" : string,
+        "last_name" : string,
+        "username" : string,
+        "password" : string,
+        "email" : string
+   }
+                    </pre>
+                    <p><strong>Response</strong></p>
+                    <pre>
+    {
+        "code" : 200
+        "id": int,
+        "message": "Admin HR registered successfully",
+        "token": string
+    }
+                        </pre>
+                </div>
+            </div>
+
+            <div id="LoginAdmin" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Login Admin HR</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/signin</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+    {
+        "username" : "string",
+        "password" : "string"
+    }
+                        </pre>
+                    <p><strong>Response</strong></p>
+                    <pre>
+    {
+        "code" : 200,
+        "error" : false,
+        "id": int,
+        "message": "Admin login successful",
+        "token": string
+    }
+                        </pre>
+                </div>
+            </div>
+
+
+            <div id="CreateShift" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Shift Admin HR</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/shifts</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Body - Form Data</strong></p>
+                    <pre>
+    {
+        "shift_name": "string",
+    }
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Shift created successfully",
+    "shift": {
+        "id": int,
+        "shift_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewShifts" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Shift</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/shifts</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Shifts retrieved successfully",
+    "shifts": [
+        {
+            "id": int,
+            "shift_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        },
+        {
+            "id": int,
+            "shift_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        },
+        {
+            "id": int,
+            "shift_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        },
+        {
+            "id": int,
+            "shift_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        }
+    ]
+}                </pre>
+                </div>
+            </div>
+
+            <div id="ViewShiftsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Shift By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/shifts/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Shift retrieved successfully",
+    "shift": {
+        "id": 1,
+        "shift_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}                </pre>
+                </div>
+            </div>
+
+
+            <div id="EditShiftsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Shift By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/shifts/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "shift_name" : "string"
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Shift name updated successfully",
+    "shift": {
+        "id": int,
+        "shift_name": string,
+        "created_at": string,
+        "UpdatedAt": string
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteShiftsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Shift By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/shifts/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Shift deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+
+            <div id="CreateRoles" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Roles</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/roles</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Body - Form Data</strong></p>
+                    <pre>
+    {
+        "role_name": "string",
+    }
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Role created successfully",
+    "role": {
+        "id": int,
+        "role_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewRoles" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Role</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/roles</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Roles retrieved successfully",
+    "roles": [
+        {
+            "id": int,
+            "role_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        },
+        {
+            "id": int,
+            "role_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        },
+        {
+            "id": int,
+            "role_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewRolesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Role By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/roles/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Role retrieved successfully",
+    "role": {
+        "id": int,
+        "role_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditRolesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Role By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/roles/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "role_name" : "string"
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Role updated successfully",
+    "role": {
+        "id": int,
+        "role_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteRolesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Role By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/roles/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Role deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="CreateDepartments" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Departements</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/departments</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+    {
+        "department_name": "string",
+    }
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Department created successfully",
+    "department": {
+        "id": int,
+        "department_name": string,
+        "created_at": string,
+        "UpdatedAt": string
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewDepartments" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Departements</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/departments</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Departments retrieved successfully",
+    "departments": [
+        {
+            "id": int,
+            "department_name": string,
+            "created_at": string,
+            "UpdatedAt": string
+        },
+        {
+            "id": int,
+            "department_name": string,
+            "created_at": string,
+            "UpdatedAt": string
+        },
+        {
+            "id": int,
+            "department_name": string,
+            "created_at": string,
+            "UpdatedAt": string
+        },
+        {
+            "id": int,
+            "department_name": string,
+            "created_at": string,
+            "UpdatedAt": string
+        },
+        {
+            "id": int,
+            "department_name": string,
+            "created_at":time,
+            "UpdatedAt": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewDepartmentsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Departements By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/departments/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Department retrieved successfully",
+    "department": {
+        "id": int,
+        "department_name": string,
+        "created_at": string,
+        "UpdatedAt": string
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditDepartmentsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Departements By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/departments/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "department_name" : "string"
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Department updated successfully",
+    "department": {
+        "id": int,
+        "department_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteDepartmentsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Departements By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/departments/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Department deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="CreateEmployeeAccount" class="card mb-4">
+                <div class="card-body">
+                    <h2>Create New Employee Account</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/employees</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "first_name" : string,
+    "last_name" : string,
+    "contact_number" : string,
+    "gender" : string,
+    "email" : string,
+    "username" : string,
+    "password" : string,
+    "shift" : string,
+    "role" : string,
+    "department" : string,
+    "basic_salary" : int,
+    "hourly_rate" : int,
+    "pay_slip_type" : string
+}
+                    </pre>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Employee account created successfully",
+    "employee": {
+        "id": int,
+        "first_name": string,
+        "last_name": string,
+        "contact_number": string,
+        "gender": string,
+        "email": string,
+        "username": string,
+        "password": string,
+        "shift_id": int,
+        "shift": string,
+        "role_id": int,
+        "role": string,
+        "department_id": int,
+        "department": string,
+        "basic_salary": int,
+        "hourly_rate": int,
+        "pay_slip_type": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="LoginEmployee" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Login Employee Account</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/employee/signin</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+    {
+        "username" : "string",
+        "password" : "string"
+    }
+                        </pre>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "id": int,
+    "message": "Employee login successful",
+    "token": string
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ProfileEmployee" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Profile Employee Account</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/profile</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Employee profile retrieved successfully",
+    "profile": {
+        "basic_salary": int,
+        "contact_number": string,
+        "created_at": time,
+        "department": string,
+        "department_id": int,
+        "email": string,
+        "first_name": string,
+        "gender": string,
+        "hourly_rate": int,
+        "id": int,
+        "last_name": string,
+        "pay_slip_type": string,
+        "role": string,
+        "role_id": int,
+        "shift": string,
+        "shift_id": int,
+        "updated_at": time,
+        "username": string
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+
+</html>
