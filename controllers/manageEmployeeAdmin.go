@@ -62,9 +62,9 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		// Validate all employee data
 		if employee.FirstName == "" || employee.LastName == "" || employee.ContactNumber == "" ||
 			employee.Gender == "" || employee.Email == "" || employee.Username == "" ||
-			employee.Password == "" || employee.Shift == "" || employee.Role == "" ||
-			employee.Department == "" || employee.BasicSalary == 0 || employee.HourlyRate == 0 ||
-			employee.PaySlipType == "" {
+			employee.Password == "" || employee.ShiftID == 0 || employee.RoleID == 0 ||
+			employee.DepartmentID == 0 || employee.BasicSalary == 0 || employee.HourlyRate == 0 ||
+			employee.PaySlipType == "" || employee.DesignationID == 0 {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid employee data. All fields are required."}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
@@ -73,27 +73,44 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		// Check if the department exists
 		var officeShift models.Shift
-		result = db.First(&officeShift, "shift_name = ?", employee.Shift)
+		result = db.First(&officeShift, "id = ?", employee.ShiftID)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid shift name. Shift not found."}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		employee.Shift = officeShift.ShiftName
+
 		// Check if the department exists
 		var role models.Role
-		result = db.First(&role, "role_name = ?", employee.Role)
+		result = db.First(&role, "id = ?", employee.RoleID)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid role name. Role not found."}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		employee.Role = role.RoleName
+
 		// Check if the department exists
 		var department models.Department
-		result = db.First(&department, "department_name = ?", employee.Department)
+		result = db.First(&department, "id = ?", employee.DepartmentID)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid department name. Department not found."}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
+
+		employee.Department = department.DepartmentName
+
+		// Check if the designation exists
+		var designation models.Designation
+		result = db.First(&designation, "id = ?", employee.DesignationID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid designation ID. Designation not found."}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		employee.Designation = designation.DesignationName
+		employee.DesignationID = designation.ID
 
 		// Check if username is unique
 		var existingUsername models.Employee
@@ -161,5 +178,274 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			Employee: &employee,
 		}
 		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+// ExitEmployee handles the exit process for employees by admin
+func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		var exitData models.ExitEmployee
+		if err := c.Bind(&exitData); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: err.Error()}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Parse exitDate from string to time.Time
+		exitDate, err := time.Parse("2006-01-02", exitData.ExitDate)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid exitDate format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		exitData.ExitDate = exitDate.Format("2006-01-02")
+
+		// Validasi apakah employee dengan ID yang diberikan ada
+		var employee models.Employee
+		result = db.First(&employee, exitData.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Validasi apakah exit dengan ID yang diberikan ada
+		var exit models.Exit
+		result = db.First(&exit, exitData.ExitID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Exit not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Update status IsActive berdasarkan disable account
+		if !exitData.DisableAccount {
+			employee.IsActive = true
+		} else {
+			employee.IsActive = false
+		}
+
+		// Membuat record ExitEmployee di database
+		exitData.CreatedAt = time.Now()
+
+		db.Create(&exitData)
+
+		// Update data employee di database
+		db.Save(&employee)
+
+		// Respond with success
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "Employee exit processed successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// GetAllExitEmployees returns all ExitEmployee records for admin
+func GetAllExitEmployees(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Fetch all ExitEmployee records
+		var exitEmployees []models.ExitEmployee
+		if err := db.Find(&exitEmployees).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch ExitEmployee records"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Respond with success
+		successResponse := helper.Response{
+			Code:          http.StatusOK,
+			Error:         false,
+			Message:       "ExitEmployee records retrieved successfully",
+			ExitEmployees: exitEmployees,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// GetExitEmployeeByID returns the ExitEmployee record based on the provided ID for admin
+func GetExitEmployeeByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Extract ExitEmployee ID from the request
+		exitEmployeeID := c.Param("id")
+
+		// Fetch the ExitEmployee record by ID
+		var exitEmployee models.ExitEmployee
+		if err := db.Where("id = ?", exitEmployeeID).First(&exitEmployee).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "ExitEmployee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Respond with success
+		successResponse := helper.Response{
+			Code:         http.StatusOK,
+			Error:        false,
+			Message:      "ExitEmployee record retrieved successfully",
+			ExitEmployee: &exitEmployee,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// DeleteExitEmployeeByID deletes the ExitEmployee record based on the provided ID for admin
+func DeleteExitEmployeeByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Extract ExitEmployee ID from the request
+		exitEmployeeID := c.Param("id")
+
+		// Fetch the ExitEmployee record by ID
+		var exitEmployee models.ExitEmployee
+		if err := db.Where("id = ?", exitEmployeeID).First(&exitEmployee).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "ExitEmployee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Delete the ExitEmployee record from the database
+		if err := db.Delete(&exitEmployee).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to delete ExitEmployee record"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Respond with success
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "ExitEmployee record deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
 	}
 }
