@@ -45,6 +45,12 @@ func EmployeeLogin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 		}
 
+		// Validasi untuk memastikan bahwa akun karyawan masih aktif
+		if !existingEmployee.IsActive {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Account is not active"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
 		// Membandingkan password yang dimasukkan dengan password yang di-hash
 		err := bcrypt.CompareHashAndPassword([]byte(existingEmployee.Password), []byte(employee.Password))
 		if err != nil {
