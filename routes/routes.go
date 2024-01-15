@@ -47,8 +47,28 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/departments/:id", controllers.EditDepartmentByIDByAdmin(db, secretKey))
 	e.DELETE("/departments/:id", controllers.DeleteDepartmentByIDByAdmin(db, secretKey))
 
+	//Designation Admin
+	e.POST("/designations", controllers.CreateDesignationByAdmin(db, secretKey))
+	e.GET("/designations", controllers.GetAllDesignationsByAdmin(db, secretKey))
+	e.GET("/designations/:id", controllers.GetDesignationByID(db, secretKey))
+	e.PUT("/designations/:id", controllers.UpdateDesignationByID(db, secretKey))
+	e.DELETE("/designations/:id", controllers.DeleteDesignationByID(db, secretKey))
+
+	//Exit Admin
+	e.POST("/exits", controllers.CreateExitStatusByAdmin(db, secretKey))
+	e.GET("/exits", controllers.GetAllExitStatusByAdmin(db, secretKey))
+	e.GET("/exits/:id", controllers.GetExitStatusByIDByAdmin(db, secretKey))
+	e.PUT("/exits/:id", controllers.UpdateExitStatusByAdmin(db, secretKey))
+	e.DELETE("/exits/:id", controllers.DeleteExitStatusByIDByAdmin(db, secretKey))
+
 	//Employee Admin
 	e.POST("/admin/employees", controllers.CreateEmployeeAccountByAdmin(db, secretKey))
+
+	//Employee Exit Admin
+	e.POST("/admin/employees/:id/exit", controllers.ExitEmployee(db, secretKey))
+	e.GET("/admin/employees/exit", controllers.GetAllExitEmployees(db, secretKey))
+	e.GET("/admin/employees/:id/exit", controllers.GetExitEmployeeByID(db, secretKey))
+	e.DELETE("/admin/employees/:id/exit", controllers.DeleteExitEmployeeByID(db, secretKey))
 
 	//Employee Login
 	e.POST("/employee/signin", controllers.EmployeeLogin(db, secretKey))

@@ -17,9 +17,12 @@ type Employee struct {
 	Role          string     `json:"role"`
 	DepartmentID  uint       `json:"department_id"`
 	Department    string     `json:"department"`
+	DesignationID uint       `json:"designation_id"`
+	Designation   string     `json:"designation"`
 	BasicSalary   float64    `json:"basic_salary"`
 	HourlyRate    float64    `json:"hourly_rate"`
 	PaySlipType   string     `json:"pay_slip_type"`
+	IsActive      bool       `json:"is_active" gorm:"default:true"`
 	CreatedAt     *time.Time `json:"created_at"`
 	UpdatedAt     time.Time
 }

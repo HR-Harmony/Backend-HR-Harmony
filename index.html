@@ -91,6 +91,20 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewDepartmentsByID">View List Departements By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditDepartmentsByID">Edit List Departements By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteDepartmentsByID">Delete List Departements By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateExits">Create Exits Type</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewExits">View List Exits Type</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewExitsByID">View List Exits Type By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditExitsByID">Edit List Exits By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteExitsByID">Delete List Exits By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateDesignations">Create Designations</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewDesignations">View List Designation</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewDesignationsByID">View List Designations By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditDesignationsByID">Edit List Designations By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteDesignationsByID">Delete List Designations By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteExitsEmployeeByID">Delete List Exits Employee By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateEmployeeAccount">Create New Employee Account</a></li>
 
                 <!-- Employee -->
@@ -647,6 +661,425 @@
                 </div>
             </div>
 
+            <div id="CreateExits" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Exits Type</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/exits</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "exit_name" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Exit status created successfully",
+    "exit": {
+        "id": int,
+        "exit_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewExits" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Exits Type</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/exits</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Exit statuses retrieved successfully",
+    "exits": [
+        {
+            "id": int,
+            "exit_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        },
+        {
+            "id": int,
+            "exit_name": string,
+            "created_at": time,
+            "UpdatedAt": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewExitsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Exits Type By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/exits/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Exit status retrieved successfully",
+    "exit": {
+        "id": int,
+        "exit_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditExitsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Exits By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/exits/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "exit_name" : "string"
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Exit status updated successfully",
+    "exit": {
+        "id": int,
+        "exit_name": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteExitsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Exits By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/exits/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Exit status deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateDesignations" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Designations</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/designations</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "department_id" : int,
+    "designation_name" : string,
+    "description" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Designation created successfully",
+    "designation": {
+        "id": int,
+        "department_id": int,
+        "designation_name": string,
+        "description": string,
+        "created_at": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewDesignations" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Designation</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/designations</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Designations retrieved successfully",
+    "designations": [
+        {
+            "id": int,
+            "department_id": int,
+            "designation_name": string,
+            "description": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "department_id": int,
+            "designation_name": string,
+            "description": string,
+            "created_at": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewDesignationsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Designations By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/designations/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Designation retrieved successfully",
+    "designation": {
+        "id": int,
+        "department_id": int,
+        "designation_name": string,
+        "description": string,
+        "created_at": time
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditDesignationsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Designations By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/designations/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "designation_name" : "it support team",
+    "description" : "Ini merupakan jajaran Financial Team Perusahaan Saat Ini"
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Designation updated successfully",
+    "designation": {
+        "id": int,
+        "department_id": int,
+        "designation_name": string,
+        "description": string,
+        "created_at": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteDesignationsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Designations By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/designations/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Designation deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateExitsEmployee" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Exits Employee</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/employees/:id/exit</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "employee_id" : int,
+    "exit_id" : int,
+    "exit_date" : string,
+    "disable_account" : bool,
+    "description" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Employee exit processed successfully"
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewExitsEmployee" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Exits Employee</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/employees/exit</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "ExitEmployee records retrieved successfully",
+    "exit_employees": [
+        {
+            "id": int,
+            "employee_id": int,
+            "exit_id": int,
+            "disable_account": bool,
+            "description": string,
+            "exit_date": string,
+            "created_at": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewExitsEmployeeByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Exits Type By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/employees/:id/exit</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "ExitEmployee records retrieved successfully",
+    "exit_employees": [
+        {
+            "id": int,
+            "employee_id": int,
+            "exit_id": int,
+            "disable_account": bool,
+            "description": string,
+            "exit_date": string,
+            "created_at": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteExitsEmployeeByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Exits By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/exits/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "ExitEmployee record deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
 
             <div id="CreateEmployeeAccount" class="card mb-4">
                 <div class="card-body">
@@ -665,9 +1098,10 @@
     "email" : string,
     "username" : string,
     "password" : string,
-    "shift" : string,
-    "role" : string,
-    "department" : string,
+    "shift_id" : int,
+    "role_id" : int,
+    "department_id" : int,
+    "designation_id" : int,
     "basic_salary" : int,
     "hourly_rate" : int,
     "pay_slip_type" : string
@@ -694,6 +1128,8 @@
         "role": string,
         "department_id": int,
         "department": string,
+        "designation": string,
+        "designation_id": int,
         "basic_salary": int,
         "hourly_rate": int,
         "pay_slip_type": string,
