@@ -64,6 +64,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Announcement Admin
 	e.POST("/announcements", controllers.CreateAnnouncementByAdmin(db, secretKey))
 	e.GET("/announcements", controllers.GetAnnouncementsByAdmin(db, secretKey))
+	e.GET("/announcements/:id", controllers.GetAnnouncementByIDForAdmin(db, secretKey))
+	e.PUT("/announcements/:id", controllers.UpdateAnnouncementForAdmin(db, secretKey))
+	e.DELETE("/announcements/:id", controllers.DeleteAnnouncementForAdmin(db, secretKey))
 
 	//Exit Admin
 	e.POST("/exits", controllers.CreateExitStatusByAdmin(db, secretKey))
