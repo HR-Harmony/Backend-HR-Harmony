@@ -101,6 +101,11 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewDesignationsByID">View List Designations By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditDesignationsByID">Edit List Designations By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteDesignationsByID">Delete List Designations By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreatePolicies">Create Policy</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewPolicies">View List Policy</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewPoliciesByID">View List Policy By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditPoliciesByID">Edit List Policy By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeletePoliciesByID">Delete List Policy By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
@@ -960,6 +965,167 @@
     "code": 200,
     "error": false,
     "message": "Designation deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="CreatePolicies" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Policy</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/policies</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "title" : "SOP - IT Development Departement",
+    "description" : "Ini merupakan SOP Divisi IT "
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Policy created successfully",
+    "policy": {
+        "id": int,
+        "title": string,
+        "description": string,
+        "created_by_admin_id": int,
+        "created_by_admin_username": string,
+        "created_at": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewPolicies" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Policy</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/policies</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Policies retrieved successfully",
+    "policies": [
+        {
+            "id": int,
+            "title": string,
+            "description": string,
+            "created_by_admin_id": int,
+            "created_by_admin_username": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "title": string,
+            "description": string,
+            "created_by_admin_id": int,
+            "created_by_admin_username": string,
+            "created_at": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewPoliciesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Policy By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/policies/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Policy retrieved successfully",
+    "policy": {
+        "id": int,
+        "title": string,
+        "description": string,
+        "created_by_admin_id": int,
+        "created_by_admin_username": string,
+        "created_at": time
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditPoliciesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Policy By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/policies/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "title" : "SOP - IT Development Departement",
+    "description" : "Ini merupakan SOP Divisi IT "
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Policy created successfully",
+    "policy": {
+        "id": 3,
+        "title": "SOP - IT Development Departement",
+        "description": "Ini merupakan SOP Divisi IT ",
+        "created_by_admin_id": 2,
+        "created_by_admin_username": "admin",
+        "created_at": "2024-01-17T21:26:56.764494+07:00"
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeletePoliciesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Policy By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/policies/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Policy deleted successfully"
 }
                             </pre>
                 </div>
