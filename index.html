@@ -106,6 +106,11 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewPoliciesByID">View List Policy By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditPoliciesByID">Edit List Policy By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeletePoliciesByID">Delete List Policy By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateAnnouncments">Create Announcments</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewAnnouncments">View List Announcments</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewAnnouncmentsByID">View List Announcments By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditAnnouncmentsByID">Edit List Announcments By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteAnnouncmentsByID">Delete List Announcments By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
@@ -1126,6 +1131,195 @@
     "code": 200,
     "error": false,
     "message": "Policy deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateAnnouncments" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Announcments</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/announcements</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "title": string,
+    "department_id": int,
+    "start_date": string (yyyy-mm-dd),
+    "end_date": string (yyyy-mm-dd),
+    "summary": string,
+    "description": string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Announcement created successfully",
+    "announcement": {
+        "id": int,
+        "title": string,
+        "department_id": int,
+        "department_name": string,
+        "summary": string,
+        "description": string,
+        "start_date": string,
+        "end_date": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewAnnouncments" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>>View List Announcments</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/announcements</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Announcements retrieved successfully",
+    "announcements": [
+        {
+            "id": int,
+            "title": string,
+            "department_id": int,
+            "department_name": string,
+            "summary": string,
+            "description": string,
+            "start_date": string,
+            "end_date": string,
+            "created_at": time,
+            "UpdatedAt": time
+        },
+        {
+            "id": int,
+            "title": string,
+            "department_id": int,
+            "department_name": string,
+            "summary": string,
+            "description": string,
+            "start_date": string,
+            "end_date": string,
+            "created_at": time,
+            "UpdatedAt": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewAnnouncmentsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Announcments By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/announcements/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Announcement retrieved successfully",
+    "announcement": {
+        "id": int,
+        "title": string,
+        "department_id": int,
+        "department_name": string,
+        "summary": string,
+        "description": string,
+        "start_date": string,
+        "end_date": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditAnnouncmentsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Announcments By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/announcements/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "title": string,
+    "department_id": int,
+    "start_date": string (yyyy-mm-dd),
+    "end_date": string (yyyy-mm-dd),
+    "summary": string,
+    "description": string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Announcement created successfully",
+    "announcement": {
+        "id": int,
+        "title": string,
+        "department_id": int,
+        "department_name": string,
+        "summary": string,
+        "description": string,
+        "start_date": string,
+        "end_date": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteAnnouncmentsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Announcments By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/announcements/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Announcement deleted successfully"
 }
                             </pre>
                 </div>
