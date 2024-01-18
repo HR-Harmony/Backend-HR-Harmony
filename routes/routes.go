@@ -87,4 +87,10 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Employee Login
 	e.POST("/employee/signin", controllers.EmployeeLogin(db, secretKey))
 	e.GET("/profile", controllers.EmployeeProfile(db, secretKey))
+
+	// Chatbot untuk user dapat bertanya dengan Debot rekomendasi tempat wisata
+	harmonyUsecase := controllers.NewHarmonyUsecase()
+	e.POST("/chatbot", func(c echo.Context) error {
+		return controllers.RecommendTraining(c, harmonyUsecase)
+	})
 }

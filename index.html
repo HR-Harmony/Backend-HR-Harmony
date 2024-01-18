@@ -121,6 +121,8 @@
                 <li class="nav-item"><a class="nav-link" href="#LoginEmployee">Login Employee Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ProfileEmployee">Profile Employee Account</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#Chatbot">Chatbot HR Harmony</a></li>
+
                 <li class="nav-item"><a class="nav-link" href=""></a></li>
                 <li class="nav-item"><a class="nav-link" href=""></a></li>
                 <li class="nav-item"><a class="nav-link" href=""></a></li>
@@ -1566,6 +1568,31 @@
     }
 }
                     </pre>
+                </div>
+            </div>
+
+            <div id="Chatbot" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Chatbot HR Harmony</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/chatbot</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Body - Form Data</strong></p>
+                    <pre>
+    {
+        "message": "string",
+    }
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "status": "success",
+    "data": string
+}
+                        </pre>
                 </div>
             </div>
 
