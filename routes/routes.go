@@ -68,6 +68,13 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/announcements/:id", controllers.UpdateAnnouncementForAdmin(db, secretKey))
 	e.DELETE("/announcements/:id", controllers.DeleteAnnouncementForAdmin(db, secretKey))
 
+	//Project Admin
+	e.POST("/projects", controllers.CreateProjectByAdmin(db, secretKey))
+	e.GET("/projects", controllers.GetAllProjectsByAdmin(db, secretKey))
+	e.GET("/projects/:id", controllers.GetProjectByIDByAdmin(db, secretKey))
+	e.PUT("/projects/:id", controllers.UpdateProjectByIDByAdmin(db, secretKey))
+	e.DELETE("/projects/:id", controllers.DeleteProjectByIDByAdmin(db, secretKey))
+
 	//Exit Admin
 	e.POST("/exits", controllers.CreateExitStatusByAdmin(db, secretKey))
 	e.GET("/exits", controllers.GetAllExitStatusByAdmin(db, secretKey))

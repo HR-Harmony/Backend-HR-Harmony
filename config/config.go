@@ -45,6 +45,7 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.Designation{})
 	db.AutoMigrate(&models.Policy{}) // Add this line
 	db.AutoMigrate(&models.Announcement{})
+	db.AutoMigrate(&models.Project{})
 
 	return db, nil
 }
