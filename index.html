@@ -111,6 +111,11 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewAnnouncmentsByID">View List Announcments By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditAnnouncmentsByID">Edit List Announcments By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteAnnouncmentsByID">Delete List Announcments By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateProjects">Create Projects</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewProjects">View List Projects</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewProjectsByID">View List Projects By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditProjectsByID">Edit List Projects By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteProjectsByID">Delete List Projects By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
@@ -1322,6 +1327,218 @@
     "code": 200,
     "error": false,
     "message": "Announcement deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="CreateProjects" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Projects</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/projects</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "title":string,
+    "employee_id" : int,
+    "estimated_hour" : int,
+    "priority" : string,
+    "start_date" : string (yyyy-mm-dd),
+    "end_date" : string (yyyy-mm-dd),
+    "summary" : string,
+    "department_id" : int,
+    "description" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Project created successfully",
+    "project": {
+        "id": 2,
+        "title": "Development Web Apps",
+        "employee_id": 3,
+        "username": "aimrzki",
+        "estimated_hour": 40,
+        "priority": "highest",
+        "start_date": "2024-02-17",
+        "end_date": "2024-03-17",
+        "summary": "Aplikasi untuk perusahaan berbasis website",
+        "department_id": 1,
+        "department_name": "it",
+        "description": "Tersedia untuk seluruh platform",
+        "created_at": "2024-01-19T15:56:57.518618+07:00",
+        "updated_at": "2024-01-19T15:56:57.839299+07:00"
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewProjects" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>>View List Projects</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/projects</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Projects retrieved successfully",
+    "projects": [
+        {
+            "id": int,
+            "title": string,
+            "employee_id": int,
+            "username": string,
+            "estimated_hour": int,
+            "priority": string,
+            "start_date": string (yyyy-mm-dd),
+            "end_date": string (yyyy-mm-dd),
+            "summary": string,
+            "department_id": int,
+            "department_name": string,
+            "description": string,
+            "created_at": time,
+            "updated_at": time
+        },
+        {
+            "id": int,
+            "title": string,
+            "employee_id": int,
+            "username": string,
+            "estimated_hour": int,
+            "priority": string,
+            "start_date": string (yyyy-mm-dd),
+            "end_date": string (yyyy-mm-dd),
+            "summary": string,
+            "department_id": int,
+            "department_name": string,
+            "description": string,
+            "created_at": time,
+            "updated_at": time
+        },
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewProjectsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Projects By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/projects/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Project retrieved successfully",
+    "project": {
+        "id": int,
+        "title": string,
+        "employee_id": int,
+        "username": string,
+        "estimated_hour": int,
+        "priority": string,
+        "start_date": string (yyyy-mm-dd),
+        "end_date": string (yyyy-mm-dd),
+        "summary": string,
+        "department_id": int,
+        "department_name": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditProjectsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Projects By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/projects/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "title":string,
+    "employee_id" : int,
+    "estimated_hour" : int,
+    "priority" : string,
+    "start_date" : string (yyyy-mm-dd),
+    "end_date" : string (yyyy-mm-dd),
+    "summary" : string,
+    "department_id" : int,
+    "description" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Project updated successfully",
+    "announcement": {
+        "id": int,
+        "title": string,
+        "department_id": int,
+        "department_name": string,
+        "summary": string,
+        "description": string,
+        "start_date": string,
+        "end_date": string,
+        "created_at": time,
+        "UpdatedAt": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteProjectsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Projects By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/announcements/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Project deleted successfully"
 }
                             </pre>
                 </div>
