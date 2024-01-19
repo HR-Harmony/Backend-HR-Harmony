@@ -37,4 +37,6 @@ type Response struct {
 	Admins        []models.Admin        `json:"admins,omitempty"`   // Add this line
 	Announcement  *models.Announcement  `json:"announcement,omitempty"`
 	Announcements []models.Announcement `json:"announcements,omitempty"`
+	Project       *models.Project       `json:"project,omitempty"`
+	Projects      []models.Project      `json:"projects,omitempty"`
 }
