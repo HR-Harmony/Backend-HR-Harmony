@@ -116,6 +116,11 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewProjectsByID">View List Projects By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditProjectsByID">Edit List Projects By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteProjectsByID">Delete List Projects By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateTasks">Create Tasks</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewTasks">View List Tasks</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewTasksByID">View List Tasks By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditTasksByID">Edit List Tasks By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteTasksByID">Delete List Tasks By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
@@ -1539,6 +1544,202 @@
     "code": 200,
     "error": false,
     "message": "Project deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateTasks" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Tasks</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/tasks</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "title" : string,
+    "start_date" : string,
+    "end_date" : string,
+    "estimated_hour" : int,
+    "project_id" : int,
+    "summary" : string,
+    "description" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Task created successfully",
+    "task": {
+        "id": int,
+        "title": string,
+        "start_date": string,
+        "end_date": string,
+        "estimated_hour": int,
+        "project_id": int,
+        "project_name": string,
+        "summary": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewTasks" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>>View List Tasks</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/tasks</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Tasks retrieved successfully",
+    "tasks": [
+        {
+            "id": int,
+            "title": string,
+            "start_date": string,
+            "end_date": string,
+            "estimated_hour": int,
+            "project_id": int,
+            "project_name": string,
+            "summary": string,
+            "description": string,
+            "created_at": time,
+            "updated_at": time
+        },
+        {
+            "id": int,
+            "title": string,
+            "start_date": string,
+            "end_date": string,
+            "estimated_hour": int,
+            "project_id": int,
+            "project_name": string,
+            "summary": string,
+            "description": string,
+            "created_at": time,
+            "updated_at": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewTasksByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Tasks By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/tasks/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Task retrieved successfully",
+    "task": {
+        "id": int,
+        "title": string,
+        "start_date": string,
+        "end_date": string,
+        "estimated_hour": int,
+        "project_id": int,
+        "project_name": string,
+        "summary": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditTasksByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Tasks By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/tasks/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "title" : string,
+    "start_date" : string,
+    "end_date" : string,
+    "estimated_hour" : int,
+    "project_id" : int,
+    "summary" : string,
+    "description" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Task updated successfully",
+    "task": {
+        "id": int,
+        "title": string,
+        "start_date": string,
+        "end_date": string,
+        "estimated_hour": int,
+        "project_id": int,
+        "project_name": string,
+        "summary": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteTasksByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Tasks By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/tasks/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Task deleted successfully"
 }
                             </pre>
                 </div>

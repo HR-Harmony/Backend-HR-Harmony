@@ -39,4 +39,6 @@ type Response struct {
 	Announcements []models.Announcement `json:"announcements,omitempty"`
 	Project       *models.Project       `json:"project,omitempty"`
 	Projects      []models.Project      `json:"projects,omitempty"`
+	Task          *models.Task          `json:"task,omitempty"`
+	Tasks         []models.Task         `json:"tasks,omitempty"`
 }
