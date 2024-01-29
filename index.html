@@ -131,6 +131,11 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewdisciplinarysByID">View List Disciplinary By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditdisciplinarysByID">Edit List Disciplinary By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeletedisciplinarysByID">Delete List Disciplinary By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateHelpdesks">Create Helpdesk</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewHelpdesks">View List Helpdesk</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewHelpdesksByID">View List Helpdesk By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditHelpdesksByID">Edit List Helpdesk By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteHelpdesksByID">Delete List Helpdesk By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
@@ -2082,6 +2087,194 @@
     "code": 200,
     "error": false,
     "message": "Disciplinary data deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="CreateHelpdesks" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Helpdesk</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/helpdesks</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "subject" : string,
+    "priority" : string,
+    "department_id" : int,
+    "employee_id" : int,
+    "description" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Helpdesk created successfully",
+    "helpdesk": {
+        "id": int,
+        "subject": string,
+        "priority": string,
+        "department_id": int,
+        "department_name": string,
+        "employee_id": int,
+        "employee_username": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewHelpdesks" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>>View List Helpdesk</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/helpdesks</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "All helpdesk data retrieved successfully",
+    "helpdesks": [
+        {
+            "id": int,
+            "subject": string,
+            "priority": string,
+            "department_id": int,
+            "department_name": string,
+            "employee_id": int,
+            "employee_username": string,
+            "description": string,
+            "created_at": time,
+            "updated_at": time
+        },
+        {
+            "id": int,
+            "subject": string,
+            "priority": string,
+            "department_id": int,
+            "department_name": string,
+            "employee_id": int,
+            "employee_username": string,
+            "description": string,
+            "created_at": time,
+            "updated_at": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewHelpdesksByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Helpdesk By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/helpdesks/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Helpdesk data retrieved successfully",
+    "helpdesk": {
+        "id": int,
+        "subject": string,
+        "priority": string,
+        "department_id": int,
+        "department_name": string,
+        "employee_id": int,
+        "employee_username": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditHelpdesksByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Helpdesk By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/helpdesks/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "subject" : string,
+    "priority" : string,
+    "department_id" : int,
+    "employee_id" : int,
+    "description" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Helpdesk data updated successfully",
+    "helpdesk": {
+        "id": int,
+        "subject": string,
+        "priority": string,
+        "department_id": int,
+        "department_name": string,
+        "employee_id": int,
+        "employee_username": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteHelpdesksByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Helpdesk By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/helpdesks/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Helpdesk data deleted successfully"
 }
                             </pre>
                 </div>
