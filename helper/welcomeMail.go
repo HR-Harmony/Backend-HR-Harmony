@@ -15,7 +15,7 @@ func SendWelcomeEmail(adminEmail, fullName, verificationToken string) error {
 	sender := smtpUsername
 	recipient := adminEmail
 	subject := "Welcome to HR Harmony"
-	verificationLink := "https://hr-harmony.uc.r.appspot.com/verify?token=" + verificationToken
+	verificationLink := "http://localhost:8080/verify?token=" + verificationToken
 	emailBody := `
     <html>
     <head>
