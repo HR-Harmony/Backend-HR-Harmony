@@ -126,6 +126,11 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewCasesByID">View List Cases By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditCasesByID">Edit List Cases By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteCasesByID">Delete List Cases By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#Createdisciplinarys">Create Disciplinary</a></li>
+                <li class="nav-item"><a class="nav-link" href="#Viewdisciplinarys">View List Disciplinary</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewdisciplinarysByID">View List Disciplinary By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditdisciplinarysByID">Edit List Disciplinary By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeletedisciplinarysByID">Delete List Disciplinary By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
@@ -1900,6 +1905,183 @@
     "code": 200,
     "error": false,
     "message": "Case deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="Createdisciplinarys" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Disciplinary</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/disciplinarys</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "employee_id" : int,
+    "case_id" : int,
+    "subject" : string,
+    "case_date" : string,
+    "description" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Disciplinary data created successfully",
+    "disciplinary": {
+        "id": int,
+        "employee_id": int,
+        "username_employee": string,
+        "case_id": int,
+        "case_name": string,
+        "subject": string,
+        "case_date": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="Viewdisciplinarys" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>>View List Disciplinary</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/disciplinarys</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "All disciplinary data retrieved successfully",
+    "disciplinaries": [
+        {
+            "id": int,
+            "employee_id": int,
+            "username_employee": string,
+            "case_id": int,
+            "case_name": string,
+            "subject": string,
+            "case_date": string,
+            "description": string,
+            "created_at": date,
+            "updated_at": date
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewdisciplinarysByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Disciplinary By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/disciplinarys/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "All disciplinary data retrieved successfully",
+    "disciplinaries": [
+        {
+            "id": int,
+            "employee_id": int,
+            "username_employee": string,
+            "case_id": int,
+            "case_name": string,
+            "subject": string,
+            "case_date": string,
+            "description": string,
+            "created_at": date,
+            "updated_at": date
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditdisciplinarysByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Disciplinary By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/disciplinarys/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "employee_id" : int,
+    "case_id" : int,
+    "subject" : string,
+    "case_date" : string,
+    "description" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Disciplinary data updated successfully",
+    "disciplinary": {
+        "id": int,
+        "employee_id": int,
+        "username_employee": string,
+        "case_id": int,
+        "case_name": string,
+        "subject": string,
+        "case_date": string,
+        "description": string,
+        "created_at": time,
+        "updated_at": time
+    }
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeletedisciplinarysByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Disciplinary By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/disciplinarys/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Disciplinary data deleted successfully"
 }
                             </pre>
                 </div>

@@ -89,6 +89,13 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/cases/:id", controllers.UpdateCaseByIDByAdmin(db, secretKey))
 	e.DELETE("/cases/:id", controllers.DeleteCaseByIDByAdmin(db, secretKey))
 
+	//Disciplinary Admin
+	e.POST("/disciplinarys", controllers.CreateDisciplinaryByAdmin(db, secretKey))
+	e.GET("/disciplinarys", controllers.GetAllDisciplinaryByAdmin(db, secretKey))
+	e.GET("/disciplinarys/:id", controllers.GetDisciplinaryByIDByAdmin(db, secretKey))
+	e.PUT("/disciplinarys/:id", controllers.UpdateDisciplinaryByIDByAdmin(db, secretKey))
+	e.DELETE("/disciplinarys/:id", controllers.DeleteDisciplinaryByIDByAdmin(db, secretKey))
+
 	//Exit Admin
 	e.POST("/exits", controllers.CreateExitStatusByAdmin(db, secretKey))
 	e.GET("/exits", controllers.GetAllExitStatusByAdmin(db, secretKey))
