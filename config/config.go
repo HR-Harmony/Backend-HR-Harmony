@@ -49,6 +49,7 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.Task{})
 	db.AutoMigrate(&models.Case{})
 	db.AutoMigrate(&models.Disciplinary{})
+	db.AutoMigrate(&models.Helpdesk{})
 
 	return db, nil
 }

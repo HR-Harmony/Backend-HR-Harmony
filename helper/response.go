@@ -31,10 +31,10 @@ type Response struct {
 	ExitEmployees  []models.ExitEmployee `json:"exit_employees,omitempty"`
 	Designation    *models.Designation   `json:"designation,omitempty"`
 	Designations   []models.Designation  `json:"designations,omitempty"`
-	Policy         *models.Policy        `json:"policy,omitempty"`   // Add this line
-	Policies       []models.Policy       `json:"policies,omitempty"` // Add this line
-	Admin          *models.Admin         `json:"admin,omitempty"`    // Add this line
-	Admins         []models.Admin        `json:"admins,omitempty"`   // Add this line
+	Policy         *models.Policy        `json:"policy,omitempty"`
+	Policies       []models.Policy       `json:"policies,omitempty"`
+	Admin          *models.Admin         `json:"admin,omitempty"`
+	Admins         []models.Admin        `json:"admins,omitempty"`
 	Announcement   *models.Announcement  `json:"announcement,omitempty"`
 	Announcements  []models.Announcement `json:"announcements,omitempty"`
 	Project        *models.Project       `json:"project,omitempty"`
@@ -45,4 +45,6 @@ type Response struct {
 	Cases          []models.Case         `json:"cases,omitempty"`
 	Disciplinary   *models.Disciplinary  `json:"disciplinary,omitempty"`
 	Disciplinaries []models.Disciplinary `json:"disciplinaries,omitempty"`
+	Helpdesk       *models.Helpdesk      `json:"helpdesk,omitempty"`
+	Helpdesks      []models.Helpdesk     `json:"helpdesks,omitempty"`
 }
