@@ -142,6 +142,10 @@
                 <li class="nav-item"><a class="nav-link" href="#DeleteExitsEmployeeByID">Delete List Exits Employee By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateEmployeeAccount">Create New Employee Account</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#ViewPayrolls">View List All Employee Payroll</a></li>
+                <li class="nav-item"><a class="nav-link" href="#UpdatePayrollsStatus">View List All Employee Payroll</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewPayrollsHistory">View List All Payroll Transaction</a></li>
+
                 <!-- Employee -->
                 <li class="nav-item"><a class="nav-link" href="#LoginEmployee">Login Employee Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ProfileEmployee">Profile Employee Account</a></li>
@@ -2521,6 +2525,129 @@
     }
 }
                     </pre>
+                </div>
+            </div>
+
+            <div id="ViewPayrolls" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List All Employee Payroll</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/payrolls</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Employee payroll information retrieved successfully",
+    "payroll_info": [
+        {
+            "basic_salary": int,
+            "employee_id": int,
+            "hourly_rate": int,
+            "paid_status": bool,
+            "payroll_id": int,
+            "payslip_type": string,
+            "username": string
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewPayrollsHistory" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List All Payroll Transaction</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/payrolls/history</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Payroll information retrieved successfully",
+    "payroll_info_list": [
+        {
+            "id": int,
+            "employee_id": int,
+            "basic_salary": int,
+            "payslip_type": string,
+            "created_at": time,
+            "updated_at": time
+        },
+        {
+            "id": int,
+            "employee_id": int,
+            "basic_salary": int,
+            "payslip_type": string,
+            "created_at": time,
+            "updated_at": time
+        }
+    ]
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="UpdatePayrollsStatus" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List All Employee Payroll</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/payrolls/:payroll_id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "paid_status" : bool
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "employee": {
+        "basic_salary": int,
+        "contact_number": string,
+        "created_at": time,
+        "department": string,
+        "department_id": int,
+        "designation": string,
+        "designation_id": int,
+        "email": string,
+        "first_name": string,
+        "gender": string,
+        "hourly_rate": int,
+        "id": int,
+        "is_active": bool,
+        "last_name": string,
+        "paid_status":bool,
+        "pay_slip_type": string,
+        "payroll_id": int,
+        "role": string,
+        "role_id": int,
+        "shift": string,
+        "shift_id": int,
+        "updated_at": time,
+        "username": string
+    },
+    "error": false,
+    "message": "Paid status updated successfully"
+}
+                            </pre>
                 </div>
             </div>
 
