@@ -68,7 +68,7 @@ func (uc *harmonyUsecase) getCompletionFromMessages(
 	return resp, err
 }
 
-func RecommendTraining(c echo.Context, wisataUsecase HarmonyUsecase) error {
+func RecommendTraining(c echo.Context, harmonyUsecase HarmonyUsecase) error {
 	tokenString := c.Request().Header.Get("Authorization")
 	if tokenString == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"error": true, "message": "Authorization token is missing"})
@@ -93,22 +93,22 @@ func RecommendTraining(c echo.Context, wisataUsecase HarmonyUsecase) error {
 	}
 
 	// Check if the user input contains keywords related to tourism
-	tourismKeywords := []string{"materi", "materi apa saja", "materi apa yang ada", "materi apa yang tersedia", "materi apa yang bisa dipelajari", "materi apa yang bisa", "soal", "pelatihan", "kode", "coding", "belajar", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "divisi", "bagian", "perusahaan"}
-	containsTourismKeyword := false
-	for _, keyword := range tourismKeywords {
+	trainingKeywords := []string{"materi", "materi apa saja", "materi apa yang ada", "materi apa yang tersedia", "materi apa yang bisa dipelajari", "materi apa yang bisa", "soal", "pelatihan", "kode", "coding", "belajar", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "belajar apa saja", "belajar apa yang ada", "belajar apa yang tersedia", "belajar apa yang bisa dipelajari", "belajar apa yang bisa", "belajar apa", "divisi", "bagian", "perusahaan"}
+	containsTrainingKeyword := false
+	for _, keyword := range trainingKeywords {
 		if strings.Contains(strings.ToLower(userInput), keyword) {
-			containsTourismKeyword = true
+			containsTrainingKeyword = true
 			break
 		}
 	}
 
-	if !containsTourismKeyword {
+	if !containsTrainingKeyword {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{"error": true, "message": "Maaf, HRBot hanya bisa menjawab pertanyaan seputar pelatihan. Silakan coba lagi dengan pertanyaan yang berbeda"})
 	}
 
 	userInput = fmt.Sprintf("Training: %s", userInput)
 
-	answer, err := wisataUsecase.RecommendHarmony(userInput, os.Getenv("OPENAI_API_KEY"))
+	answer, err := harmonyUsecase.RecommendHarmony(userInput, os.Getenv("OPENAI_API_KEY"))
 	if err != nil {
 		errorMessage := "Failed to generate question about training"
 		if strings.Contains(err.Error(), "rate limits exceeded") {
