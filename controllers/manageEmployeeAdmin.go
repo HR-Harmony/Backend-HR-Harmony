@@ -4,6 +4,7 @@ package controllers
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -148,6 +149,9 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		employee.ShiftID = officeShift.ID
 		employee.RoleID = role.ID
 		employee.DepartmentID = department.ID
+
+		payrollID := generateUniquePayrollID()
+		employee.PayrollID = payrollID
 
 		// Set the created timestamp
 		currentTime := time.Now()
@@ -448,4 +452,20 @@ func DeleteExitEmployeeByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
+}
+
+func generateUniquePayrollID() int64 {
+	// Generate a new UUID
+	uid, err := uuid.NewUUID()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// Get the 64-bit unsigned integer representation of the UUID
+	uidInt := uid.ID()
+
+	// Convert the unsigned integer to a signed int64
+	uidInt64 := int64(uidInt)
+
+	return uidInt64
 }

@@ -50,6 +50,7 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.Case{})
 	db.AutoMigrate(&models.Disciplinary{})
 	db.AutoMigrate(&models.Helpdesk{})
+	db.AutoMigrate(&models.PayrollInfo{}) // Add this line
 
 	return db, nil
 }
