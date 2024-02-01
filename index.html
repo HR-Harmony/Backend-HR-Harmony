@@ -141,6 +141,10 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteExitsEmployeeByID">Delete List Exits Employee By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateEmployeeAccount">Create New Employee Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewEmployees">View List All Employee Registred</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewEmployeesByID">View List Employee Registred By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#UpdateEmployeeAccount">Update Employee Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteEmployeeByID">Delete List Employee By ID</a></li>
 
                 <!-- Employee -->
                 <li class="nav-item"><a class="nav-link" href="#LoginEmployee">Login Employee Account</a></li>
@@ -2453,6 +2457,191 @@
     }
 }
                         </pre>
+                </div>
+            </div>
+
+            <div id="ViewEmployees" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List All Employee Registred</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/employees</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "employees": [
+        {
+            "id": int,
+            "payroll_id": int,
+            "first_name": string,
+            "last_name": string,
+            "contact_number": string,
+            "gender": string,
+            "email": string,
+            "username": string,
+            "password": string,
+            "shift_id": int,
+            "shift": string,
+            "role_id": int,
+            "role": string,
+            "department_id": int,
+            "department": string,
+            "designation_id": int,
+            "designation": string,
+            "basic_salary": int,
+            "hourly_rate": int,
+            "pay_slip_type": string,
+            "is_active": bool,
+            "paid_status": bool,
+            "created_at": time,
+            "UpdatedAt": time
+        }
+    ],
+    "error": false,
+    "message": "All employees retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewEmployeesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Employee Registred By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/employees/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "employees": [
+        {
+            "id": int,
+            "payroll_id": int,
+            "first_name": string,
+            "last_name": string,
+            "contact_number": string,
+            "gender": string,
+            "email": string,
+            "username": string,
+            "password": string,
+            "shift_id": int,
+            "shift": string,
+            "role_id": int,
+            "role": string,
+            "department_id": int,
+            "department": string,
+            "designation_id": int,
+            "designation": string,
+            "basic_salary": int,
+            "hourly_rate": int,
+            "pay_slip_type": string,
+            "is_active": bool,
+            "paid_status": bool,
+            "created_at": time,
+            "UpdatedAt": time
+        }
+    ],
+    "error": false,
+    "message": "All employees retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="UpdateEmployeeAccount" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Update Employee Account</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/employees/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "first_name" : string,
+    "last_name" : string,
+    "contact_number" : string,
+    "gender" : string,
+    "email" : string,
+    "username" : string,
+    "password" : string,
+    "shift_id" : int,
+    "role_id" : int,
+    "designation_id" : int,
+    "department_id" : int,
+    "basic_salary" : int,
+    "hourly_rate" : int,
+    "pay_slip_type" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "employee": {
+        "id": int,
+        "payroll_id": int,
+        "first_name": string,
+        "last_name": string,
+        "contact_number": string,
+        "gender": string,
+        "email": string,
+        "username": string,
+        "password": string,
+        "shift_id": int,
+        "shift": string,
+        "role_id": int,
+        "role": string,
+        "department_id": int,
+        "department": string,
+        "designation_id": int,
+        "designation": string,
+        "basic_salary": int,
+        "hourly_rate": int,
+        "pay_slip_type": string,
+        "is_active": bool,
+        "paid_status": bool,
+        "created_at": time,
+        "UpdatedAt": time
+    },
+    "error": false,
+    "message": "Employee account updated successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteEmployeeByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Employee By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/employees/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Employee deleted successfully"
+}
+                            </pre>
                 </div>
             </div>
 
