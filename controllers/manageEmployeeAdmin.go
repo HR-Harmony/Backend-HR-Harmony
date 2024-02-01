@@ -185,6 +185,391 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 	}
 }
 
+func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		var employees []models.Employee
+		db.Find(&employees)
+
+		var employeesResponse []helper.EmployeeResponse
+		for _, emp := range employees {
+			employeeResponse := helper.EmployeeResponse{
+				ID:            emp.ID,
+				PayrollID:     emp.PayrollID,
+				FirstName:     emp.FirstName,
+				LastName:      emp.LastName,
+				ContactNumber: emp.ContactNumber,
+				Gender:        emp.Gender,
+				Email:         emp.Email,
+				Username:      emp.Username,
+				Password:      emp.Password,
+				ShiftID:       emp.ShiftID,
+				Shift:         emp.Shift,
+				RoleID:        emp.RoleID,
+				Role:          emp.Role,
+				DepartmentID:  emp.DepartmentID,
+				Department:    emp.Department,
+				DesignationID: emp.DesignationID,
+				Designation:   emp.Designation,
+				BasicSalary:   emp.BasicSalary,
+				HourlyRate:    emp.HourlyRate,
+				PaySlipType:   emp.PaySlipType,
+				IsActive:      emp.IsActive,
+				PaidStatus:    emp.PaidStatus,
+				CreatedAt:     emp.CreatedAt,
+				UpdatedAt:     emp.UpdatedAt,
+			}
+			employeesResponse = append(employeesResponse, employeeResponse)
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":      http.StatusOK,
+			"error":     false,
+			"message":   "All employees retrieved successfully",
+			"employees": employeesResponse,
+		})
+	}
+}
+
+func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		employeeID := c.Param("id")
+		if employeeID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var employee models.Employee
+		result = db.First(&employee, "id = ?", employeeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		employeeResponse := helper.EmployeeResponse{
+			ID:            employee.ID,
+			PayrollID:     employee.PayrollID,
+			FirstName:     employee.FirstName,
+			LastName:      employee.LastName,
+			ContactNumber: employee.ContactNumber,
+			Gender:        employee.Gender,
+			Email:         employee.Email,
+			Username:      employee.Username,
+			Password:      employee.Password,
+			ShiftID:       employee.ShiftID,
+			Shift:         employee.Shift,
+			RoleID:        employee.RoleID,
+			Role:          employee.Role,
+			DepartmentID:  employee.DepartmentID,
+			Department:    employee.Department,
+			DesignationID: employee.DesignationID,
+			Designation:   employee.Designation,
+			BasicSalary:   employee.BasicSalary,
+			HourlyRate:    employee.HourlyRate,
+			PaySlipType:   employee.PaySlipType,
+			IsActive:      employee.IsActive,
+			PaidStatus:    employee.PaidStatus,
+			CreatedAt:     employee.CreatedAt,
+			UpdatedAt:     employee.UpdatedAt,
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":     http.StatusOK,
+			"error":    false,
+			"message":  "Employee retrieved successfully",
+			"employee": employeeResponse,
+		})
+	}
+}
+
+func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"})
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"})
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"})
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"})
+		}
+
+		if !adminUser.IsAdminHR {
+			return c.JSON(http.StatusForbidden, helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"})
+		}
+
+		employeeID := c.Param("id")
+		if employeeID == "" {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee ID is missing"})
+		}
+
+		var existingEmployee models.Employee
+		result = db.First(&existingEmployee, "id = ?", employeeID)
+		if result.Error != nil {
+			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"})
+		}
+
+		var updatedEmployee models.Employee
+		if err := c.Bind(&updatedEmployee); err != nil {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
+		}
+
+		if updatedEmployee.FirstName != "" {
+			existingEmployee.FirstName = updatedEmployee.FirstName
+		}
+		if updatedEmployee.LastName != "" {
+			existingEmployee.LastName = updatedEmployee.LastName
+		}
+		if updatedEmployee.ContactNumber != "" {
+			existingEmployee.ContactNumber = updatedEmployee.ContactNumber
+		}
+		if updatedEmployee.Gender != "" {
+			existingEmployee.Gender = updatedEmployee.Gender
+		}
+		if updatedEmployee.Email != "" {
+			existingEmployee.Email = updatedEmployee.Email
+		}
+		if updatedEmployee.Username != "" {
+			existingEmployee.Username = updatedEmployee.Username
+		}
+		if updatedEmployee.Password != "" {
+			// Hash the updated password
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedEmployee.Password), bcrypt.DefaultCost)
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to hash password"})
+			}
+			existingEmployee.Password = string(hashedPassword)
+		}
+
+		passwordWithNoHash := updatedEmployee.Password
+
+		if updatedEmployee.ShiftID != 0 {
+			var officeShift models.Shift
+			result = db.First(&officeShift, "id = ?", updatedEmployee.ShiftID)
+			if result.Error != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid shift name. Shift not found."})
+			}
+			existingEmployee.ShiftID = updatedEmployee.ShiftID
+			existingEmployee.Shift = officeShift.ShiftName
+		}
+		if updatedEmployee.RoleID != 0 {
+			var role models.Role
+			result = db.First(&role, "id = ?", updatedEmployee.RoleID)
+			if result.Error != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid role name. Role not found."})
+			}
+			existingEmployee.RoleID = updatedEmployee.RoleID
+			existingEmployee.Role = role.RoleName
+		}
+		if updatedEmployee.DepartmentID != 0 {
+			var department models.Department
+			result = db.First(&department, "id = ?", updatedEmployee.DepartmentID)
+			if result.Error != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid department name. Department not found."})
+			}
+			existingEmployee.DepartmentID = updatedEmployee.DepartmentID
+			existingEmployee.Department = department.DepartmentName
+		}
+		if updatedEmployee.DesignationID != 0 {
+			var designation models.Designation
+			result = db.First(&designation, "id = ?", updatedEmployee.DesignationID)
+			if result.Error != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid designation ID. Designation not found."})
+			}
+			existingEmployee.DesignationID = updatedEmployee.DesignationID
+			existingEmployee.Designation = designation.DesignationName
+		}
+		if updatedEmployee.BasicSalary != 0 {
+			existingEmployee.BasicSalary = updatedEmployee.BasicSalary
+		}
+		if updatedEmployee.HourlyRate != 0 {
+			existingEmployee.HourlyRate = updatedEmployee.HourlyRate
+		}
+		if updatedEmployee.PaySlipType != "" {
+			existingEmployee.PaySlipType = updatedEmployee.PaySlipType
+		}
+
+		if err := db.Save(&existingEmployee).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to update employee data"})
+		}
+
+		// Send email notification to the employee with the plain text password
+		err = helper.SendEmployeeAccountNotificationWithPlainTextPassword(existingEmployee.Email, existingEmployee.FirstName+" "+existingEmployee.LastName, existingEmployee.Username, passwordWithNoHash)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send welcome email"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Exclude PayrollInfo from the response
+		employeeWithoutPayrollInfo := helper.EmployeeResponse{
+			ID:            existingEmployee.ID,
+			PayrollID:     existingEmployee.PayrollID,
+			FirstName:     existingEmployee.FirstName,
+			LastName:      existingEmployee.LastName,
+			ContactNumber: existingEmployee.ContactNumber,
+			Gender:        existingEmployee.Gender,
+			Email:         existingEmployee.Email,
+			Username:      existingEmployee.Username,
+			Password:      existingEmployee.Password,
+			ShiftID:       existingEmployee.ShiftID,
+			Shift:         existingEmployee.Shift,
+			RoleID:        existingEmployee.RoleID,
+			Role:          existingEmployee.Role,
+			DepartmentID:  existingEmployee.DepartmentID,
+			Department:    existingEmployee.Department,
+			DesignationID: existingEmployee.DesignationID,
+			Designation:   existingEmployee.Designation,
+			BasicSalary:   existingEmployee.BasicSalary,
+			HourlyRate:    existingEmployee.HourlyRate,
+			PaySlipType:   existingEmployee.PaySlipType,
+			IsActive:      existingEmployee.IsActive,
+			PaidStatus:    existingEmployee.PaidStatus,
+			CreatedAt:     existingEmployee.CreatedAt,
+			UpdatedAt:     existingEmployee.UpdatedAt,
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":     http.StatusOK,
+			"error":    false,
+			"message":  "Employee account updated successfully",
+			"employee": employeeWithoutPayrollInfo,
+		})
+	}
+}
+
+func DeleteEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"})
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"})
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"})
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"})
+		}
+
+		if !adminUser.IsAdminHR {
+			return c.JSON(http.StatusForbidden, helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"})
+		}
+
+		employeeID := c.Param("id")
+		if employeeID == "" {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee ID is missing"})
+		}
+
+		var existingEmployee models.Employee
+		result = db.First(&existingEmployee, "id = ?", employeeID)
+		if result.Error != nil {
+			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"})
+		}
+
+		// Hapus terlebih dahulu entri terkait di tabel payroll_infos
+		if err := db.Where("employee_id = ?", existingEmployee.ID).Delete(&models.PayrollInfo{}).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to delete related payroll information"})
+		}
+
+		if err := db.Delete(&existingEmployee).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to delete employee"})
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Employee deleted successfully",
+		})
+	}
+}
+
 // ExitEmployee handles the exit process for employees by admin
 func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

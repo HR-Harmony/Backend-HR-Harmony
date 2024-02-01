@@ -117,6 +117,10 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 
 	//Employee Admin
 	e.POST("/admin/employees", controllers.CreateEmployeeAccountByAdmin(db, secretKey))
+	e.GET("/admin/employees", controllers.GetAllEmployeesByAdmin(db, secretKey))
+	e.GET("/admin/employees/:id", controllers.GetEmployeeByIDByAdmin(db, secretKey))
+	e.PUT("/admin/employees/:id", controllers.UpdateEmployeeAccountByAdmin(db, secretKey))
+	e.DELETE("/admin/employees/:id", controllers.DeleteEmployeeAccountByAdmin(db, secretKey))
 
 	//Employee Exit Admin
 	e.POST("/admin/employees/:id/exit", controllers.ExitEmployee(db, secretKey))

@@ -1,6 +1,9 @@
 package helper
 
-import "hrsale/models"
+import (
+	"hrsale/models"
+	"time"
+)
 
 type ErrorResponse struct {
 	Code    int    `json:"code"`
@@ -14,6 +17,33 @@ type ResponseShift struct {
 	Shift   *models.Shift `json:"shift,omitempty"`
 }
 
+type EmployeeResponse struct {
+	ID            uint       `json:"id"`
+	PayrollID     int64      `json:"payroll_id"`
+	FirstName     string     `json:"first_name"`
+	LastName      string     `json:"last_name"`
+	ContactNumber string     `json:"contact_number"`
+	Gender        string     `json:"gender"`
+	Email         string     `json:"email"`
+	Username      string     `json:"username"`
+	Password      string     `json:"password"`
+	ShiftID       uint       `json:"shift_id"`
+	Shift         string     `json:"shift"`
+	RoleID        uint       `json:"role_id"`
+	Role          string     `json:"role"`
+	DepartmentID  uint       `json:"department_id"`
+	Department    string     `json:"department"`
+	DesignationID uint       `json:"designation_id"`
+	Designation   string     `json:"designation"`
+	BasicSalary   float64    `json:"basic_salary"`
+	HourlyRate    float64    `json:"hourly_rate"`
+	PaySlipType   string     `json:"pay_slip_type"`
+	IsActive      bool       `json:"is_active" gorm:"default:true"`
+	PaidStatus    bool       `json:"paid_status" gorm:"default:false"`
+	CreatedAt     *time.Time `json:"created_at"`
+	UpdatedAt     time.Time  `json:"UpdatedAt"`
+}
+
 type Response struct {
 	Code                 int                      `json:"code"`
 	Error                bool                     `json:"error"`
@@ -25,6 +55,7 @@ type Response struct {
 	Department           *models.Department       `json:"department,omitempty"`
 	Departments          []models.Department      `json:"departments,omitempty"`
 	Employee             *models.Employee         `json:"employee,omitempty"`
+	Employees            []models.Employee        `json:"employees,omitempty"`
 	Exit                 *models.Exit             `json:"exit,omitempty"`
 	Exits                []models.Exit            `json:"exits,omitempty"`
 	ExitEmployee         *models.ExitEmployee     `json:"exit_employee,omitempty"`
