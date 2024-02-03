@@ -136,6 +136,11 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewHelpdesksByID">View List Helpdesk By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditHelpdesksByID">Edit List Helpdesk By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteHelpdesksByID">Delete List Helpdesk By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateGoals">Create Goals</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewGoals">View List Goals</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewGoalsByID">View List Goals By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditGoalsByID">Edit List Goals By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteGoalsByID">Delete List Goals By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
@@ -2283,6 +2288,151 @@
     "code": 200,
     "error": false,
     "message": "Helpdesk data deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="CreateGoals" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Goals</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goal_types</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "goal_type" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "goal_type": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Goal type added successfully"
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewGoals" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>>View List Goals</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goal_types</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "goalTypes": [
+        {
+            "id": int,
+            "goal_type": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "goal_type": string,
+            "created_at": time
+        }
+    ],
+    "message": "All goal types retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewGoalsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Goals By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goal_types/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "goalType": {
+        "id": int,
+        "goal_type": string,
+        "created_at": time
+    },
+    "message": "Goal type retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditGoalsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Goals By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goal_types/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "goal_type" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "goalType": {
+        "id": int,
+        "goal_type": string,
+        "created_at": time
+    },
+    "message": "Goal type updated successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteGoalsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Goals By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goal_types/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Goal type deleted successfully"
 }
                             </pre>
                 </div>

@@ -43,14 +43,15 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.Exit{})
 	db.AutoMigrate(&models.ExitEmployee{})
 	db.AutoMigrate(&models.Designation{})
-	db.AutoMigrate(&models.Policy{}) // Add this line
+	db.AutoMigrate(&models.Policy{})
 	db.AutoMigrate(&models.Announcement{})
 	db.AutoMigrate(&models.Project{})
 	db.AutoMigrate(&models.Task{})
 	db.AutoMigrate(&models.Case{})
 	db.AutoMigrate(&models.Disciplinary{})
 	db.AutoMigrate(&models.Helpdesk{})
-	db.AutoMigrate(&models.PayrollInfo{}) // Add this line
+	db.AutoMigrate(&models.PayrollInfo{})
+	db.AutoMigrate(&models.GoalType{})
 
 	return db, nil
 }
