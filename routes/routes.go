@@ -116,11 +116,18 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.DELETE("/exits/:id", controllers.DeleteExitStatusByIDByAdmin(db, secretKey))
 
 	//Performance Goals
-	e.POST("/goal_types", controllers.CreateGoalTypeByAdmin(db, secretKey))
-	e.GET("/goal_types", controllers.GetAllGoalTypesByAdmin(db, secretKey))
-	e.GET("/goal_types/:id", controllers.GetGoalTypeByIDByAdmin(db, secretKey))
-	e.PUT("/goal_types/:id", controllers.UpdateGoalTypeByIDByAdmin(db, secretKey))
-	e.DELETE("/goal_types/:id", controllers.DeleteGoalTypeByIDByAdmin(db, secretKey))
+	e.POST("/goals_types", controllers.CreateGoalTypeByAdmin(db, secretKey))
+	e.GET("/goals_types", controllers.GetAllGoalTypesByAdmin(db, secretKey))
+	e.GET("/goals_types/:id", controllers.GetGoalTypeByIDByAdmin(db, secretKey))
+	e.PUT("/goals_types/:id", controllers.UpdateGoalTypeByIDByAdmin(db, secretKey))
+	e.DELETE("/goals_types/:id", controllers.DeleteGoalTypeByIDByAdmin(db, secretKey))
+
+	//Performance Tracking Goals
+	e.POST("/goals", controllers.CreateGoalByAdmin(db, secretKey))
+	e.GET("/goals", controllers.GetAllGoalsByAdmin(db, secretKey))
+	e.GET("/goals/:id", controllers.GetGoalByIDByAdmin(db, secretKey))
+	e.PUT("/goals/:id", controllers.UpdateGoalByIDByAdmin(db, secretKey))
+	e.DELETE("/goals/:id", controllers.DeleteGoalByIDByAdmin(db, secretKey))
 
 	//Employee Admin
 	e.POST("/admin/employees", controllers.CreateEmployeeAccountByAdmin(db, secretKey))
