@@ -8,6 +8,7 @@ import (
 	"hrsale/models"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // Goal Type
@@ -347,6 +348,416 @@ func DeleteGoalTypeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Goal type deleted successfully",
+		}
+		return c.JSON(http.StatusOK, response)
+	}
+}
+
+// Tracking Goals
+
+func CreateGoalByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Mendapatkan token dari header Authorization
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Memeriksa format token
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mendapatkan nilai token
+		tokenString = authParts[1]
+
+		// Verifikasi token
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mencari admin berdasarkan username
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Memeriksa apakah pengguna adalah admin HR
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Bind data goal dari request
+		var goal models.Goal
+		if err := c.Bind(&goal); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validasi data goal
+		if goal.GoalTypeID == 0 || goal.Subject == "" || goal.TargetAchievement == "" || goal.StartDate == "" || goal.EndDate == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid goal data. All fields are required."}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Set goal_type_name berdasarkan goal_type_id
+		var goalType models.GoalType
+		result = db.First(&goalType, "id = ?", goal.GoalTypeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Goal type not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		goal.GoalTypeName = goalType.GoalType
+
+		// Parse start date from string to time.Time
+		if goal.StartDate != "" {
+			startDate, err := time.Parse("2006-01-02", goal.StartDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			// Format start date in "yyyy-mm-dd" format
+			goal.StartDate = startDate.Format("2006-01-02")
+		}
+
+		// Parse end date from string to time.Time
+		if goal.EndDate != "" {
+			endDate, err := time.Parse("2006-01-02", goal.EndDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid EndDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			// Format end date in "yyyy-mm-dd" format
+			goal.EndDate = endDate.Format("2006-01-02")
+		}
+
+		// Set created_at
+		goal.CreatedAt = time.Now().Format("2006-01-02")
+
+		// Membuat data goal
+		db.Create(&goal)
+
+		// Response sukses
+		response := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Goal added successfully",
+			"data":    goal,
+		}
+		return c.JSON(http.StatusOK, response)
+	}
+}
+
+func GetAllGoalsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Mendapatkan token dari header Authorization
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Memeriksa format token
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mendapatkan nilai token
+		tokenString = authParts[1]
+
+		// Verifikasi token
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mencari admin berdasarkan username
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Memeriksa apakah pengguna adalah admin HR
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Mencari semua data tracking goals
+		var goals []models.Goal
+		db.Find(&goals)
+
+		// Response sukses
+		response := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "All goals retrieved successfully",
+			"goals":   goals,
+		}
+		return c.JSON(http.StatusOK, response)
+	}
+}
+
+func GetGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Mendapatkan token dari header Authorization
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Memeriksa format token
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mendapatkan nilai token
+		tokenString = authParts[1]
+
+		// Verifikasi token
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mencari admin berdasarkan username
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Memeriksa apakah pengguna adalah admin HR
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Mendapatkan ID goal dari parameter URL
+		goalID := c.Param("id")
+		if goalID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Goal ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Mencari data tracking goal berdasarkan ID
+		var goal models.Goal
+		result = db.First(&goal, "id = ?", goalID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Goal not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Response sukses
+		response := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Goal retrieved successfully",
+			"data":    goal,
+		}
+		return c.JSON(http.StatusOK, response)
+	}
+}
+
+func UpdateGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Mendapatkan token dari header Authorization
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Memeriksa format token
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mendapatkan nilai token
+		tokenString = authParts[1]
+
+		// Verifikasi token
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mencari admin berdasarkan username
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Memeriksa apakah pengguna adalah admin HR
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Mendapatkan ID goal dari parameter URL
+		goalID := c.Param("id")
+		if goalID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Goal ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Mencari data tracking goal berdasarkan ID
+		var goal models.Goal
+		result = db.First(&goal, "id = ?", goalID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Goal not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Bind data goal dari request
+		var updatedGoal models.Goal
+		if err := c.Bind(&updatedGoal); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Update field yang diizinkan diubah
+		if updatedGoal.GoalTypeID != 0 {
+			var goalType models.GoalType
+			result = db.First(&goalType, "id = ?", updatedGoal.GoalTypeID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid goal type ID. Goal type not found."}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			updatedGoal.GoalTypeID = goalType.ID
+			updatedGoal.GoalTypeName = goalType.GoalType
+
+			// Set nilai pada goal
+			goal.GoalTypeID = updatedGoal.GoalTypeID
+			goal.GoalTypeName = updatedGoal.GoalTypeName
+		}
+
+		if updatedGoal.Subject != "" {
+			goal.Subject = updatedGoal.Subject
+		}
+		if updatedGoal.TargetAchievement != "" {
+			goal.TargetAchievement = updatedGoal.TargetAchievement
+		}
+		if updatedGoal.StartDate != "" {
+			startDate, err := time.Parse("2006-01-02", updatedGoal.StartDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			goal.StartDate = startDate.Format("2006-01-02")
+		}
+		if updatedGoal.EndDate != "" {
+			endDate, err := time.Parse("2006-01-02", updatedGoal.EndDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid EndDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			goal.EndDate = endDate.Format("2006-01-02")
+		}
+		if updatedGoal.Description != "" {
+			goal.Description = updatedGoal.Description
+		}
+
+		// Simpan perubahan ke database
+		db.Save(&goal)
+
+		// Response sukses
+		response := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Goal updated successfully",
+			"data":    goal,
+		}
+		return c.JSON(http.StatusOK, response)
+	}
+}
+
+func DeleteGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Mendapatkan token dari header Authorization
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Memeriksa format token
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mendapatkan nilai token
+		tokenString = authParts[1]
+
+		// Verifikasi token
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mencari admin berdasarkan username
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Memeriksa apakah pengguna adalah admin HR
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Mendapatkan ID goal dari parameter URL
+		goalID := c.Param("id")
+		if goalID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Goal ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Mencari data tracking goal berdasarkan ID
+		var goal models.Goal
+		result = db.First(&goal, "id = ?", goalID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Goal not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Menghapus data goal dari database
+		db.Delete(&goal)
+
+		// Response sukses
+		response := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Goal deleted successfully",
 		}
 		return c.JSON(http.StatusOK, response)
 	}

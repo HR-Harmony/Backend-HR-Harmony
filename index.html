@@ -136,11 +136,18 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewHelpdesksByID">View List Helpdesk By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditHelpdesksByID">Edit List Helpdesk By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteHelpdesksByID">Delete List Helpdesk By ID</a></li>
-                <li class="nav-item"><a class="nav-link" href="#CreateGoals">Create Goals</a></li>
-                <li class="nav-item"><a class="nav-link" href="#ViewGoals">View List Goals</a></li>
-                <li class="nav-item"><a class="nav-link" href="#ViewGoalsByID">View List Goals By ID</a></li>
-                <li class="nav-item"><a class="nav-link" href="#EditGoalsByID">Edit List Goals By ID</a></li>
-                <li class="nav-item"><a class="nav-link" href="#DeleteGoalsByID">Delete List Goals By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#CreateGoalTypes">Create Goals</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewGoalTypes">View List Goals</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewGoalTypesByID">View List Goals By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditGoalTypesByID">Edit List Goals By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteGoalTypesByID">Delete List Goals By ID</a></li>
+
+                <li class="nav-item"><a class="nav-link" href="#CreateGoalTrackings">Create Goals Tracking</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewGoalTrackings">View List Goals Tracking</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewGoalTrackingsByID">View List Goals Tracking By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditGoalTrackingsByID">Edit List Goals Tracking By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteGoalTrackingsByID">Delete List Goals Tracking By ID</a></li>
+
                 <li class="nav-item"><a class="nav-link" href="#CreateExitsEmployee">Create Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
@@ -2294,11 +2301,11 @@
             </div>
 
 
-            <div id="CreateGoals" class="card mb-4 anchor">
+            <div id="CreateGoalTypes" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>Create Goals</h2>
                     <p><strong>URL</strong></p>
-                    <p><code>/goal_types</code></p>
+                    <p><code>/goals_types</code></p>
                     <p><strong>Method</strong></p>
                     <p><code>POST</code></p>
                     <p><strong>Request Body - Raw Json</strong></p>
@@ -2326,11 +2333,11 @@
                 </div>
             </div>
 
-            <div id="ViewGoals" class="card mb-4 anchor">
+            <div id="ViewGoalTypes" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>>View List Goals</h2>
                     <p><strong>URL</strong></p>
-                    <p><code>/goal_types</code></p>
+                    <p><code>/goals_types</code></p>
                     <p><strong>Method</strong></p>
                     <p><code>GET</code></p>
                     <p><strong>Request Body</strong></p>
@@ -2359,11 +2366,11 @@
                 </div>
             </div>
 
-            <div id="ViewGoalsByID" class="card mb-4 anchor">
+            <div id="ViewGoalTypesByID" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>View List Goals By ID</h2>
                     <p><strong>URL</strong></p>
-                    <p><code>/goal_types/:id</code></p>
+                    <p><code>/goals_types/:id</code></p>
                     <p><strong>Method</strong></p>
                     <p><code>GET</code></p>
                     <p><strong>Request Body</strong></p>
@@ -2386,11 +2393,11 @@
             </div>
 
 
-            <div id="EditGoalsByID" class="card mb-4 anchor">
+            <div id="EditGoalTypesByID" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>Edit List Goals By ID</h2>
                     <p><strong>URL</strong></p>
-                    <p><code>/goal_types/:id</code></p>
+                    <p><code>/goals_types/:id</code></p>
                     <p><strong>Method</strong></p>
                     <p><code>PUT</code></p>
                     <p><strong>Request Body - Raw Json</strong></p>
@@ -2418,11 +2425,11 @@
             </div>
 
 
-            <div id="DeleteGoalsByID" class="card mb-4 anchor">
+            <div id="DeleteGoalTypesByID" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>Delete List Goals By ID</h2>
                     <p><strong>URL</strong></p>
-                    <p><code>/goal_types/:id</code></p>
+                    <p><code>/goals_types/:id</code></p>
                     <p><strong>Method</strong></p>
                     <p><code>DELETE</code></p>
                     <p><strong>Note</strong></p>
@@ -2433,6 +2440,189 @@
     "code": 200,
     "error": false,
     "message": "Goal type deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateGoalTrackings" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Goals Tracking</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goals</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "goal_type_id" : int,
+    "subject" : string,
+    "target_achievement" : string,
+    "start_date" : string,
+    "end_date" : string,
+    "description" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "goal_type_id": int,
+        "goal_type_name": string,
+        "subject": string,
+        "target_achievement": string,
+        "start_date": string,
+        "end_date": string,
+        "description": string,
+        "created_at": string"
+    },
+    "error": false,
+    "message": "Goal added successfully"
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewGoalTrackings" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Goals Tracking</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goals</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "goals": [
+        {
+            "id": int,
+            "goal_type_id": int,
+            "goal_type_name": string,
+            "subject": string,
+            "target_achievement": string,
+            "start_date": string,
+            "end_date": string,
+            "description": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "goal_type_id": int,
+            "goal_type_name": string,
+            "subject": string,
+            "target_achievement": string,
+            "start_date": string,
+            "end_date": string,
+            "description": string,
+            "created_at": time
+        }
+    ],
+    "message": "All goals retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewGoalTrackingsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Goals Tracking By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goals</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "goal_type_id": int,
+        "goal_type_name": string,
+        "subject": string,
+        "target_achievement": string,
+        "start_date": string,
+        "end_date": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Goal retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditGoalTrackingsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Goals Tracking By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goals/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "goal_type_id" : int,
+    "subject" : string,
+    "target_achievement" : string,
+    "start_date" : string,
+    "end_date" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "goal_type_id": int,
+        "goal_type_name": string,
+        "subject": string,
+        "target_achievement": string,
+        "start_date": string,
+        "end_date": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Goal updated successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteGoalTrackingsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Goals Tracking By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/goals</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Goal deleted successfully"
 }
                             </pre>
                 </div>
