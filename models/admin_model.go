@@ -14,6 +14,6 @@ type Admin struct {
 	HourlyRate        float64 `json:"hourly_rate"`
 	PaySlipType       string  `json:"pay_slip_type"`
 	IsAdminHR         bool    `json:"is_admin_hr"`
-	IsVerified        bool    `gorm:"default:false" json:"is_verified"` // Tambahkan kolom ini
-	VerificationToken string  `json:"verification_token"`               // Tambahkan kolom ini
+	IsVerified        bool    `gorm:"default:false" json:"is_verified"`
+	VerificationToken string  `json:"verification_token"`
 }
