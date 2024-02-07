@@ -246,9 +246,23 @@
                     <p><code>POST</code></p>
                     <p><strong>Body - Form Data</strong></p>
                     <pre>
-    {
-        "shift_name": "string",
-    }
+{
+    "shift_name" : string,
+    "monday_in_time": string,
+    "monday_out_time": string,
+    "tuesday_in_time": string,
+    "tuesday_out_time": string,
+    "wednesday_in_time": string,
+    "wednesday_out_time": string,
+    "thursday_in_time": string,
+    "thursday_out_time": string,
+    "friday_in_time": string,
+    "friday_out_time": string,
+    "saturday_in_time": string,
+    "saturday_out_time": string,
+    "sunday_in_time": string,
+    "sunday_out_time": string
+}
                             </pre>
                     <p><strong>Note</strong></p>
                     <p><code>Include authorization token in headers.</code></p>
@@ -261,6 +275,20 @@
     "shift": {
         "id": int,
         "shift_name": string,
+        "monday_in_time": string,
+        "monday_out_time": string,
+        "tuesday_in_time": string,
+        "tuesday_out_time": string,
+        "wednesday_in_time": string,
+        "wednesday_out_time": string,
+        "thursday_in_time": string,
+        "thursday_out_time": string,
+        "friday_in_time": string,
+        "friday_out_time": string,
+        "saturday_in_time": string,
+        "saturday_out_time": string,
+        "sunday_in_time": string,
+        "sunday_out_time": string,
         "created_at": time,
         "UpdatedAt": time
     }
@@ -289,24 +317,80 @@
         {
             "id": int,
             "shift_name": string,
+            "monday_in_time": string,
+            "monday_out_time": string,
+            "tuesday_in_time": string,
+            "tuesday_out_time": string,
+            "wednesday_in_time": string,
+            "wednesday_out_time": string,
+            "thursday_in_time": string,
+            "thursday_out_time": string,
+            "friday_in_time": string,
+            "friday_out_time": string,
+            "saturday_in_time": string,
+            "saturday_out_time": string,
+            "sunday_in_time": string,
+            "sunday_out_time": string,
             "created_at": time,
             "UpdatedAt": time
         },
         {
             "id": int,
             "shift_name": string,
+            "monday_in_time": string,
+            "monday_out_time": string,
+            "tuesday_in_time": string,
+            "tuesday_out_time": string,
+            "wednesday_in_time": string,
+            "wednesday_out_time": string,
+            "thursday_in_time": string,
+            "thursday_out_time": string,
+            "friday_in_time": string,
+            "friday_out_time": string,
+            "saturday_in_time": string,
+            "saturday_out_time": string,
+            "sunday_in_time": string,
+            "sunday_out_time": string,
             "created_at": time,
             "UpdatedAt": time
         },
         {
             "id": int,
             "shift_name": string,
+            "monday_in_time": string,
+            "monday_out_time": string,
+            "tuesday_in_time": string,
+            "tuesday_out_time": string,
+            "wednesday_in_time": string,
+            "wednesday_out_time": string,
+            "thursday_in_time": string,
+            "thursday_out_time": string,
+            "friday_in_time": string,
+            "friday_out_time": string,
+            "saturday_in_time": string,
+            "saturday_out_time": string,
+            "sunday_in_time": string,
+            "sunday_out_time": string,
             "created_at": time,
             "UpdatedAt": time
         },
         {
             "id": int,
             "shift_name": string,
+            "monday_in_time": string,
+            "monday_out_time": string,
+            "tuesday_in_time": string,
+            "tuesday_out_time": string,
+            "wednesday_in_time": string,
+            "wednesday_out_time": string,
+            "thursday_in_time": string,
+            "thursday_out_time": string,
+            "friday_in_time": string,
+            "friday_out_time": string,
+            "saturday_in_time": string,
+            "saturday_out_time": string,
+            "sunday_in_time": string,
+            "sunday_out_time": string,
             "created_at": time,
             "UpdatedAt": time
         }
@@ -332,12 +416,27 @@
     "error": false,
     "message": "Shift retrieved successfully",
     "shift": {
-        "id": 1,
+        "id": int,
         "shift_name": string,
+        "monday_in_time": string,
+        "monday_out_time": string,
+        "tuesday_in_time": string,
+        "tuesday_out_time": string,
+        "wednesday_in_time": string,
+        "wednesday_out_time": string,
+        "thursday_in_time": string,
+        "thursday_out_time": string,
+        "friday_in_time": string,
+        "friday_out_time": string,
+        "saturday_in_time": string,
+        "saturday_out_time": string,
+        "sunday_in_time": string,
+        "sunday_out_time": string,
         "created_at": time,
         "UpdatedAt": time
     }
-}                </pre>
+}
+              </pre>
                 </div>
             </div>
 
@@ -352,7 +451,21 @@
                     <p><strong>Request Body - Raw Json</strong></p>
                     <pre>
 {
-    "shift_name" : "string"
+    "shift_name" : "string",
+    "monday_in_time" : "string",
+    "monday_out_time" : "string",
+    "tuesday_in_time" : "string",
+    "tuesday_out_time" : "string",
+    "wednesday_in_time" : "string",
+    "wednesday_out_time" : "string",
+    "thursday_in_time" : "string",
+    "thursday_out_time" : "string",
+    "friday_in_time" : "string",
+    "friday_out_time" : "string",
+    "saturday_in_time": "string",
+    "saturday_out_time": "string",
+    "sunday_in_time": "string",
+    "sunday_out_time": "string"
 }
                             </pre>
                     <p><strong>Note</strong></p>
@@ -361,14 +474,28 @@
                     <pre>
 {
     "code": 200,
-    "error": false,
-    "message": "Shift name updated successfully",
-    "shift": {
-        "id": int,
+    "data": {
+        "id": 1,
         "shift_name": string,
-        "created_at": string,
-        "UpdatedAt": string
-    }
+        "monday_in_time": string,
+        "monday_out_time": string,
+        "tuesday_in_time": string,
+        "tuesday_out_time": string,
+        "wednesday_in_time": string,
+        "wednesday_out_time": string,
+        "thursday_in_time": string,
+        "thursday_out_time": string,
+        "friday_in_time": string,
+        "friday_out_time": string,
+        "saturday_in_time": string,
+        "saturday_out_time": string,
+        "sunday_in_time": string,
+        "sunday_out_time": string,
+        "created_at": time,
+        "UpdatedAt": time
+    },
+    "error": false,
+    "message": "Shift updated successfully"
 }
                             </pre>
                 </div>
