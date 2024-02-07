@@ -30,7 +30,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.POST("/shifts", controllers.CreateShiftByAdmin(db, secretKey))
 	e.GET("/shifts", controllers.GetAllShiftsByAdmin(db, secretKey))
 	e.GET("/shifts/:id", controllers.GetShiftByIDByAdmin(db, secretKey))
-	e.PUT("/shifts/:id", controllers.EditShiftNameByIDByAdmin(db, secretKey))
+	e.PUT("/shifts/:id", controllers.EditShiftByIDByAdmin(db, secretKey))
 	e.DELETE("/shifts/:id", controllers.DeleteShiftByIDByAdmin(db, secretKey))
 
 	//Role Admin
