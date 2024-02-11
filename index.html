@@ -162,6 +162,13 @@
                 <li class="nav-item"><a class="nav-link" href="#UpdatePayrollsStatus">View List All Employee Payroll</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewPayrollsHistory">View List All Payroll Transaction</a></li>
 
+
+                <li class="nav-item"><a class="nav-link" href="#CreateAttendancesManual">Create Attendances Manual</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewAttendancesManual">View List Attendances Manual</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewAttendancesManualByID">View List Attendances Manual By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditAttendancesManualByID">Edit List Attendances Manual By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteAttendancesManualByID">Delete List Attendances Manual By ID</a></li>
+
                 <!-- Employee -->
                 <li class="nav-item"><a class="nav-link" href="#LoginEmployee">Login Employee Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ProfileEmployee">Profile Employee Account</a></li>
@@ -1356,7 +1363,7 @@
 
             <div id="ViewAnnouncments" class="card mb-4 anchor">
                 <div class="card-body">
-                    <h2>>View List Announcments</h2>
+                    <h2>View List Announcments</h2>
                     <p><strong>URL</strong></p>
                     <p><code>/announcements</code></p>
                     <p><strong>Method</strong></p>
@@ -1553,7 +1560,7 @@
 
             <div id="ViewProjects" class="card mb-4 anchor">
                 <div class="card-body">
-                    <h2>>View List Projects</h2>
+                    <h2>View List Projects</h2>
                     <p><strong>URL</strong></p>
                     <p><code>/projects</code></p>
                     <p><strong>Method</strong></p>
@@ -1759,7 +1766,7 @@
 
             <div id="ViewTasks" class="card mb-4 anchor">
                 <div class="card-body">
-                    <h2>>View List Tasks</h2>
+                    <h2>View List Tasks</h2>
                     <p><strong>URL</strong></p>
                     <p><code>/tasks</code></p>
                     <p><strong>Method</strong></p>
@@ -1942,7 +1949,7 @@
 
             <div id="ViewCases" class="card mb-4 anchor">
                 <div class="card-body">
-                    <h2>>View List Cases</h2>
+                    <h2>View List Cases</h2>
                     <p><strong>URL</strong></p>
                     <p><code>/cases</code></p>
                     <p><strong>Method</strong></p>
@@ -2107,7 +2114,7 @@
 
             <div id="Viewdisciplinarys" class="card mb-4 anchor">
                 <div class="card-body">
-                    <h2>>View List Disciplinary</h2>
+                    <h2>View List Disciplinary</h2>
                     <p><strong>URL</strong></p>
                     <p><code>/disciplinarys</code></p>
                     <p><strong>Method</strong></p>
@@ -2285,7 +2292,7 @@
 
             <div id="ViewHelpdesks" class="card mb-4 anchor">
                 <div class="card-body">
-                    <h2>>View List Helpdesk</h2>
+                    <h2>View List Helpdesk</h2>
                     <p><strong>URL</strong></p>
                     <p><code>/helpdesks</code></p>
                     <p><strong>Method</strong></p>
@@ -2462,7 +2469,7 @@
 
             <div id="ViewGoalTypes" class="card mb-4 anchor">
                 <div class="card-body">
-                    <h2>>View List Goals</h2>
+                    <h2>View List Goals</h2>
                     <p><strong>URL</strong></p>
                     <p><code>/goals_types</code></p>
                     <p><strong>Method</strong></p>
@@ -3302,6 +3309,176 @@
     },
     "error": false,
     "message": "Paid status updated successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateAttendancesManual" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Attendances Manual</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/attendances</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "employee_id" : int,
+    "attendance_date" : string,
+    "in_time" : string,
+    "out_time" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "username": string,
+        "attendance_date": string,
+        "in_time": string,
+        "out_time": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Attendance data added successfully"
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewAttendancesManual" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Attendances Manual - Gunakan Query Params untuk Search By date & employee_id</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/attendances</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "employee_id": int,
+            "username": string,
+            "attendance_date": string,
+            "in_time": string,
+            "out_time": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "employee_id": int,
+            "username": string,
+            "attendance_date": string,
+            "in_time": string,
+            "out_time": string,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Attendance data retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewAttendancesManualByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Attendances Manual By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/attendances</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "username": string,
+        "attendance_date": string,
+        "in_time": string,
+        "out_time": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Attendance data retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditAttendancesManualByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Attendances Manual By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/attendances</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "employee_id" : int,
+    "attendance_date" : string,
+    "in_time" : string,
+    "out_time" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "username": string,
+        "attendance_date": string,
+        "in_time": string,
+        "out_time": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Attendance data updated successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteAttendancesManualByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Attendances Manual By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/attendances</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Attendance data deleted successfully"
 }
                             </pre>
                 </div>
