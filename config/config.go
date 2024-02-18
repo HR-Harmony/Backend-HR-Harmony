@@ -54,6 +54,7 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.GoalType{})
 	db.AutoMigrate(&models.Goal{})
 	db.AutoMigrate(&models.Attendance{})
+	db.AutoMigrate(&models.Finance{})
 
 	return db, nil
 }
