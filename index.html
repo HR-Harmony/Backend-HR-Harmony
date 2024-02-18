@@ -162,6 +162,12 @@
                 <li class="nav-item"><a class="nav-link" href="#UpdatePayrollsStatus">View List All Employee Payroll</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewPayrollsHistory">View List All Payroll Transaction</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CreateFinances">Create Finances</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewFinances">View List Finances</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewFinancesByID">View List Finances By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditFinancesByID">Edit List Finances By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteFinancesByID">Delete List Finances By ID</a></li>
+
 
                 <li class="nav-item"><a class="nav-link" href="#CreateAttendancesManual">Create Attendances Manual</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewAttendancesManual">View List Attendances Manual</a></li>
@@ -3309,6 +3315,184 @@
     },
     "error": false,
     "message": "Paid status updated successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="CreateFinances" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Finances</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/finances</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "account_title" : string,
+    "initial_balance" : int,
+    "account_number" : string",
+    "branch_code" : string,
+    "bank_branch" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "account_title": string,
+        "initial_balance": int,
+        "account_number": string,
+        "branch_code": string,
+        "bank_branch": string
+    },
+    "error": false,
+    "message": "Finance data added successfully"
+}
+
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewFinances" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Finances - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/finances</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "account_title": string,
+            "initial_balance": int,
+            "account_number": string,
+            "branch_code": string,
+            "bank_branch": string
+        },
+        {
+            "id": int,
+            "account_title": string,
+            "initial_balance": int,
+            "account_number": string,
+            "branch_code": string,
+            "bank_branch": string
+        },
+        {
+            "id": int,
+            "account_title": string,
+            "initial_balance": int,
+            "account_number": string,
+            "branch_code": string,
+            "bank_branch": string
+        }
+    ],
+    "error": false,
+    "message": "Finance data retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewFinancesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Finances By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/finances/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "account_title": string,
+        "initial_balance": int,
+        "account_number": string,
+        "branch_code": string,
+        "bank_branch": string
+    },
+    "error": false,
+    "message": "Finance data retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditFinancesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Finances By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/finances/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "account_title" : string,
+    "initial_balance" : int,
+    "account_number" : string",
+    "branch_code" : string,
+    "bank_branch" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "account_title": string,
+        "initial_balance": int,
+        "account_number": string,
+        "branch_code": string,
+        "bank_branch": string
+    },
+    "error": false,
+    "message": "Finance data updated successfully"
+}
+
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteFinancesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Finances By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/finances/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Finance data deleted successfully"
 }
                             </pre>
                 </div>
