@@ -168,6 +168,13 @@
                 <li class="nav-item"><a class="nav-link" href="#EditFinancesByID">Edit List Finances By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteFinancesByID">Delete List Finances By ID</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CreateDepositCategories">Create Deposit Categories</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewDepositCategories">View List Deposit Categories</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewDepositCategoriesByID">View List Deposit Categories By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditDepositCategorieByID">Edit List Deposit Categories By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteDepositCategorieByID">Delete List Deposit Categories By ID</a></li>
+
+
 
                 <li class="nav-item"><a class="nav-link" href="#CreateAttendancesManual">Create Attendances Manual</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewAttendancesManual">View List Attendances Manual</a></li>
@@ -3493,6 +3500,152 @@
     "code": 200,
     "error": false,
     "message": "Finance data deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateDepositCategories" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Deposit Categories</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/deposit_categories</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "deposit_category" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "deposit_category": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Deposit category added successfully"
+}
+
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewDepositCategories" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List DepositCategories - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/deposit_categories</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "deposit_category": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "deposit_category": string,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Deposit categories retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewDepositCategoriesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Deposit Categories By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/deposit_categories/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "deposit_category": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Deposit category retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditDepositCategorieByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Deposit Categories By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/deposit_categories/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "deposit_category" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "deposit_category": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Deposit category updated successfully"
+}
+
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteDepositCategorieByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Deposit Categories By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/deposit_categories/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Deposit category deleted successfully"
 }
                             </pre>
                 </div>

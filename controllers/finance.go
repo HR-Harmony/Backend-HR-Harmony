@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func CreateFinanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
@@ -341,6 +342,340 @@ func DeleteFinanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Finance data deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func CreateDepositCategoryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Bind deposit category data from request body
+		var depositCategory models.DepositCategory
+		if err := c.Bind(&depositCategory); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate deposit category data
+		if depositCategory.DepositCategory == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Deposit category is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Set creation timestamp
+		depositCategory.CreatedAt = time.Now()
+
+		// Create deposit category in the database
+		db.Create(&depositCategory)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Deposit category added successfully",
+			"data":    depositCategory,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+// GetAllDepositCategoriesByAdmin adalah handler untuk mendapatkan semua data deposit category oleh admin
+func GetAllDepositCategoriesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Fetch searching query parameter
+		searching := c.QueryParam("searching")
+
+		// Fetch deposit categories from database with optional search filter
+		var depositCategories []models.DepositCategory
+		query := db.Model(&depositCategories)
+		if searching != "" {
+			query = query.Where("LOWER(deposit_category) LIKE ?", "%"+strings.ToLower(searching)+"%")
+		}
+		query.Find(&depositCategories)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Deposit categories retrieved successfully",
+			"data":    depositCategories,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// GetDepositCategoryByIDByAdmin adalah handler untuk mendapatkan data deposit category berdasarkan ID oleh admin
+func GetDepositCategoryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Fetch deposit category ID from path parameter
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve deposit category from database by ID
+		var depositCategory models.DepositCategory
+		result = db.First(&depositCategory, id)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Deposit category not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Deposit category retrieved successfully",
+			"data":    depositCategory,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func EditDepositCategoryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Fetch deposit category ID from path parameter
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Bind the deposit category data from the request body
+		var updatedDepositCategory models.DepositCategory
+		if err := c.Bind(&updatedDepositCategory); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate deposit category data
+		if updatedDepositCategory.DepositCategory == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid deposit category data. Deposit category is required."}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve deposit category from database by ID
+		var depositCategory models.DepositCategory
+		result = db.First(&depositCategory, id)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Deposit category not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Update deposit category fields
+		depositCategory.DepositCategory = updatedDepositCategory.DepositCategory
+
+		// Save the updated deposit category to the database
+		db.Save(&depositCategory)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Deposit category updated successfully",
+			"data":    depositCategory,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// DeleteDepositCategoryByIDByAdmin adalah handler untuk menghapus data deposit category berdasarkan ID oleh admin
+func DeleteDepositCategoryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Fetch deposit category ID from path parameter
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve deposit category from database by ID
+		var depositCategory models.DepositCategory
+		result = db.First(&depositCategory, id)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Deposit category not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Delete the deposit category from the database
+		db.Delete(&depositCategory)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Deposit category deleted successfully",
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
