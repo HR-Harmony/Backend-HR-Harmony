@@ -2,6 +2,7 @@ package helper
 
 import (
 	"regexp"
+	"strconv"
 )
 
 // IsValidPassword checks if the password meets the required criteria
@@ -46,4 +47,13 @@ func ContainsOnlyDigits(s string) bool {
 		}
 	}
 	return true
+}
+
+// ParseStringToFloat mengonversi string menjadi float64 jika memungkinkan
+func ParseStringToFloat(s string) float64 {
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0.0 // Nilai default jika parsing gagal
+	}
+	return f
 }
