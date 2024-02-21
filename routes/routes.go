@@ -122,6 +122,13 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/deposit_categories/:id", controllers.EditDepositCategoryByIDByAdmin(db, secretKey))
 	e.DELETE("/deposit_categories/:id", controllers.DeleteDepositCategoryByIDByAdmin(db, secretKey))
 
+	//Add Deposit
+	e.POST("/add_deposits", controllers.AddDepositByAdmin(db, secretKey))
+	e.GET("/add_deposits", controllers.GetAllAddDepositsByAdmin(db, secretKey))
+	e.GET("/add_deposits/:id", controllers.GetDepositByIDByAdmin(db, secretKey))
+	e.PUT("/add_deposits/:id", controllers.UpdateDepositByAdmin(db, secretKey))
+	e.DELETE("/add_deposits/:id", controllers.DeleteDepositByIDByAdmin(db, secretKey))
+
 	//Attendance
 	e.POST("/attendances", controllers.AddManualAttendanceByAdmin(db, secretKey))
 	e.GET("/attendances", controllers.GetAllAttendanceByAdmin(db, secretKey))
