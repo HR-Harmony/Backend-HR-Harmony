@@ -174,6 +174,11 @@
                 <li class="nav-item"><a class="nav-link" href="#EditDepositCategorieByID">Edit List Deposit Categories By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteDepositCategorieByID">Delete List Deposit Categories By ID</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CreateAddDeposits">Create Add Deposit</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewAddDeposits">View List Add Deposit</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewAddDepositsByID">View List Add Deposit By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditAddDepositsByID">Edit List Add Deposit By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteAddDepositsByID">Delete List Add Deposit By ID</a></li>
 
 
                 <li class="nav-item"><a class="nav-link" href="#CreateAttendancesManual">Create Attendances Manual</a></li>
@@ -3646,6 +3651,211 @@
     "code": 200,
     "error": false,
     "message": "Deposit category deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateAddDeposits" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Add Deposit</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/add_deposits</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "finance_id" : int,
+    "amount" : int,
+    "date" : string (yyyy-mm-dd),
+    "category_id" : int,
+    "payer" : string,
+    "payment_method" : string,
+    "ref" : string,
+    "description" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "finance_id": int,
+        "account_title": string,
+        "amount": int,
+        "date": string,
+        "category_id": int,
+        "deposit_category": string,
+        "payer": string,
+        "payment_method": string,
+        "ref": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Add deposit data added successfully"
+}
+
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewAddDeposits" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Add Deposit - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/add_deposits</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "finance_id": int,
+            "account_title": string,
+            "amount": int,
+            "date": string,
+            "category_id": int,
+            "deposit_category": string,
+            "payer": string,
+            "payment_method": string,
+            "ref": string,
+            "description": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "finance_id": int,
+            "account_title": string,
+            "amount": int,
+            "date": string,
+            "category_id": int,
+            "deposit_category": string,
+            "payer": string,
+            "payment_method": string,
+            "ref": string,
+            "description": string,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Add deposit data retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewAddDepositsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Add Deposit By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/add_deposits/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "finance_id": int,
+        "account_title": string,
+        "amount": int,
+        "date": time,
+        "category_id": int,
+        "deposit_category": string,
+        "payer": string,
+        "payment_method": string,
+        "ref": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Deposit data retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditAddDepositsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Add Deposit By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/add_deposits/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "finance_id" : int,
+    "amount" : int,
+    "date" : string (yyyy-mm-dd),
+    "category_id" : int,
+    "payer" : string,
+    "payment_method" : string,
+    "ref" : string,
+    "description" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "finance_id": int,
+        "account_title": string,
+        "amount": int,
+        "date": string,
+        "category_id": int,
+        "deposit_category": string,
+        "payer": string,
+        "payment_method": string,
+        "ref": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Deposit data updated successfully"
+}
+
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteAddDepositsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Add Deposit By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/add_deposits/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Deposit data deleted successfully"
 }
                             </pre>
                 </div>
