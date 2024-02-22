@@ -31,3 +31,9 @@ type AddDeposit struct {
 	Description     string    `json:"description"`
 	CreatedAt       time.Time `json:"created_at"`
 }
+
+type ExpenseCategory struct {
+	ID              uint      `gorm:"primaryKey" json:"id"`
+	ExpenseCategory string    `json:"expense_category"`
+	CreatedAt       time.Time `json:"created_at"`
+}
