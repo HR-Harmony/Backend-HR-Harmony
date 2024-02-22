@@ -1113,3 +1113,332 @@ func DeleteDepositByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+
+// AddExpenseCategoryByAdmin adalah handler untuk menambahkan data expense category oleh admin
+func CreateExpenseCategoryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Bind the expense category data from the request body
+		var expenseCategory models.ExpenseCategory
+		if err := c.Bind(&expenseCategory); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Create the expense category entry in the database
+		db.Create(&expenseCategory)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Expense category added successfully",
+			"data":    expenseCategory,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+// GetExpenseCategoriesByAdmin adalah handler untuk ADMIN dapat melihat seluruh data expense category dilengkapi dengan fitur searching
+func GetAllExpenseCategoriesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve all expense categories from the database
+		var expenseCategories []models.ExpenseCategory
+		db.Find(&expenseCategories)
+
+		// Check if searching query parameter is provided
+		searching := c.QueryParam("searching")
+		if searching != "" {
+			search := strings.ToLower(searching)
+			var filteredExpenseCategories []models.ExpenseCategory
+			for _, category := range expenseCategories {
+				if strings.Contains(strings.ToLower(category.ExpenseCategory), search) {
+					filteredExpenseCategories = append(filteredExpenseCategories, category)
+				}
+			}
+			expenseCategories = filteredExpenseCategories
+		}
+
+		// Respond with the list of expense categories
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Expense categories retrieved successfully",
+			"data":    expenseCategories,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// GetExpenseCategoryByID adalah handler untuk ADMIN dapat melihat data expense category berdasarkan ID
+func GetExpenseCategoryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Parse expense category ID from path parameter
+		categoryID, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid expense category ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve expense category data from the database
+		var expenseCategory models.ExpenseCategory
+		result = db.First(&expenseCategory, categoryID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Expense category not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Respond with the expense category data
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Expense category retrieved successfully",
+			"data":    expenseCategory,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// UpdateExpenseCategoryByID adalah handler untuk ADMIN dapat mengedit data expense category berdasarkan ID
+func EditExpenseCategoryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Parse expense category ID from path parameter
+		categoryID, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid expense category ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve existing expense category data from the database
+		var existingCategory models.ExpenseCategory
+		result = db.First(&existingCategory, categoryID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Expense category not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Bind the updated expense category data from the request body
+		var updatedCategory models.ExpenseCategory
+		if err := c.Bind(&updatedCategory); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Update the expense category data with the new values
+		if updatedCategory.ExpenseCategory != "" {
+			existingCategory.ExpenseCategory = updatedCategory.ExpenseCategory
+		}
+
+		// Save the updated expense category data to the database
+		db.Save(&existingCategory)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Expense category updated successfully",
+			"data":    existingCategory,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// DeleteExpenseCategoryByID adalah handler untuk ADMIN dapat menghapus data expense category berdasarkan ID
+func DeleteExpenseCategoryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Parse expense category ID from path parameter
+		categoryID, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid expense category ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve existing expense category data from the database
+		var existingCategory models.ExpenseCategory
+		result = db.First(&existingCategory, categoryID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Expense category not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Delete the expense category from the database
+		db.Delete(&existingCategory)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Expense category deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
