@@ -1442,3 +1442,442 @@ func DeleteExpenseCategoryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+
+func AddExpenseByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Bind the add expense data from the request body
+		var addExpense models.AddExpense
+		if err := c.Bind(&addExpense); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate expense data
+		if addExpense.FinanceID == 0 || addExpense.Amount <= 0 || addExpense.Date == "" || addExpense.ExpenseCategoryID == 0 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid expense data. All fields are required and amount must be greater than 0."}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate date format
+		_, err = time.Parse("2006-01-02", addExpense.Date)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid date format. Required format: yyyy-mm-dd"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve finance data from the database
+		var finance models.Finance
+		result = db.First(&finance, addExpense.FinanceID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Finance ID not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		addExpense.AccountTitle = finance.AccountTitle
+
+		// Retrieve expense category data from the database
+		var expenseCategory models.ExpenseCategory
+		result = db.First(&expenseCategory, addExpense.ExpenseCategoryID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Expense Category ID not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		addExpense.ExpenseCategory = expenseCategory.ExpenseCategory
+
+		// Update the initial balance with the expense amount
+		finance.InitialBalance -= addExpense.Amount
+		db.Save(&finance)
+
+		// Create the add expense entry in the database
+		db.Create(&addExpense)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Add expense data added successfully",
+			"data":    addExpense,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+func GetAllAddExpensesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Extract search query parameter
+		searching := c.QueryParam("searching")
+
+		// Query for expenses with search parameters
+		var expenses []models.AddExpense
+		query := db.Model(&expenses)
+		if searching != "" {
+			searching = strings.ToLower(searching)
+			query = query.Where("LOWER(account_title) LIKE ? OR amount = ? OR LOWER(date) LIKE ? OR LOWER(expense_category) LIKE ? OR LOWER(payer) LIKE ? OR LOWER(payment_method) LIKE ? OR LOWER(ref) LIKE ? OR LOWER(description) LIKE ?",
+				"%"+searching+"%",
+				helper.ParseStringToFloat(searching),
+				"%"+searching+"%",
+				"%"+searching+"%",
+				"%"+searching+"%",
+				"%"+searching+"%",
+				"%"+searching+"%",
+				"%"+searching+"%",
+			)
+		}
+		query.Find(&expenses)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Expenses retrieved successfully",
+			"data":    expenses,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetExpenseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Parse expense ID from path parameter
+		expenseID, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid expense ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve expense data from the database
+		var expense models.AddExpense
+		result = db.First(&expense, expenseID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Expense not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Expense retrieved successfully",
+			"data":    expense,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func UpdateExpenseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Parse expense ID from path parameter
+		expenseID, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid expense ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve existing expense data from the database
+		var existingExpense models.AddExpense
+		result = db.First(&existingExpense, expenseID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Expense not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Bind the updated expense data from the request body
+		var updatedExpense models.AddExpense
+		if err := c.Bind(&updatedExpense); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve finance data from the database if finance_id is updated
+		var newFinance models.Finance
+		if updatedExpense.FinanceID != 0 && updatedExpense.FinanceID != existingExpense.FinanceID {
+			result = db.First(&newFinance, updatedExpense.FinanceID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "New finance ID not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+
+			// Calculate the difference in amount
+			amountDiff := updatedExpense.Amount - existingExpense.Amount
+
+			// Update the initial balance of the new finance ID
+			newFinance.InitialBalance += amountDiff
+			db.Save(&newFinance)
+
+			// Update the initial balance of the old finance ID
+			var oldFinance models.Finance
+			db.First(&oldFinance, existingExpense.FinanceID)
+			oldFinance.InitialBalance -= amountDiff
+			db.Save(&oldFinance)
+
+			// Update the finance ID and account title in the expense data
+			existingExpense.FinanceID = updatedExpense.FinanceID
+			existingExpense.AccountTitle = newFinance.AccountTitle
+		}
+
+		if updatedExpense.Amount != 0 {
+			// Calculate the difference in amount
+			amountDiff := updatedExpense.Amount - existingExpense.Amount
+			existingExpense.Amount = updatedExpense.Amount
+
+			// Update the initial balance of finance ID
+			var finance models.Finance
+			db.First(&finance, existingExpense.FinanceID)
+			finance.InitialBalance -= amountDiff
+			db.Save(&finance)
+		}
+		if updatedExpense.Date != "" {
+			existingExpense.Date = updatedExpense.Date
+		}
+		if updatedExpense.ExpenseCategoryID != 0 {
+			existingExpense.ExpenseCategoryID = updatedExpense.ExpenseCategoryID
+
+			// Retrieve expense category data from the database
+			var expenseCategory models.ExpenseCategory
+			result = db.First(&expenseCategory, updatedExpense.ExpenseCategoryID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Expense Category ID not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+
+			existingExpense.ExpenseCategory = expenseCategory.ExpenseCategory
+		}
+		if updatedExpense.Payer != "" {
+			existingExpense.Payer = updatedExpense.Payer
+		}
+		if updatedExpense.PaymentMethod != "" {
+			existingExpense.PaymentMethod = updatedExpense.PaymentMethod
+		}
+		if updatedExpense.Ref != "" {
+			existingExpense.Ref = updatedExpense.Ref
+		}
+		if updatedExpense.Description != "" {
+			existingExpense.Description = updatedExpense.Description
+		}
+
+		// Update the database record
+		db.Save(&existingExpense)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Expense data updated successfully",
+			"data":    existingExpense,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func DeleteExpenseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Parse expense ID from path parameter
+		expenseID, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid expense ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve existing expense data from the database
+		var expense models.AddExpense
+		result = db.First(&expense, expenseID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Expense not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Retrieve finance data from the database
+		var finance models.Finance
+		result = db.First(&finance, expense.FinanceID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Finance ID not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Update the initial balance by subtracting the expense amount
+		finance.InitialBalance += expense.Amount
+		db.Save(&finance)
+
+		// Delete the expense record from the database
+		db.Delete(&expense)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Expense data deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
