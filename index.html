@@ -188,6 +188,13 @@
                 <li class="nav-item"><a class="nav-link" href="#DeleteExpenseCategorieByID">Delete List Expense Categories By ID</a></li>
 
 
+                <li class="nav-item"><a class="nav-link" href="#CreateExpenses">Create Expense</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewExpenses">View List Expense</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewExpensesByID">View List Expense By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditExpensesByID">Edit List Expense By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteExpensesByID">Delete List Expense By ID</a></li>
+
+
                 <li class="nav-item"><a class="nav-link" href="#CreateAttendancesManual">Create Attendances Manual</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewAttendancesManual">View List Attendances Manual</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewAttendancesManualByID">View List Attendances Manual By ID</a></li>
@@ -3664,152 +3671,6 @@
             </div>
 
 
-            <div id="CreateExpenseCategories" class="card mb-4 anchor">
-                <div class="card-body">
-                    <h2>Create Expense Categories</h2>
-                    <p><strong>URL</strong></p>
-                    <p><code>/expense_categories</code></p>
-                    <p><strong>Method</strong></p>
-                    <p><code>POST</code></p>
-                    <p><strong>Request Body - Raw Json</strong></p>
-                    <pre>
-{
-    "expense_category" : string
-}
-
-                            </pre>
-                    <p><strong>Note</strong></p>
-                    <p><code>Include authorization token in headers.</code></p>
-                    <p><strong>Response</strong></p>
-                    <pre>
-{
-    "code": 201,
-    "data": {
-        "id": int,
-        "expense_category": string,
-        "created_at": time
-    },
-    "error": false,
-    "message": "Expense category added successfully"
-}
-
-                        </pre>
-                </div>
-            </div>
-
-            <div id="ViewExpenseCategories" class="card mb-4 anchor">
-                <div class="card-body">
-                    <h2>View List Expense Categories - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
-                    <p><strong>URL</strong></p>
-                    <p><code>/expense_categories</code></p>
-                    <p><strong>Method</strong></p>
-                    <p><code>GET</code></p>
-                    <p><strong>Request Body</strong></p>
-                    <p><strong>Note</strong></p>
-                    <p><code>Include authorization token in headers</code></p>
-                    <p><strong>Response</strong></p>
-                    <pre>
-{
-    "code": 200,
-    "data": [
-        {
-            "id": int,
-            "expense_category": string,
-            "created_at": time
-        },
-        {
-            "id": int,
-            "expense_category": string,
-            "created_at": time
-        }
-    ],
-    "error": false,
-    "message": "Expense categories retrieved successfully"
-}
-                    </pre>
-                </div>
-            </div>
-
-            <div id="ViewExpenseCategoriesByID" class="card mb-4 anchor">
-                <div class="card-body">
-                    <h2>View List Expense Categories By ID</h2>
-                    <p><strong>URL</strong></p>
-                    <p><code>/expense_categories/:id</code></p>
-                    <p><strong>Method</strong></p>
-                    <p><code>GET</code></p>
-                    <p><strong>Request Body</strong></p>
-                    <p><strong>Note</strong></p>
-                    <p><code>Include authorization token in headers</code></p>
-                    <p><strong>Response</strong></p>
-                    <pre>
-{
-    "code": 200,
-    "data": {
-        "id": int,
-        "expense_category": string,
-        "created_at": time
-    },
-    "error": false,
-    "message": "Expense category retrieved successfully"
-}
-                    </pre>
-                </div>
-            </div>
-
-
-            <div id="EditExpenseCategorieByID" class="card mb-4 anchor">
-                <div class="card-body">
-                    <h2>Edit List Expense Categories By ID</h2>
-                    <p><strong>URL</strong></p>
-                    <p><code>/expense_categories/:id</code></p>
-                    <p><strong>Method</strong></p>
-                    <p><code>PUT</code></p>
-                    <p><strong>Request Body - Raw Json</strong></p>
-                    <pre>
-{
-    "expense_category" : string
-}
-                            </pre>
-                    <p><strong>Note</strong></p>
-                    <p><code>Include authorization token in headers.</code></p>
-                    <p><strong>Response</strong></p>
-                    <pre>
-{
-    "code": 200,
-    "data": {
-        "id": int,
-        "expense_category": string,
-        "created_at": time
-    },
-    "error": false,
-    "message": "Expense category updated successfully"
-}
-
-                            </pre>
-                </div>
-            </div>
-
-
-            <div id="DeleteExpenseCategorieByID" class="card mb-4 anchor">
-                <div class="card-body">
-                    <h2>Delete List Expense Categories By ID</h2>
-                    <p><strong>URL</strong></p>
-                    <p><code>/expense_categories/:id</code></p>
-                    <p><strong>Method</strong></p>
-                    <p><code>DELETE</code></p>
-                    <p><strong>Note</strong></p>
-                    <p><code>Include authorization token in headers.</code></p>
-                    <p><strong>Response</strong></p>
-                    <pre>
-{
-    "code": 200,
-    "error": false,
-    "message": "Expense category deleted successfully"
-}
-                            </pre>
-                </div>
-            </div>
-
             <div id="CreateAddDeposits" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>Create Add Deposit</h2>
@@ -4010,6 +3871,358 @@
     "code": 200,
     "error": false,
     "message": "Deposit data deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+            <div id="CreateExpenseCategories" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Expense Categories</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expense_categories</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "expense_category" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "expense_category": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Expense category added successfully"
+}
+
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewExpenseCategories" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Expense Categories - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expense_categories</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "expense_category": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "expense_category": string,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Expense categories retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewExpenseCategoriesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Expense Categories By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expense_categories/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "expense_category": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Expense category retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditExpenseCategorieByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Expense Categories By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expense_categories/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "expense_category" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "expense_category": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Expense category updated successfully"
+}
+
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteExpenseCategorieByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Expense Categories By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expense_categories/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Expense category deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="CreateExpenses" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Create Expense</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expenses</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "finance_id" : int,
+    "amount" : int,
+    "date" : string (yyyy-mm-dd),
+    "expense_category_id" : int,
+    "payer" : string,
+    "payment_method" : string,
+    "ref" : string,
+    "description" : string
+}
+
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "finance_id": int,
+        "account_title": string,
+        "amount": int,
+        "date": string,
+        "expense_category_id": int,
+        "expense_category": string,
+        "payer": string,
+        "payment_method": string,
+        "ref": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Add expense data added successfully"
+}
+
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewExpenses" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Expense - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expenses</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "finance_id": int,
+            "account_title": string,
+            "amount": int,
+            "date": string,
+            "expense_category_id": int,
+            "expense_category": string,
+            "payer": string,
+            "payment_method": string,
+            "ref": string,
+            "description": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "finance_id": int,
+            "account_title": string,
+            "amount": int,
+            "date": string,
+            "expense_category_id": int,
+            "expense_category": string,
+            "payer": string,
+            "payment_method": string,
+            "ref": string,
+            "description": string,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Expenses retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewExpensesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Expense By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expenses/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "finance_id": int,
+        "account_title": string,
+        "amount": int,
+        "date": string,
+        "expense_category_id": int,
+        "expense_category": string,
+        "payer": string,
+        "payment_method": string,
+        "ref": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Expense retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="EditExpensesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Edit List Expense By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expense_categories/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "finance_id" : int,
+    "amount" : int,
+    "date" : string (yyyy-mm-dd),
+    "expense_category_id" : int,
+    "payer" : string,
+    "payment_method" : string,
+    "ref" : string,
+    "description" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "finance_id": int,
+        "account_title": string,
+        "amount": int,
+        "date": string,
+        "expense_category_id": int,
+        "expense_category": string,
+        "payer": string,
+        "payment_method": string,
+        "ref": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Expense data updated successfully"
+}
+
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteExpensesByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Expense By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/expenses/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Expense data deleted successfully"
 }
                             </pre>
                 </div>
