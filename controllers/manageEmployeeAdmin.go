@@ -11,6 +11,7 @@ import (
 	"hrsale/helper"
 	"hrsale/middleware"
 	"hrsale/models"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -170,6 +171,7 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		// Send email notification to the employee with the plain text password
 		err = helper.SendEmployeeAccountNotificationWithPlainTextPassword(employee.Email, employee.FirstName+" "+employee.LastName, employee.Username, passwordWithNoHash)
 		if err != nil {
+			log.Println("Failed to send welcome email:", err)
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send welcome email"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
@@ -220,7 +222,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var employees []models.Employee
-		db.Find(&employees)
+		db.Where("is_client = ?", false).Find(&employees)
 
 		var employeesResponse []helper.EmployeeResponse
 		for _, emp := range employees {

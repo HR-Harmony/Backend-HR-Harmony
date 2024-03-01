@@ -7,6 +7,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -1877,6 +1878,87 @@ func DeleteExpenseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Expense data deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetAllTransactions(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Fetch add deposit data from database with preloading DepositCategory
+		var addDeposits []models.AddDeposit
+		db.Preload("DepositCategory").Find(&addDeposits)
+
+		// Fetch add expense data from database with preloading ExpenseCategory
+		var addExpenses []models.AddExpense
+		db.Preload("ExpenseCategory").Find(&addExpenses)
+
+		// Combine both results
+		transactions := append([]models.AddDeposit{}, addDeposits...)
+		for _, expense := range addExpenses {
+			// Convert expense to AddDeposit type
+			addDeposit := models.AddDeposit{
+				ID:              expense.ID,
+				FinanceID:       expense.FinanceID,
+				AccountTitle:    expense.AccountTitle,
+				Amount:          expense.Amount,
+				Date:            expense.Date,
+				CategoryID:      expense.ExpenseCategoryID,
+				DepositCategory: expense.ExpenseCategory,
+				Payer:           expense.Payer,
+				PaymentMethod:   expense.PaymentMethod,
+				Ref:             expense.Ref,
+				Description:     expense.Description,
+				CreatedAt:       expense.CreatedAt,
+			}
+			transactions = append(transactions, addDeposit)
+		}
+
+		// Sort transactions by createdAt in descending order
+		sort.Slice(transactions, func(i, j int) bool {
+			return transactions[i].CreatedAt.After(transactions[j].CreatedAt)
+		})
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Transactions data retrieved successfully",
+			"data":    transactions,
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
