@@ -143,6 +143,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/expenses/:id", controllers.UpdateExpenseByIDByAdmin(db, secretKey))
 	e.DELETE("/expenses/:id", controllers.DeleteExpenseByIDByAdmin(db, secretKey))
 
+	//Transaction
+	e.GET("/transactions", controllers.GetAllTransactions(db, secretKey))
+
 	//Attendance
 	e.POST("/attendances", controllers.AddManualAttendanceByAdmin(db, secretKey))
 	e.GET("/attendances", controllers.GetAllAttendanceByAdmin(db, secretKey))
@@ -177,6 +180,13 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/admin/employees/:id", controllers.GetEmployeeByIDByAdmin(db, secretKey))
 	e.PUT("/admin/employees/:id", controllers.UpdateEmployeeAccountByAdmin(db, secretKey))
 	e.DELETE("/admin/employees/:id", controllers.DeleteEmployeeAccountByAdmin(db, secretKey))
+
+	//Client Admin
+	e.POST("/admin/clients", controllers.CreateClientAccountByAdmin(db, secretKey))
+	e.GET("/admin/clients", controllers.GetAllClientsByAdmin(db, secretKey))
+	e.GET("/admin/clients/:id", controllers.GetClientByIDByAdmin(db, secretKey))
+	e.PUT("/admin/clients/:id", controllers.UpdateClientAccountByAdmin(db, secretKey))
+	e.DELETE("/admin/clients/:id", controllers.DeleteClientAccountByAdmin(db, secretKey))
 
 	//Employee Exit Admin
 	e.POST("/admin/employees/:id/exit", controllers.ExitEmployee(db, secretKey))
