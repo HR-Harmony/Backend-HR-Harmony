@@ -152,11 +152,19 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployee">View List Exits Employee</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewExitsEmployeeByID">View List Exits Employee By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteExitsEmployeeByID">Delete List Exits Employee By ID</a></li>
+
                 <li class="nav-item"><a class="nav-link" href="#CreateEmployeeAccount">Create New Employee Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewEmployees">View List All Employee Registred</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewEmployeesByID">View List Employee Registred By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#UpdateEmployeeAccount">Update Employee Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteEmployeeByID">Delete List Employee By ID</a></li>
+
+                <li class="nav-item"><a class="nav-link" href="#CreateClientsAccount">Create New Client Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewClients">View List All Clients Registred</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewClientsByID">View List Clients Registred By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#UpdateClientsAccount">Update Clients Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteClientsByID">Delete List Clients By ID</a></li>
+
 
                 <li class="nav-item"><a class="nav-link" href="#ViewPayrolls">View List All Employee Payroll</a></li>
                 <li class="nav-item"><a class="nav-link" href="#UpdatePayrollsStatus">View List All Employee Payroll</a></li>
@@ -193,6 +201,8 @@
                 <li class="nav-item"><a class="nav-link" href="#ViewExpensesByID">View List Expense By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#EditExpensesByID">Edit List Expense By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteExpensesByID">Delete List Expense By ID</a></li>
+
+                <li class="nav-item"><a class="nav-link" href="#ViewAllTransaction">View List All Transaction</a></li>
 
 
                 <li class="nav-item"><a class="nav-link" href="#CreateAttendancesManual">Create Attendances Manual</a></li>
@@ -3155,6 +3165,180 @@
                 </div>
             </div>
 
+
+            <div id="CreateClientsAccount" class="card mb-4">
+                <div class="card-body">
+                    <h2>Create New Client Account</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/clients</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>POST</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "first_name" :string,
+    "last_name" : string,
+    "contact_number" : string,
+    "gender" : string,
+    "email" : string,
+    "password" : string,
+    "username" : string
+}
+                    </pre>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 201,
+    "employee": {
+        "contact_number": string,
+        "email": string,
+        "first_name": string,
+        "gender": string,
+        "id": int,
+        "last_name": string,
+        "username": string
+    },
+    "error": false,
+    "message": "Client account created successfully"
+}
+                        </pre>
+                </div>
+            </div>
+
+            <div id="ViewClients"" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List All Clients Registred</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/clients</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "first_name": string,
+            "last_name": string,
+            "contact_number": string,
+            "gender": string,
+            "email": string,
+            "username": string
+        },
+        {
+            "id": int,
+            "first_name": string,
+            "last_name": string,
+            "contact_number": string,
+            "gender": string,
+            "email": string,
+            "username": string
+        }
+    ],
+    "error": false,
+    "message": "Client  data retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div id="ViewClientsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List Clients Registred By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/clients/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "employee": {
+        "contact_number": string,
+        "email": string,
+        "first_name": string,
+        "gender": string,
+        "id": int,
+        "last_name": string,
+        "username": string
+    },
+    "error": false,
+    "message": "Client retrieved successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div id="UpdateClientsAccount" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Update Clients Account</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/clients/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>PUT</code></p>
+                    <p><strong>Request Body - Raw Json</strong></p>
+                    <pre>
+{
+    "first_name" :string,
+    "last_name" : string,
+    "contact_number" : string,
+    "gender" : string,
+    "email" : string,
+    "password" : string,
+    "username" : string
+}
+                            </pre>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "employee": {
+        "contact_number": string,
+        "email": string,
+        "first_name": string,
+        "gender": string,
+        "id": int,
+        "last_name": string,
+        "username": string
+    },
+    "error": false,
+    "message": "Client account created successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
+
+            <div id="DeleteClientsByID" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Delete List Clients By ID</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/clients/:id</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>DELETE</code></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers.</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Client deleted successfully"
+}
+                            </pre>
+                </div>
+            </div>
+
             <div id="LoginEmployee" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>Login Employee Account</h2>
@@ -4225,6 +4409,58 @@
     "message": "Expense data deleted successfully"
 }
                             </pre>
+                </div>
+            </div>
+
+
+            <div id="ViewAllTransaction" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>View List All Transaction - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/transactions</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "finance_id": int,
+            "account_title": string,
+            "amount": int,
+            "date": string,
+            "category_id": int,
+            "deposit_category": string,
+            "payer": string,
+            "payment_method": string,
+            "ref": string,
+            "description": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "finance_id": int,
+            "account_title": string,
+            "amount": int,
+            "date": string,
+            "category_id": int,
+            "deposit_category": string,
+            "payer": string,
+            "payment_method": string,
+            "ref": string,
+            "description": string,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Transactions data retrieved successfully"
+}
+                    </pre>
                 </div>
             </div>
 

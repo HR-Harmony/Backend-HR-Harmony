@@ -23,6 +23,7 @@ type Employee struct {
 	BasicSalary   float64     `json:"basic_salary"`
 	HourlyRate    float64     `json:"hourly_rate"`
 	PaySlipType   string      `json:"pay_slip_type"`
+	IsClient      bool        `json:"is_client" gorm:"default:false"`
 	IsActive      bool        `json:"is_active" gorm:"default:true"`
 	PaidStatus    bool        `json:"paid_status" gorm:"default:false"`
 	PayrollInfo   PayrollInfo `gorm:"foreignKey:EmployeeID"`
