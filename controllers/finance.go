@@ -115,19 +115,40 @@ func GetAllFinanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Fetch searching query parameter
 		searching := c.QueryParam("searching")
 
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
 		var finances []models.Finance
 		query := db.Model(&finances)
 		if searching != "" {
 			query = query.Where("LOWER(account_title) ILIKE ? OR cast(initial_balance as text) LIKE ? OR account_number LIKE ? OR branch_code LIKE ? OR LOWER(bank_branch) ILIKE ?", "%"+strings.ToLower(searching)+"%", "%"+searching+"%", "%"+searching+"%", "%"+searching+"%", "%"+strings.ToLower(searching)+"%")
 		}
-		query.Find(&finances)
+
+		// Count total records for pagination
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch data with pagination
+		query.Offset(offset).Limit(perPage).Find(&finances)
 
 		// Respond with success
 		successResponse := map[string]interface{}{
-			"code":    http.StatusOK,
-			"error":   false,
-			"message": "Finance data retrieved successfully",
-			"data":    finances,
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "Finance data retrieved successfully",
+			"data":       finances,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
