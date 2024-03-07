@@ -211,6 +211,12 @@
                 <li class="nav-item"><a class="nav-link" href="#EditAttendancesManualByID">Edit List Attendances Manual By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteAttendancesManualByID">Delete List Attendances Manual By ID</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CreateNewJobs">Create New Jobs</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewNewJobs">View List New Jobs</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewNewJobsByID">View List New Jobs By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditNewJobsByID">Edit List New Jobs By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteNewJobsByID">Delete List New Jobs By ID</a></li>
+
                 <!-- Employee -->
                 <li class="nav-item"><a class="nav-link" href="#LoginEmployee">Login Employee Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ProfileEmployee">Profile Employee Account</a></li>
@@ -4633,6 +4639,219 @@
                             </pre>
                 </div>
             </div>
+
+
+        <div id="CreateNewJobs" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create New Jobs</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/jobs</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "title" : string,
+    "job_type" : string,
+    "designation_id" : int,
+    "number_of_position" : int,
+    "is_publish" : bool,
+    "date_closing" : string,
+    "gender" : string,
+    "minimum_experience" : string,
+    "short_description" : string,
+    "long_description" : string
+}
+
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "title": string,
+        "job_type": string,
+        "designation_id": int,
+        "designation_name": string,
+        "number_of_position": int,
+        "is_publish": bool,
+        "date_closing": string,
+        "gender": string,
+        "minimum_experience": string,
+        "short_description": string,
+        "long_description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "New job created successfully"
+}
+                        </pre>
+            </div>
+        </div>
+
+        <div id="ViewNewJobs" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List New Jobs</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/jobs</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "All new jobs retrieved successfully",
+    "new_jobs": [
+        {
+            "id": int,
+            "title": string,
+            "job_type": string,
+            "designation_id": int,
+            "designation_name": string,
+            "number_of_position": int,
+            "is_publish": bool,
+            "date_closing": string,
+            "gender": string,
+            "minimum_experience": string,
+            "short_description": string,
+            "long_description": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "title": string,
+            "job_type": string,
+            "designation_id": int,
+            "designation_name": string,
+            "number_of_position": int,
+            "is_publish": bool,
+            "date_closing": string,
+            "gender": string,
+            "minimum_experience": string,
+            "short_description": string,
+            "long_description": string,
+            "created_at": time
+        }
+    ]
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewNewJobsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List New Jobs By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/jobs</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "New job retrieved successfully",
+    "new_job": {
+        "id": int,
+        "title": string,
+        "job_type": string,
+        "designation_id": int,
+        "designation_name": string,
+        "number_of_position": int,
+        "is_publish": bool,
+        "date_closing": string,
+        "gender": string,
+        "minimum_experience": string,
+        "short_description": string,
+        "long_description": string,
+        "created_at": time
+    }
+}
+                    </pre>
+            </div>
+        </div>
+
+
+        <div id="EditNewJobsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit List New Jobs By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/jobs</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "title" : string,
+    "job_type" : string,
+    "designation_id" : int,
+    "number_of_position" : int,
+    "is_publish" : bool,
+    "date_closing" : string,
+    "gender" : string,
+    "minimum_experience" : string,
+    "short_description" : string,
+    "long_description" : string
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "title": string,
+        "job_type": string,
+        "designation_id": int,
+        "designation_name": string,
+        "number_of_position": int,
+        "is_publish": bool,
+        "date_closing": string,
+        "gender": string,
+        "minimum_experience": string,
+        "short_description": string,
+        "long_description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "New job updated successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteNewJobsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete List New Jobs By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/attendances</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "New job deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
 
             <div id="Chatbot" class="card mb-4 anchor">
                 <div class="card-body">
