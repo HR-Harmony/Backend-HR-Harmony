@@ -201,6 +201,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/admin/employees/:id/exit", controllers.GetExitEmployeeByID(db, secretKey))
 	e.DELETE("/admin/employees/:id/exit", controllers.DeleteExitEmployeeByID(db, secretKey))
 
+	//Cooperation Message
+	e.POST("/cooperation", controllers.CreateCooperationMessage(db))
+
 	//Employee Login
 	e.POST("/employee/signin", controllers.EmployeeLogin(db, secretKey))
 	e.GET("/profile", controllers.EmployeeProfile(db, secretKey))
