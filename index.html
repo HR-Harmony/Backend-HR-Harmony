@@ -217,6 +217,8 @@
                 <li class="nav-item"><a class="nav-link" href="#EditNewJobsByID">Edit List New Jobs By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteNewJobsByID">Delete List New Jobs By ID</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CooperationMessage">Create New Cooperation Message</a></li>
+
                 <!-- Employee -->
                 <li class="nav-item"><a class="nav-link" href="#LoginEmployee">Login Employee Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ProfileEmployee">Profile Employee Account</a></li>
@@ -4848,8 +4850,40 @@
     "code": 200,
     "error": false,
     "message": "New job deleted successfully"
-}
+}x
                             </pre>
+            </div>
+        </div>
+
+
+        <div id="CooperationMessage" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create New Cooperation Message - Public Landing Page</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/cooperation</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "first_name" : string,
+    "last_name" : string,
+    "email" : string,
+    "phone_number" : string,
+    "message" : string
+}
+
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Not Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "error": false,
+    "message": "Cooperation Message berhasil dikirim"
+}
+                        </pre>
             </div>
         </div>
 
