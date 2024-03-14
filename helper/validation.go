@@ -57,3 +57,13 @@ func ParseStringToFloat(s string) float64 {
 	}
 	return f
 }
+
+// ParseStringToInt parses a string to an integer.
+func ParseStringToInt(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		// If conversion fails, return 0 (or handle the error according to your application's logic)
+		return 0
+	}
+	return i
+}

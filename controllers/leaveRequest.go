@@ -2,14 +2,14 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 	"hrsale/helper"
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
 	"strings"
-
-	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
+	"time"
 )
 
 func CreateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
@@ -338,6 +338,437 @@ func DeleteLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Leave request type deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Verify if the user is an admin
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Bind the leave request data from the request body
+		var leaveRequest models.LeaveRequest
+		if err := c.Bind(&leaveRequest); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Add employee username based on employee ID
+		var employee models.Employee
+		result = db.First(&employee, "id = ?", leaveRequest.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		leaveRequest.Username = employee.Username
+
+		// Add leave type based on leave type ID
+		var leaveType models.LeaveRequestType
+		result = db.First(&leaveType, "id = ?", leaveRequest.LeaveTypeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Leave type not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		leaveRequest.LeaveType = leaveType.LeaveType
+
+		// Parse start date from string to time.Time
+		startDate, err := time.Parse("2006-01-02", leaveRequest.StartDate)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Parse end date from string to time.Time
+		endDate, err := time.Parse("2006-01-02", leaveRequest.EndDate)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid EndDate format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Calculate the difference in days
+		days := int(endDate.Sub(startDate).Hours() / 24)
+
+		// Assign the calculated days to leaveRequest
+		leaveRequest.Days = days
+
+		// Format start date in "yyyy-mm-dd" format
+		leaveRequest.StartDate = startDate.Format("2006-01-02")
+
+		// Format end date in "yyyy-mm-dd" format
+		leaveRequest.EndDate = endDate.Format("2006-01-02")
+
+		// Save the leave request to the database
+		if err := db.Create(&leaveRequest).Error; err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to create leave request"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Provide success response
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Leave request created successfully",
+			"data":    leaveRequest,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Fetch searching query parameters
+		searching := c.QueryParam("searching")
+
+		// Fetch leave request data from database with optional search filters
+		var leaveRequests []models.LeaveRequest
+		query := db.Model(&leaveRequests)
+		if searching != "" {
+			query = query.Where("LOWER(username) LIKE ? OR LOWER(leave_type) LIKE ? OR LOWER(start_date) LIKE ? OR LOWER(end_date) LIKE ? OR days = ?",
+				"%"+strings.ToLower(searching)+"%",
+				"%"+strings.ToLower(searching)+"%",
+				"%"+strings.ToLower(searching)+"%",
+				"%"+strings.ToLower(searching)+"%",
+				helper.ParseStringToInt(searching),
+			)
+		}
+		query.Find(&leaveRequests)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Leave request data retrieved successfully",
+			"data":    leaveRequests,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Verify if the user is an admin
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve leave request ID from the request URL parameter
+		leaveRequestID := c.Param("id")
+		if leaveRequestID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Fetch the leave request from the database based on the ID
+		var leaveRequest models.LeaveRequest
+		result = db.First(&leaveRequest, "id = ?", leaveRequestID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Leave request not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Provide success response
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Leave request retrieved successfully",
+			"data":    leaveRequest,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Verify if the user is an admin
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve leave request ID from the request URL parameter
+		leaveRequestID := c.Param("id")
+		if leaveRequestID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Fetch the leave request from the database based on the ID
+		var leaveRequest models.LeaveRequest
+		result = db.First(&leaveRequest, "id = ?", leaveRequestID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Leave request not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Bind the updated leave request data from the request body
+		var updatedLeaveRequest models.LeaveRequest
+		if err := c.Bind(&updatedLeaveRequest); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Update the leave request data
+		if updatedLeaveRequest.EmployeeID != 0 {
+			// Update employee username based on the new employee ID
+			var employee models.Employee
+			result = db.First(&employee, "id = ?", updatedLeaveRequest.EmployeeID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			leaveRequest.Username = employee.Username
+			leaveRequest.EmployeeID = updatedLeaveRequest.EmployeeID
+		}
+		if updatedLeaveRequest.LeaveTypeID != 0 {
+			// Update leave type based on the new leave type ID
+			var leaveType models.LeaveRequestType
+			result = db.First(&leaveType, "id = ?", updatedLeaveRequest.LeaveTypeID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Leave type not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			leaveRequest.LeaveType = leaveType.LeaveType
+			leaveRequest.LeaveTypeID = updatedLeaveRequest.LeaveTypeID
+		}
+		if updatedLeaveRequest.StartDate != "" {
+			// Parse start date from string to time.Time
+			startDate, err := time.Parse("2006-01-02", updatedLeaveRequest.StartDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			leaveRequest.StartDate = startDate.Format("2006-01-02")
+		}
+		if updatedLeaveRequest.EndDate != "" {
+			// Parse end date from string to time.Time
+			endDate, err := time.Parse("2006-01-02", updatedLeaveRequest.EndDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid EndDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			leaveRequest.EndDate = endDate.Format("2006-01-02")
+		}
+		if updatedLeaveRequest.IsHalfDay {
+			leaveRequest.IsHalfDay = updatedLeaveRequest.IsHalfDay
+		}
+		if updatedLeaveRequest.Remarks != "" {
+			leaveRequest.Remarks = updatedLeaveRequest.Remarks
+		}
+		if updatedLeaveRequest.LeaveReason != "" {
+			leaveRequest.LeaveReason = updatedLeaveRequest.LeaveReason
+		}
+
+		// Update the days based on the updated start and end dates
+		if leaveRequest.StartDate != "" && leaveRequest.EndDate != "" {
+			startDate, _ := time.Parse("2006-01-02", leaveRequest.StartDate)
+			endDate, _ := time.Parse("2006-01-02", leaveRequest.EndDate)
+			days := int(endDate.Sub(startDate).Hours() / 24) // Calculate the difference in days
+			leaveRequest.Days = days
+		}
+
+		// Save the updated leave request to the database
+		if err := db.Save(&leaveRequest).Error; err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to update leave request"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Provide success response
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Leave request updated successfully",
+			"data":    leaveRequest,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func DeleteLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Verify if the user is an admin
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve leave request ID from the request URL parameter
+		leaveRequestID := c.Param("id")
+		if leaveRequestID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Fetch the leave request from the database based on the ID
+		var leaveRequest models.LeaveRequest
+		result = db.First(&leaveRequest, "id = ?", leaveRequestID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Leave request not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Delete the leave request from the database
+		if err := db.Delete(&leaveRequest).Error; err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to delete leave request"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Provide success response
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Leave request deleted successfully",
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
