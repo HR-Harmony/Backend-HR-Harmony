@@ -224,6 +224,13 @@
                 <li class="nav-item"><a class="nav-link" href="#EditLeaveRequestTypesByID">Edit List Leave Request Types By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteLeaveRequestTypesByID">Delete List Leave Request Types By ID</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CreateLeaveRequest">Create Leave Request</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewLeaveRequest">View Leave Request</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewLeaveRequestByID">View List Leave Request By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditLeaveRequestByID">Edit List Leave Request By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteLeaveRequestByID">Delete List Leave Request By ID</a></li>
+
+
                 <li class="nav-item"><a class="nav-link" href="#CooperationMessage">Create New Cooperation Message</a></li>
 
                 <!-- Employee -->
@@ -5011,6 +5018,203 @@
     "code": 200,
     "error": false,
     "message": "Leave request type deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="CreateLeaveRequest" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create Leave Request</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/leave_requests</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "leave_type_id" : int,
+    "start_date" : string (yyyy-mm-dd),
+    "end_date" : string (yyyy-mm-dd),
+    "is_half_day" : bool,
+    "remarks" : string,
+    "leave_reason" : string
+}
+
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "username": string,
+        "leave_type_id": int,
+        "leave_type": string,
+        "start_date": string,
+        "end_date": string,
+        "is_half_day": bool,
+        "remarks": string,
+        "leave_reason": string,
+        "days": int
+    },
+    "error": false,
+    "message": "Leave request created successfully"
+}
+                        </pre>
+            </div>
+        </div>
+
+        <div id="ViewLeaveRequest" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View Leave Request</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/leave_requests</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers. Including Searching query params</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "employee_id": int,
+            "username": string,
+            "leave_type_id": int,
+            "leave_type": string,
+            "start_date": string,
+            "end_date": string,
+            "is_half_day": bool,
+            "remarks": string,
+            "leave_reason": string,
+            "days": int
+        },
+        {
+            "id": int,
+            "employee_id": int,
+            "username": string,
+            "leave_type_id": int,
+            "leave_type": string,
+            "start_date": string,
+            "end_date": string,
+            "is_half_day": bool,
+            "remarks": string,
+            "leave_reason": string,
+            "days": int
+        }
+    ],
+    "error": false,
+    "message": "Leave request data retrieved successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewLeaveRequestByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List Leave Request By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/leave_requests/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "username": string,
+        "leave_type_id": int,
+        "leave_type": string,
+        "start_date": string,
+        "end_date": string,
+        "is_half_day": bool,
+        "remarks": string,
+        "leave_reason": string,
+        "days": int
+    },
+    "error": false,
+    "message": "Leave request retrieved successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+
+        <div id="EditLeaveRequestByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit List Leave Request By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/leave_requests/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "leave_type_id" : int,
+    "start_date" : string (yyyy-mm-dd),
+    "end_date" : string (yyyy-mm-dd),
+    "is_half_day" : bool,
+    "remarks" : string,
+    "leave_reason" : string
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "username": string,
+        "leave_type_id": int,
+        "leave_type": string,
+        "start_date": string,
+        "end_date": string,
+        "is_half_day": bool,
+        "remarks": string,
+        "leave_reason": string,
+        "days": int
+    },
+    "error": false,
+    "message": "Leave request updated successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteLeaveRequestByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete List Leave Request By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/leave_requests/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Leave request deleted successfully"
 }
                             </pre>
             </div>
