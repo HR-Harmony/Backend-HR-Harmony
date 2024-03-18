@@ -11,3 +11,13 @@ type Attendance struct {
 	OutTime        string     `json:"out_time"`
 	CreatedAt      *time.Time `json:"created_at"`
 }
+
+type OvertimeRequest struct {
+	ID         uint   `gorm:"primaryKey" json:"id"`
+	EmployeeID uint   `json:"employee_id"`
+	Username   string `json:"username"`
+	Date       string `json:"date"` // Format: yyyy-mm-dd
+	InTime     string `json:"in_time"`
+	OutTime    string `json:"out_time"`
+	Reason     string `json:"reason"`
+}
