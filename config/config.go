@@ -63,6 +63,7 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.LeaveRequestType{})
 	db.AutoMigrate(&models.LeaveRequest{})
 	db.AutoMigrate(&models.OvertimeRequest{})
+	db.AutoMigrate(&models.Trainer{})
 
 	return db, nil
 }
