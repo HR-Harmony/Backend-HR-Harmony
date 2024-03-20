@@ -236,6 +236,12 @@
                 <li class="nav-item"><a class="nav-link" href="#EditLeaveRequestByID">Edit List Leave Request By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteLeaveRequestByID">Delete List Leave Request By ID</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CreateTrainers">Create Trainers</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewTrainers">View All Trainers</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewTrainersByID">View List Trainers By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditTrainersByID">Edit List Trainers By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteTrainersByID">Delete List Trainers By ID</a></li>
+
 
                 <li class="nav-item"><a class="nav-link" href="#CooperationMessage">Create New Cooperation Message</a></li>
 
@@ -5394,6 +5400,191 @@
     "code": 200,
     "error": false,
     "message": "Leave request deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="CreateTrainers" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create Trainers</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainers</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "first_name" : string,
+    "last_name" : string,
+    "contact_number" : string,
+    "email" : string,
+    "expertise" : string,
+    "address" : string
+}
+
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "first_name": string,
+        "last_name": string,
+        "full_name": string,
+        "contact_number": string,
+        "email": string,
+        "expertise": string,
+        "address": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Trainer created successfully"
+}
+                        </pre>
+            </div>
+        </div>
+
+        <div id="ViewTrainers" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View All Trainers</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainers</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers. Including Searching query params</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "first_name": string,
+            "last_name": string,
+            "full_name": string,
+            "contact_number": string,
+            "email": string,
+            "expertise": string,
+            "address": string,
+            "created_at": time
+        },
+        {
+            "id": 1,
+            "first_name": "Jose Pep",
+            "last_name": "Guardiola",
+            "full_name": "Jose Pep Guardiola",
+            "contact_number": "081256784567",
+            "email": "pepguardiola@gmail.com",
+            "expertise": "IT",
+            "address": "Jalan Sukabirus no 22 rt02 rw08",
+            "created_at": "2024-03-20T16:09:10.681763+07:00"
+        }
+    ],
+    "error": false,
+    "message": "Trainers fetched successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewTrainersByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List Trainers By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainers/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "first_name": string,
+        "last_name": string,
+        "full_name": string,
+        "contact_number": string,
+        "email": string,
+        "expertise": string,
+        "address": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Trainer fetched successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+
+        <div id="EditTrainersByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit List Trainers By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainers/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "first_name" : string,
+    "last_name" : string,
+    "contact_number" : string,
+    "email" : string,
+    "expertise" : string,
+    "address" : string
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "first_name": string,
+        "last_name": string,
+        "full_name": string,
+        "contact_number": string,
+        "email": string,
+        "expertise": string,
+        "address": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Trainer updated successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteTrainersByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete List Trainers By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainers/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Trainer deleted successfully"
 }
                             </pre>
             </div>
