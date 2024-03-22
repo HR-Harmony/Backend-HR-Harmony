@@ -174,6 +174,13 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/training_skills/:id", controllers.UpdateTrainingSkillByIDByAdmin(db, secretKey))
 	e.DELETE("/training_skills/:id", controllers.DeleteTrainingSkillByIDByAdmin(db, secretKey))
 
+	//Training
+	e.POST("/trainings", controllers.CreateTrainingByAdmin(db, secretKey))
+	e.GET("/trainings", controllers.GetAllTrainingsByAdmin(db, secretKey))
+	e.GET("/trainings/:id", controllers.GetTrainingByIDByAdmin(db, secretKey))
+	e.PUT("/trainings/:id", controllers.UpdateTrainingByIDByAdmin(db, secretKey))
+	e.DELETE("/trainings/:id", controllers.DeleteTrainingByIDByAdmin(db, secretKey))
+
 	//Exit Admin
 	e.POST("/exits", controllers.CreateExitStatusByAdmin(db, secretKey))
 	e.GET("/exits", controllers.GetAllExitStatusByAdmin(db, secretKey))
