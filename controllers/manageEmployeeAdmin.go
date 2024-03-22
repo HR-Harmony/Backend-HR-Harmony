@@ -154,6 +154,8 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		payrollID := generateUniquePayrollID()
 		employee.PayrollID = payrollID
 
+		employee.FullName = employee.FirstName + " " + employee.LastName
+
 		// Set the created timestamp
 		currentTime := time.Now()
 		employee.CreatedAt = &currentTime
@@ -394,9 +396,11 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		if updatedEmployee.FirstName != "" {
 			existingEmployee.FirstName = updatedEmployee.FirstName
+			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
 		if updatedEmployee.LastName != "" {
 			existingEmployee.LastName = updatedEmployee.LastName
+			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
 		if updatedEmployee.ContactNumber != "" {
 			existingEmployee.ContactNumber = updatedEmployee.ContactNumber
