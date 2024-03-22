@@ -13,3 +13,10 @@ type Trainer struct {
 	Address       string     `json:"address"`
 	CreatedAt     *time.Time `json:"created_at"`
 }
+
+type TrainingSkill struct {
+	ID            uint   `gorm:"primaryKey" json:"id"`
+	TrainingSkill string `json:"training_skill"`
+	CreatedAt     *time.Time
+	UpdateAt      time.Time
+}
