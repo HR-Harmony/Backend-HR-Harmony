@@ -249,6 +249,12 @@
                 <li class="nav-item"><a class="nav-link" href="#EditTrainingSkillsByID">Edit List Training Skills By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteTrainingSkillsByID">Delete List Training Skills By ID</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CreateTrainings">Create Trainings</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewTrainings">View All Trainings</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewTrainingsByID">View List Trainings By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditTrainingsByID">Edit List Trainings By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteTrainingsByID">Delete List Trainings By ID</a></li>
+
 
                 <li class="nav-item"><a class="nav-link" href="#CooperationMessage">Create New Cooperation Message</a></li>
 
@@ -5740,6 +5746,213 @@
     "code": 200,
     "error": false,
     "message": "TrainingSkill deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+        <div id="CreateTrainings" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create Trainings</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainings</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "trainer_id" : int,
+    "training_skill_id" : int,
+    "training_cost" : int,
+    "employee_id" : int,
+    "start_date" : string (yyyy-mm-dd),
+    "end_date" : string (yyyy-mm-dd),
+    "status" : string,
+    "description" : string
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "trainer_id": int,
+        "full_name_trainer": string,
+        "training_skill_id": int,
+        "training_skill": string,
+        "training_cost": int,
+        "employee_id": int,
+        "full_name_employee": string,
+        "start_date": string,
+        "end_date": string,
+        "status": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Training created successfully"
+}
+                        </pre>
+            </div>
+        </div>
+
+        <div id="ViewTrainings" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View All Trainings</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainings</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers. Including Searching query params</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "trainer_id": int,
+            "full_name_trainer": string,
+            "training_skill_id": int,
+            "training_skill": string,
+            "training_cost": int,
+            "employee_id": int,
+            "full_name_employee": string,
+            "start_date": string,
+            "end_date": string,
+            "status": string,
+            "description": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "trainer_id": int,
+            "full_name_trainer": string,
+            "training_skill_id": int,
+            "training_skill": string,
+            "training_cost": int,
+            "employee_id": int,
+            "full_name_employee": string,
+            "start_date": string,
+            "end_date": string,
+            "status": string,
+            "description": string,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Trainings fetched successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewTrainingsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List Trainings By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainings/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "trainer_id": int,
+        "full_name_trainer": string,
+        "training_skill_id": int,
+        "training_skill": string,
+        "training_cost": int,
+        "employee_id": int,
+        "full_name_employee": string,
+        "start_date": string,
+        "end_date": string,
+        "status": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Training fetched successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+
+        <div id="EditTrainingsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit List Trainings By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainings/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "trainer_id" : int,
+    "training_skill_id" : int,
+    "training_cost" : int,
+    "employee_id" : int,
+    "start_date" : string (yyyy-mm-dd),
+    "end_date" : string (yyyy-mm-dd),
+    "status" : string,
+    "description" : string
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "trainer_id": int,
+        "full_name_trainer": string,
+        "training_skill_id": int,
+        "training_skill": string,
+        "training_cost": int,
+        "employee_id": int,
+        "full_name_employee": string,
+        "start_date": string,
+        "end_date": string,
+        "status": string,
+        "description": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Training updated successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteTrainingsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete List Trainings By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/trainings/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Training deleted successfully"
 }
                             </pre>
             </div>

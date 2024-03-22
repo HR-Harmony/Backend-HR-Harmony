@@ -20,3 +20,19 @@ type TrainingSkill struct {
 	CreatedAt     *time.Time
 	UpdateAt      time.Time
 }
+
+type Training struct {
+	ID               uint       `gorm:"primaryKey" json:"id"`
+	TrainerID        uint       `json:"trainer_id"`
+	FullNameTrainer  string     `json:"full_name_trainer"`
+	TrainingSkillID  uint       `json:"training_skill_id"`
+	TrainingSkill    string     `json:"training_skill"`
+	TrainingCost     int        `json:"training_cost"`
+	EmployeeID       uint       `json:"employee_id"`
+	FullNameEmployee string     `json:"full_name_employee"`
+	StartDate        string     `json:"start_date"`
+	EndDate          string     `json:"end_date"`
+	Status           string     `json:"status"`
+	Description      string     `json:"description"`
+	CreatedAt        *time.Time `json:"created_at"`
+}
