@@ -14,6 +14,7 @@ type ExitEmployee struct {
 	EmployeeID     uint      `json:"employee_id"`
 	ExitID         uint      `json:"exit_id"`
 	DisableAccount bool      `json:"disable_account"`
+	ExitInterview  string    `json:"exit_interview"`
 	Description    string    `json:"description"`
 	ExitDate       string    `json:"exit_date"`
 	CreatedAt      time.Time `json:"created_at"`
