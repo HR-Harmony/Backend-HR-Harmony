@@ -72,6 +72,15 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusConflict, errorResponse)
 		}
 
+		// Fetch employee data based on EmployeeID
+		var employee models.Employee
+		result = db.First(&employee, "id = ?", department.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		department.FullName = employee.FullName
+
 		// Set the created timestamp
 		currentTime := time.Now()
 		department.CreatedAt = &currentTime
@@ -206,7 +215,6 @@ func GetDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// UpdateDepartmentByIDByAdmin handles the update of a department name by its ID for admin
 func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -262,6 +270,7 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Bind the updated department data from the request body
 		var updateData struct {
 			DepartmentName string `json:"department_name"`
+			EmployeeID     uint   `json:"employee_id"`
 		}
 		if err := c.Bind(&updateData); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
@@ -269,15 +278,25 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		// Validate and update department name
-		if updateData.DepartmentName == "" {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Department name is required"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
+		if updateData.DepartmentName != "" {
+			department.DepartmentName = updateData.DepartmentName
 		}
 
-		// Update the department name
-		department.DepartmentName = updateData.DepartmentName
-		department.UpdatedAt = time.Now()
+		// Validate and update employee ID and full name
+		if updateData.EmployeeID != 0 {
+			// Fetch employee data based on EmployeeID
+			var employee models.Employee
+			result := db.First(&employee, "id = ?", updateData.EmployeeID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			department.EmployeeID = updateData.EmployeeID
+			department.FullName = employee.FullName
+		}
 
+		// Update the department
+		department.UpdatedAt = time.Now()
 		db.Save(&department)
 
 		// Respond with success
