@@ -619,6 +619,14 @@ func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		// Check if exit record already exists for the employee
+		var existingExit models.ExitEmployee
+		result = db.Where("employee_id = ?", exitData.EmployeeID).First(&existingExit)
+		if result.RowsAffected > 0 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusConflict, Message: "Employee already exited"}
+			return c.JSON(http.StatusConflict, errorResponse)
+		}
+
 		// Parse exitDate from string to time.Time
 		exitDate, err := time.Parse("2006-01-02", exitData.ExitDate)
 		if err != nil {
