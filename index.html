@@ -786,6 +786,7 @@
                     <pre>
     {
         "department_name": "string",
+        "employee_id": int
     }
                             </pre>
                     <p><strong>Note</strong></p>
@@ -799,6 +800,8 @@
     "department": {
         "id": int,
         "department_name": string,
+        "employee_id": int,
+        "full_name": string,
         "created_at": string,
         "UpdatedAt": string
     }
@@ -827,32 +830,26 @@
         {
             "id": int,
             "department_name": string,
+            "employee_id": int,
+            "full_name": string,
             "created_at": string,
             "UpdatedAt": string
         },
         {
             "id": int,
             "department_name": string,
+            "employee_id": int,
+            "full_name": string,
             "created_at": string,
             "UpdatedAt": string
         },
         {
             "id": int,
             "department_name": string,
+            "employee_id": int,
+            "full_name": string,
             "created_at": string,
             "UpdatedAt": string
-        },
-        {
-            "id": int,
-            "department_name": string,
-            "created_at": string,
-            "UpdatedAt": string
-        },
-        {
-            "id": int,
-            "department_name": string,
-            "created_at":time,
-            "UpdatedAt": time
         }
     ]
 }
@@ -879,8 +876,10 @@
     "department": {
         "id": int,
         "department_name": string,
-        "created_at": string,
-        "UpdatedAt": string
+        "employee_id": int,
+        "full_name": string,
+        "created_at": time,
+        "UpdatedAt": time
     }
 }
                     </pre>
@@ -898,7 +897,8 @@
                     <p><strong>Request Body - Raw Json</strong></p>
                     <pre>
 {
-    "department_name" : "string"
+    "department_name" : "string",
+    "employee_id" : int
 }
                             </pre>
                     <p><strong>Note</strong></p>
@@ -912,6 +912,8 @@
     "department": {
         "id": int,
         "department_name": string,
+        "employee_id": int,
+        "full_name": string,
         "created_at": time,
         "UpdatedAt": time
     }
