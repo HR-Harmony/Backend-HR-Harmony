@@ -7,6 +7,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -76,6 +77,28 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
+
+		// Calculate total work duration
+		inTime, err := time.Parse("15:04", attendance.InTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		outTime, err := time.Parse("15:04", attendance.OutTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		workDuration := outTime.Sub(inTime)
+
+		// Convert work duration to hours
+		totalWorkHours := workDuration.Hours()
+
+		// Convert totalWorkHours to string
+		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
+
+		// Add total_work to attendance data
+		attendance.TotalWork = totalWork
 
 		// Create the attendance in the database
 		db.Create(&attendance)
@@ -310,6 +333,28 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		if updatedAttendance.OutTime != "" {
 			attendance.OutTime = updatedAttendance.OutTime
 		}
+
+		// Recalculate total work duration
+		inTime, err := time.Parse("15:04", attendance.InTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		outTime, err := time.Parse("15:04", attendance.OutTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		workDuration := outTime.Sub(inTime)
+
+		// Convert work duration to hours
+		totalWorkHours := workDuration.Hours()
+
+		// Convert totalWorkHours to string
+		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
+
+		// Update total work
+		attendance.TotalWork = totalWork
 
 		// Save the updated attendance data to the database
 		db.Save(&attendance)
