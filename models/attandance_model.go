@@ -9,6 +9,7 @@ type Attendance struct {
 	AttendanceDate string     `json:"attendance_date"` // Format: yyyy-mm-dd
 	InTime         string     `json:"in_time"`
 	OutTime        string     `json:"out_time"`
+	TotalWork      string     `json:"total_work"`
 	CreatedAt      *time.Time `json:"created_at"`
 }
 
