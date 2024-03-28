@@ -430,6 +430,8 @@ func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Format end date in "yyyy-mm-dd" format
 		leaveRequest.EndDate = endDate.Format("2006-01-02")
 
+		leaveRequest.Status = "Pending"
+
 		// Save the leave request to the database
 		if err := db.Create(&leaveRequest).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to create leave request"}
@@ -680,6 +682,10 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		}
 		if updatedLeaveRequest.LeaveReason != "" {
 			leaveRequest.LeaveReason = updatedLeaveRequest.LeaveReason
+		}
+
+		if updatedLeaveRequest.Status != "" {
+			leaveRequest.Status = updatedLeaveRequest.Status
 		}
 
 		// Update the days based on the updated start and end dates

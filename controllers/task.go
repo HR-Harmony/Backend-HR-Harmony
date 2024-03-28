@@ -84,6 +84,7 @@ func CreateTaskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Set the ProjectName
 		task.ProjectName = existingProject.Title
+		task.Status = "Not Started"
 
 		// Set the created timestamp
 		currentTime := time.Now()
@@ -322,6 +323,10 @@ func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		if updatedTask.Description != "" {
 			existingTask.Description = updatedTask.Description
+		}
+
+		if updatedTask.Status != "" {
+			existingTask.Status = updatedTask.Status
 		}
 
 		db.Save(&existingTask)
