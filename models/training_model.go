@@ -35,4 +35,5 @@ type Training struct {
 	Status           string     `json:"status"`
 	Description      string     `json:"description"`
 	CreatedAt        *time.Time `json:"created_at"`
+	UpdateAt         time.Time
 }

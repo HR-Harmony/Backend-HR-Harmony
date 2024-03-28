@@ -17,6 +17,7 @@ type Project struct {
 	DepartmentID   uint       `json:"department_id"`
 	DepartmentName string     `json:"department_name"`
 	Description    string     `json:"description"`
+	Status         string     `json:"status"`
 	CreatedAt      *time.Time `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`
 }
