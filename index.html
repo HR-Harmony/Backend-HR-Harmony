@@ -1629,20 +1629,21 @@
     "error": false,
     "message": "Project created successfully",
     "project": {
-        "id": 2,
-        "title": "Development Web Apps",
-        "employee_id": 3,
-        "username": "aimrzki",
-        "estimated_hour": 40,
-        "priority": "highest",
-        "start_date": "2024-02-17",
-        "end_date": "2024-03-17",
-        "summary": "Aplikasi untuk perusahaan berbasis website",
-        "department_id": 1,
-        "department_name": "it",
-        "description": "Tersedia untuk seluruh platform",
-        "created_at": "2024-01-19T15:56:57.518618+07:00",
-        "updated_at": "2024-01-19T15:56:57.839299+07:00"
+        "id": int,
+        "title": string,
+        "employee_id": int,
+        "username": string,
+        "estimated_hour": int,
+        "priority": string,
+        "start_date": string,
+        "end_date": string,
+        "summary": string,
+        "department_id": int,
+        "department_name": string,
+        "description": string,
+        "status" : string
+        "created_at": time,
+        "updated_at": time
     }
 }
                         </pre>
@@ -1679,6 +1680,7 @@
             "department_id": int,
             "department_name": string,
             "description": string,
+            "status" : string
             "created_at": time,
             "updated_at": time
         },
@@ -1695,6 +1697,7 @@
             "department_id": int,
             "department_name": string,
             "description": string,
+            "status" : string
             "created_at": time,
             "updated_at": time
         },
@@ -1733,6 +1736,7 @@
         "department_id": int,
         "department_name": string,
         "description": string,
+        "status" : string
         "created_at": time,
         "updated_at": time
     }
@@ -1761,6 +1765,7 @@
     "summary" : string,
     "department_id" : int,
     "description" : string
+    "status" : string
 }
                             </pre>
                     <p><strong>Note</strong></p>
@@ -1847,6 +1852,7 @@
         "project_name": string,
         "summary": string,
         "description": string,
+        "status" : string
         "created_at": time,
         "updated_at": time
     }
@@ -1882,6 +1888,7 @@
             "project_name": string,
             "summary": string,
             "description": string,
+            "status" : string
             "created_at": time,
             "updated_at": time
         },
@@ -1895,6 +1902,7 @@
             "project_name": string,
             "summary": string,
             "description": string,
+            "status" : string
             "created_at": time,
             "updated_at": time
         }
@@ -1930,6 +1938,7 @@
         "project_name": string,
         "summary": string,
         "description": string,
+        "status" : string
         "created_at": time,
         "updated_at": time
     }
@@ -1956,6 +1965,7 @@
     "project_id" : int,
     "summary" : string,
     "description" : string
+    "status" : string
 }
                             </pre>
                     <p><strong>Note</strong></p>
@@ -1976,6 +1986,7 @@
         "project_name": string,
         "summary": string,
         "description": string,
+        "status" : string                 
         "created_at": time,
         "updated_at": time
     }

@@ -749,6 +749,8 @@ func CreateTrainingByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		training.Status = "Pending"
+
 		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,

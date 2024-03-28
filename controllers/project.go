@@ -100,6 +100,8 @@ func CreateProjectByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		project.Username = existingEmployee.Username
 		project.DepartmentName = existingDepartment.DepartmentName
 
+		project.Status = "Not Started"
+
 		// Set the created timestamp
 		currentTime := time.Now()
 		project.CreatedAt = &currentTime
@@ -349,6 +351,10 @@ func UpdateProjectByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if updatedProject.Description != "" {
 			existingProject.Description = updatedProject.Description
+		}
+
+		if updatedProject.Status != "" {
+			existingProject.Status = updatedProject.Status
 		}
 
 		// Set the updated timestamp

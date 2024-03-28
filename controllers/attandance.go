@@ -500,6 +500,37 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		// Validate attandance_date format
+		_, err = time.Parse("2006-01-02", overtime.Date)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Calculate total work duration
+		inTime, err := time.Parse("15:04", overtime.InTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		outTime, err := time.Parse("15:04", overtime.OutTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		workDuration := outTime.Sub(inTime)
+
+		// Convert work duration to hours
+		totalWorkHours := workDuration.Hours()
+
+		// Convert totalWorkHours to string
+		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
+
+		// Add total_work to attendance data
+		overtime.TotalWork = totalWork
+
+		overtime.Status = "Pending"
+
 		// Create the attendance in the database
 		db.Create(&overtime)
 
@@ -735,6 +766,39 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 		if updatedOvertime.Reason != "" {
 			overtime.Reason = updatedOvertime.Reason
 		}
+
+		if updatedOvertime.Status != "" {
+			overtime.Status = updatedOvertime.Status
+		}
+
+		// Validate attandance_date format
+		_, err = time.Parse("2006-01-02", overtime.Date)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Calculate total work duration
+		inTime, err := time.Parse("15:04", overtime.InTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		outTime, err := time.Parse("15:04", overtime.OutTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		workDuration := outTime.Sub(inTime)
+
+		// Convert work duration to hours
+		totalWorkHours := workDuration.Hours()
+
+		// Convert totalWorkHours to string
+		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
+
+		// Add total_work to attendance data
+		overtime.TotalWork = totalWork
 
 		// Save the updated attendance data to the database
 		db.Save(&overtime)
