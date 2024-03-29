@@ -7,6 +7,8 @@ type KPIIndicator struct {
 	Title                             string    `json:"title"`
 	DesignationID                     uint      `json:"designation_id"`
 	DesignationName                   string    `json:"designation_name"`
+	AdminId                           uint      `json:"admin_id"`
+	AdminName                         string    `json:"admin_name"`
 	BddSellingSkill                   uint      `json:"bdd_selling_skill"`
 	BddHandlingObjection              uint      `json:"bdd_handling_objection"`
 	BddNegotiationSkill               uint      `json:"bdd_negotiation_skill"`

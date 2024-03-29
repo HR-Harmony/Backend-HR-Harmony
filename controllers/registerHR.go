@@ -80,6 +80,7 @@ func RegisterAdminHR(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		admin.Password = string(hashedPassword)
 		admin.IsAdminHR = true // Set status is_admin_hr ke true
+		admin.Fullname = admin.FirstName + " " + admin.LastName
 		db.Create(&admin)
 
 		admin.Password = ""
