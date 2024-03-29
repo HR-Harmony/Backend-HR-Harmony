@@ -256,6 +256,14 @@
                 <li class="nav-item"><a class="nav-link" href="#DeleteTrainingsByID">Delete List Trainings By ID</a></li>
 
 
+                <li class="nav-item"><a class="nav-link" href="#CreateKpiIndicators">Create Kpi Indicators</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewKpiIndicators">View All Kpi Indicators</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewKpiIndicatorsByID">View List Kpi Indicators By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#EditKpiIndicatorsByID">Edit List Kpi Indicators By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteKpiIndicatorsByID">Delete List Kpi Indicators By ID</a></li>
+
+
+
                 <li class="nav-item"><a class="nav-link" href="#CooperationMessage">Create New Cooperation Message</a></li>
 
                 <!-- Employee -->
@@ -5974,6 +5982,435 @@
     "code": 200,
     "error": false,
     "message": "Training deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+
+        <div id="CreateKpiIndicators" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create Kpi Indicators</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/kpi_indicators</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+	"title": string,
+	"designation_id": int,
+	"bdd_selling_skill": int,
+	"bdd_handling_objection": int,
+	"bdd_negotiation_skill": int,
+	"bdd_proposal_development": int,
+	"bdd_after_sales_management": int,
+	"bdd_customer_relationship_management": int,
+	"bdd_hubungan_interpersonal": int,
+	"bdd_communication_skill": int,
+	"bsd_product_knowledge": int,
+	"bsd_project_management": int,
+	"bsd_delivering_procedures_or_process": int,
+	"bsd_collaborating_process": int,
+	"bsd_customer_satisfaction": int,
+	"bsd_self_confidence": int,
+	"bsd_emphaty": int,
+	"tid_computer_literacy": int,
+	"tid_system_database_management": int,
+	"tid_network_management": int,
+	"tid_program_development": int,
+	"tid_coding_management": int,
+	"tid_system_analyze": int,
+	"tid_user_experience_management": int,
+	"creativity": int,
+	"ultimate_speed": int,
+	"reliable": int,
+	"open_minded": int,
+	"superior_service": int,
+	"integrity": int,
+	"agile_entrepreneur": int,
+	"daya_tahan_stress": int,
+	"stabilitas_emosi": int,
+	"motivasi_berprestasi": int,
+	"attention_to_detail": int,
+	"time_management": int,
+	"discipline_execution": int,
+	"quality_orientation": int
+}
+
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "error": false,
+    "kpi_indicator": {
+        "id": int,
+        "title": string,
+        "designation_id": int,
+        "designation_name": string,
+        "admin_id": int,
+        "admin_name": string,
+        "bdd_selling_skill": int,
+        "bdd_handling_objection": int,
+        "bdd_negotiation_skill": int,
+        "bdd_proposal_development": int,
+        "bdd_after_sales_management": int,
+        "bdd_customer_relationship_management": int,
+        "bdd_hubungan_interpersonal": int,
+        "bdd_communication_skill": int,
+        "bsd_product_knowledge": int,
+        "bsd_project_management": int,
+        "bsd_delivering_procedures_or_process": int,
+        "bsd_collaborating_process": int,
+        "bsd_customer_satisfaction": int,
+        "bsd_self_confidence": int,
+        "bsd_emphaty": int,
+        "tid_computer_literacy": int,
+        "tid_system_database_management": int,
+        "tid_network_management": int,
+        "tid_program_development": int,
+        "tid_coding_management": int,
+        "tid_system_analyze": int,
+        "tid_user_experience_management": int,
+        "creativity": int,
+        "ultimate_speed": int,
+        "reliable": int,
+        "open_minded": int,
+        "superior_service": int,
+        "integrity": int,
+        "agile_entrepreneur": int,
+        "daya_tahan_stress": int,
+        "stabilitas_emosi": int,
+        "motivasi_berprestasi": int,
+        "attention_to_detail": int,
+        "time_management": int,
+        "discipline_execution": int,
+        "quality_orientation": int,
+        "result": float,
+        "created_at": time,
+        "updated_at": time
+    },
+    "message": "KPI Indicator created successfully"
+}                  </pre>
+            </div>
+        </div>
+
+        <div id="ViewKpiIndicators" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View All Kpi Indicators</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/kpi_indicators</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers. Including Searching query params</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "title": string,
+            "designation_id": int,
+            "designation_name": string,
+            "admin_id": int,
+            "admin_name": string,
+            "bdd_selling_skill": int,
+            "bdd_handling_objection": int,
+            "bdd_negotiation_skill": int,
+            "bdd_proposal_development": int,
+            "bdd_after_sales_management": int,
+            "bdd_customer_relationship_management": int,
+            "bdd_hubungan_interpersonal": int,
+            "bdd_communication_skill": int,
+            "bsd_product_knowledge": int,
+            "bsd_project_management": int,
+            "bsd_delivering_procedures_or_process": int,
+            "bsd_collaborating_process": int,
+            "bsd_customer_satisfaction": int,
+            "bsd_self_confidence": int,
+            "bsd_emphaty": int,
+            "tid_computer_literacy": int,
+            "tid_system_database_management": int,
+            "tid_network_management": int,
+            "tid_program_development": int,
+            "tid_coding_management": int,
+            "tid_system_analyze": int,
+            "tid_user_experience_management": int,
+            "creativity": int,
+            "ultimate_speed": int,
+            "reliable": int,
+            "open_minded": int,
+            "superior_service": int,
+            "integrity": int,
+            "agile_entrepreneur": int,
+            "daya_tahan_stress": int,
+            "stabilitas_emosi": int,
+            "motivasi_berprestasi": int,
+            "attention_to_detail": int,
+            "time_management": int,
+            "discipline_execution": int,
+            "quality_orientation": int,
+            "result": float,
+            "created_at": time,
+            "updated_at": time
+        },
+        {
+            "id": int,
+            "title": string,
+            "designation_id": int,
+            "designation_name": string,
+            "admin_id": int,
+            "admin_name": string,
+            "bdd_selling_skill": int,
+            "bdd_handling_objection": int,
+            "bdd_negotiation_skill": int,
+            "bdd_proposal_development": int,
+            "bdd_after_sales_management": int,
+            "bdd_customer_relationship_management": int,
+            "bdd_hubungan_interpersonal": int,
+            "bdd_communication_skill": int,
+            "bsd_product_knowledge": int,
+            "bsd_project_management": int,
+            "bsd_delivering_procedures_or_process": int,
+            "bsd_collaborating_process": int,
+            "bsd_customer_satisfaction": int,
+            "bsd_self_confidence": int,
+            "bsd_emphaty": int,
+            "tid_computer_literacy": int,
+            "tid_system_database_management": int,
+            "tid_network_management": int,
+            "tid_program_development": int,
+            "tid_coding_management": int,
+            "tid_system_analyze": int,
+            "tid_user_experience_management": int,
+            "creativity": int,
+            "ultimate_speed": int,
+            "reliable": int,
+            "open_minded": int,
+            "superior_service": int,
+            "integrity": int,
+            "agile_entrepreneur": int,
+            "daya_tahan_stress": int,
+            "stabilitas_emosi": int,
+            "motivasi_berprestasi": int,
+            "attention_to_detail": int,
+            "time_management": int,
+            "discipline_execution": int,
+            "quality_orientation": int,
+            "result": float,
+            "created_at": time,
+            "updated_at": time
+        }
+    ],
+    "error": false,
+    "message": "KPI Indicator fetched successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewKpiIndicatorsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List Kpi Indicators By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/kpi_indicators/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+            "id": int,
+            "title": string,
+            "designation_id": int,
+            "designation_name": string,
+            "admin_id": int,
+            "admin_name": string,
+            "bdd_selling_skill": int,
+            "bdd_handling_objection": int,
+            "bdd_negotiation_skill": int,
+            "bdd_proposal_development": int,
+            "bdd_after_sales_management": int,
+            "bdd_customer_relationship_management": int,
+            "bdd_hubungan_interpersonal": int,
+            "bdd_communication_skill": int,
+            "bsd_product_knowledge": int,
+            "bsd_project_management": int,
+            "bsd_delivering_procedures_or_process": int,
+            "bsd_collaborating_process": int,
+            "bsd_customer_satisfaction": int,
+            "bsd_self_confidence": int,
+            "bsd_emphaty": int,
+            "tid_computer_literacy": int,
+            "tid_system_database_management": int,
+            "tid_network_management": int,
+            "tid_program_development": int,
+            "tid_coding_management": int,
+            "tid_system_analyze": int,
+            "tid_user_experience_management": int,
+            "creativity": int,
+            "ultimate_speed": int,
+            "reliable": int,
+            "open_minded": int,
+            "superior_service": int,
+            "integrity": int,
+            "agile_entrepreneur": int,
+            "daya_tahan_stress": int,
+            "stabilitas_emosi": int,
+            "motivasi_berprestasi": int,
+            "attention_to_detail": int,
+            "time_management": int,
+            "discipline_execution": int,
+            "quality_orientation": int,
+            "result": float,
+            "created_at": time,
+            "updated_at": time
+        },
+    "error": false,
+    "message": "KPI Indicator retrieved successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+
+        <div id="EditKpiIndicatorsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit List Kpi Indicators By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/kpi_indicators/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+	"title": string,
+	"designation_id": int,
+	"bdd_selling_skill": int,
+	"bdd_handling_objection": int,
+	"bdd_negotiation_skill": int,
+	"bdd_proposal_development": int,
+	"bdd_after_sales_management": int,
+	"bdd_customer_relationship_management": int,
+	"bdd_hubungan_interpersonal": int,
+	"bdd_communication_skill": int,
+	"bsd_product_knowledge": int,
+	"bsd_project_management": int,
+	"bsd_delivering_procedures_or_process": int,
+	"bsd_collaborating_process": int,
+	"bsd_customer_satisfaction": int,
+	"bsd_self_confidence": int,
+	"bsd_emphaty": int,
+	"tid_computer_literacy": int,
+	"tid_system_database_management": int,
+	"tid_network_management": int,
+	"tid_program_development": int,
+	"tid_coding_management": int,
+	"tid_system_analyze": int,
+	"tid_user_experience_management": int,
+	"creativity": int,
+	"ultimate_speed": int,
+	"reliable": int,
+	"open_minded": int,
+	"superior_service": int,
+	"integrity": int,
+	"agile_entrepreneur": int,
+	"daya_tahan_stress": int,
+	"stabilitas_emosi": int,
+	"motivasi_berprestasi": int,
+	"attention_to_detail": int,
+	"time_management": int,
+	"discipline_execution": int,
+	"quality_orientation": int
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "error": false,
+    "kpi_indicator": {
+        "id": int,
+        "title": string,
+        "designation_id": int,
+        "designation_name": string,
+        "admin_id": int,
+        "admin_name": string,
+        "bdd_selling_skill": int,
+        "bdd_handling_objection": int,
+        "bdd_negotiation_skill": int,
+        "bdd_proposal_development": int,
+        "bdd_after_sales_management": int,
+        "bdd_customer_relationship_management": int,
+        "bdd_hubungan_interpersonal": int,
+        "bdd_communication_skill": int,
+        "bsd_product_knowledge": int,
+        "bsd_project_management": int,
+        "bsd_delivering_procedures_or_process": int,
+        "bsd_collaborating_process": int,
+        "bsd_customer_satisfaction": int,
+        "bsd_self_confidence": int,
+        "bsd_emphaty": int,
+        "tid_computer_literacy": int,
+        "tid_system_database_management": int,
+        "tid_network_management": int,
+        "tid_program_development": int,
+        "tid_coding_management": int,
+        "tid_system_analyze": int,
+        "tid_user_experience_management": int,
+        "creativity": int,
+        "ultimate_speed": int,
+        "reliable": int,
+        "open_minded": int,
+        "superior_service": int,
+        "integrity": int,
+        "agile_entrepreneur": int,
+        "daya_tahan_stress": int,
+        "stabilitas_emosi": int,
+        "motivasi_berprestasi": int,
+        "attention_to_detail": int,
+        "time_management": int,
+        "discipline_execution": int,
+        "quality_orientation": int,
+        "result": float,
+        "created_at": time,
+        "updated_at": time
+    },
+    "message": "KPI Indicator updated successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteKpiIndicatorsByID" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete List Kpi Indicators By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/kpi_indicators/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "KPI Indicator deleted successfully"
 }
                             </pre>
             </div>
