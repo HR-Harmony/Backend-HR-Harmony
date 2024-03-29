@@ -7,6 +7,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -832,6 +833,10 @@ func CreateKPIIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		totalScores := helper.CalculateTotalScores(kpiIndicator)
 		kpiIndicator.Result = totalScores / 36
 
+		// Set admin ID and username
+		kpiIndicator.AdminId = adminUser.ID
+		kpiIndicator.AdminName = adminUser.FirstName + " " + adminUser.LastName
+
 		// Create the KPI Indicator in the database
 		db.Create(&kpiIndicator)
 
@@ -881,19 +886,244 @@ func GetAllKPIIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Fetch all KPI Indicators from the database
-		var kpiIndicators []models.KPIIndicator
-		if err := db.Find(&kpiIndicators).Error; err != nil {
-			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch KPI Indicators"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
+		// Fetch searching query parameter
+		searching := c.QueryParam("searching")
+
+		// Fetch performances data from database with optional search filters
+		var kpiIndicator []models.KPIIndicator
+		query := db.Model(&kpiIndicator)
+		if searching != "" {
+			searchingPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where("LOWER(title) LIKE ? OR LOWER(designation_name) LIKE ?", searchingPattern, searchingPattern)
+		}
+		query.Find(&kpiIndicator)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "KPI Indicator fetched successfully",
+			"data":    kpiIndicator,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetKPIIndicatorsByIdByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve performance ID from the URL parameter
+		performanceIDStr := c.Param("id")
+		performanceID, err := strconv.ParseUint(performanceIDStr, 10, 32)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid KPI Indicator ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve the performance from the database
+		var kpiIndicator models.KPIIndicator
+		result = db.First(&kpiIndicator, uint(performanceID))
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "KPI Indicator not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
 		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
-			"message": "KPI Indicators fetched successfully",
-			"data":    kpiIndicators,
+			"message": "KPI Indicator retrieved successfully",
+			"data":    kpiIndicator,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func EditKPIIndicatorByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve KPI Indicator ID from the URL parameter
+		kpiIndicatorIDStr := c.Param("id")
+		kpiIndicatorID, err := strconv.ParseUint(kpiIndicatorIDStr, 10, 32)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid KPI Indicator ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve the KPI Indicator from the database
+		var kpiIndicator models.KPIIndicator
+		result = db.First(&kpiIndicator, uint(kpiIndicatorID))
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "KPI Indicator not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Bind the updated KPI Indicator data from the request body
+		var updateData models.KPIIndicator
+		if err := c.Bind(&updateData); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate and update KPI Indicator data
+		if updateData.DesignationID != 0 {
+			// Retrieve the designation name based on the new designation ID
+			var newDesignation models.Designation
+			result = db.First(&newDesignation, updateData.DesignationID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Designation not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			kpiIndicator.DesignationName = newDesignation.DesignationName
+		}
+
+		// Update only the provided fields
+		db.Model(&kpiIndicator).Updates(updateData)
+
+		// Recalculate the result based on the updated scores
+		totalScores := helper.CalculateTotalScores(kpiIndicator)
+		kpiIndicator.Result = totalScores / 36
+
+		// Save the updated KPI Indicator
+		db.Save(&kpiIndicator)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "KPI Indicator updated successfully",
+			"data":    kpiIndicator,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func DeleteKPIIndicatorByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve KPI Indicator ID from the URL parameter
+		kpiIndicatorIDStr := c.Param("id")
+		kpiIndicatorID, err := strconv.ParseUint(kpiIndicatorIDStr, 10, 32)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid KPI Indicator ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve the KPI Indicator from the database
+		var kpiIndicator models.KPIIndicator
+		result = db.First(&kpiIndicator, uint(kpiIndicatorID))
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "KPI Indicator not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Delete the KPI Indicator
+		db.Delete(&kpiIndicator)
+
+		// Respond with success
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "KPI Indicator deleted successfully",
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

@@ -4,6 +4,7 @@ type Admin struct {
 	ID                uint    `gorm:"primaryKey" json:"id"`
 	FirstName         string  `json:"first_name"`
 	LastName          string  `json:"last_name"`
+	Fullname          string  `json:"fullname"`
 	ContactNumber     string  `json:"contact_number"`
 	Gender            string  `json:"gender"`
 	Email             string  `json:"email"`
