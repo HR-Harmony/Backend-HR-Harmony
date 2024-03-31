@@ -176,7 +176,11 @@
                 <li class="nav-item"><a class="nav-link" href="#UpdateAdvanceSalarysById">Edit Advance Salarys By ID</a></li>
                 <li class="nav-item"><a class="nav-link" href="#DeleteAdvanceSalarysById">Delete Advance Salarys By ID</a></li>
 
-
+                <li class="nav-item"><a class="nav-link" href="#CreateRequestLoans">Create Request Loans</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewRequestLoans">View List All Request Loans</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewRequestLoansById">View List Request Loans By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#UpdateRequestLoansById">Edit Request LoansBy ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteRequestLoansById">Delete Request Loans By ID</a></li>
 
                 <li class="nav-item"><a class="nav-link" href="#CreateFinances">Create Finances</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewFinances">View List Finances</a></li>
@@ -3650,6 +3654,7 @@
         "reason": string,
         "emi": int,
         "paid": int,
+        "status": string,
         "created_at": time
     },
     "error": false,
@@ -3686,6 +3691,7 @@
             "reason": string,
             "emi": int,
             "paid": int,
+            "status": string,
             "created_at": time
         },
         {
@@ -3699,6 +3705,7 @@
             "reason": string,
             "emi": int,
             "paid": int,
+            "status": string,
             "created_at": time
         }
     ],
@@ -3734,6 +3741,7 @@
         "reason": string,
         "emi": int,
         "paid": int,
+        "status": string,
         "created_at": time
     },
     "error": false,
@@ -3758,7 +3766,8 @@
     "amount" : int,
     "one_time_deduct" : string,
     "monthly_installment_amount" : int,
-    "reason" : string
+    "reason" : string,
+    "status" : string
 }
                             </pre>
                 <p><strong>Note</strong></p>
@@ -3778,6 +3787,7 @@
         "reason": string,
         "emi": int,
         "paid": int,
+        "status": string,
         "created_at": time
     },
     "error": false,
@@ -3805,6 +3815,203 @@
     "code": 200,
     "error": false,
     "message": "Advance Salary deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="CreateRequestLoans" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create Request Loans</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "month_and_year" : string (yyyy-mm),
+    "amount" : int,
+    "one_time_deduct" : string,
+    "monthly_installment_amount" : int,
+    "reason" : string
+}
+
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string,
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "status": string,
+        "remaining": int,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Request Loan created successfully"
+}
+
+                        </pre>
+            </div>
+        </div>
+
+        <div id="ViewRequestLoans" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List All Request Loans - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "employee_id": int,
+            "fullname_employee": string,
+            "month_and_year": string,
+            "amount": int,
+            "one_time_deduct": string,
+            "monthly_installment_amount": int,
+            "reason": string,
+            "emi": int,
+            "paid": int,
+            "status": string,
+            "remaining": int,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Request Loan history retrieved successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewRequestLoansById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List Request Loans By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+                    {
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "employee_id": int,
+            "fullname_employee": string,
+            "month_and_year": string,
+            "amount": int,
+            "one_time_deduct": string,
+            "monthly_installment_amount": int,
+            "reason": string,
+            "emi": int,
+            "paid": int,
+            "status": string,
+            "remaining": int,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Request Loan retrieved successfully"
+}
+             </pre>
+            </div>
+        </div>
+
+
+        <div id="UpdateRequestLoansById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit Request LoansBy ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "month_and_year" : string,
+    "amount" : int,
+    "one_time_deduct" : string,
+    "monthly_installment_amount": int,
+    "reason" : string,
+    "status" : string,
+    "paid" : int
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string",
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "status": string,
+        "remaining": int,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Request Loan updated successfully"
+}
+
+
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteRequestLoansById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete Request Loans By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Request Loan deleted successfully"
 }
                             </pre>
             </div>
