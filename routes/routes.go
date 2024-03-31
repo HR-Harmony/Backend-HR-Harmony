@@ -108,6 +108,13 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/payrolls/:payroll_id", controllers.UpdatePaidStatusByPayrollID(db, secretKey))
 	e.GET("/payrolls/history", controllers.GetAllPayrollHistory(db, secretKey))
 
+	//Advance Salary
+	e.POST("/advance_salaries", controllers.CreateAdvanceSalaryByAdmin(db, secretKey))
+	e.GET("/advance_salaries", controllers.GetAllAdvanceSalariesByAdmin(db, secretKey))
+	e.GET("/advance_salaries/:id", controllers.GetAdvanceSalaryByIDByAdmin(db, secretKey))
+	e.PUT("/advance_salaries/:id", controllers.UpdateAdvanceSalaryByIDByAdmin(db, secretKey))
+	e.DELETE("/advance_salaries/:id", controllers.DeleteAdvanceSalaryByIDByAdmin(db, secretKey))
+
 	//Finance
 	e.POST("/finances", controllers.CreateFinanceByAdmin(db, secretKey))
 	e.GET("/finances", controllers.GetAllFinanceByAdmin(db, secretKey))
