@@ -282,6 +282,12 @@ func CreateAdvanceSalaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		advanceSalary.FullnameEmployee = employee.FullName
 		advanceSalary.Emi = advanceSalary.MonthlyInstallmentAmt
 
+		advanceSalary.Status = "Pending"
+
+		if advanceSalary.OneTimeDeduct == "Yes" {
+			advanceSalary.MonthlyInstallmentAmt = advanceSalary.Amount
+		}
+
 		// Validate date format
 		_, err = time.Parse("2006-01", advanceSalary.MonthAndYear)
 		if err != nil {
@@ -510,6 +516,11 @@ func UpdateAdvanceSalaryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 		if updatedData.Paid != 0 {
 			advanceSalary.Paid = updatedData.Paid
 		}
+
+		if updatedData.Status != "" {
+			advanceSalary.Status = updatedData.Status
+		}
+
 		if updatedData.EmployeeID != 0 {
 			// Retrieve employee data by ID
 			var employee models.Employee
@@ -599,6 +610,407 @@ func DeleteAdvanceSalaryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Advance Salary deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+//Loan Feature
+
+func CreateRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		// Parse the token to get admin's username
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Bind the AdvanceSalary data from the request body
+		var requestLoan models.RequestLoan
+		if err := c.Bind(&requestLoan); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate AdvanceSalary data
+		if requestLoan.EmployeeID == 0 || requestLoan.MonthAndYear == "" || requestLoan.Amount == 0 || requestLoan.Reason == "" {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid data. Employee ID, Month and Year, Amount, and Reason are required fields"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Check if the employee with the given ID exists
+		var employee models.Employee
+		result = db.First(&employee, requestLoan.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Set the FullnameEmployee
+		requestLoan.FullnameEmployee = employee.FullName
+		requestLoan.Emi = requestLoan.MonthlyInstallmentAmt
+
+		requestLoan.Status = "Pending"
+
+		requestLoan.Remaining = requestLoan.Amount - requestLoan.Paid
+
+		// Set Monthly Installment Amount based on One Time Deduct
+		if requestLoan.OneTimeDeduct == "Yes" {
+			requestLoan.MonthlyInstallmentAmt = requestLoan.Amount
+		}
+
+		// Validate date format
+		_, err = time.Parse("2006-01", requestLoan.MonthAndYear)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid date format. Required format: yyyy-mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Create the AdvanceSalary in the database
+		db.Create(&requestLoan)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Request Loan created successfully",
+			"data":    requestLoan,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+
+	}
+}
+
+func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		// Parse the token to get admin's username
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Get query parameter for searching
+		searching := c.QueryParam("searching")
+
+		// Fetch advance salary data from the database with optional search filters
+		var requestLoan []models.RequestLoan
+		query := db.Model(&requestLoan)
+		if searching != "" {
+			query = query.Where("LOWER(fullname_employee) LIKE ? OR amount = ?", "%"+strings.ToLower(searching)+"%", helper.ParseStringToInt(searching))
+		}
+		query.Find(&requestLoan)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Request Loan history retrieved successfully",
+			"data":    requestLoan,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		// Parse the token to get admin's username
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Extract ID parameter from the request
+		id := c.Param("id")
+
+		// Parse ID to uint
+		requestLoanID, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve advance salary data from the database by ID
+		var requestLoan models.RequestLoan
+		result = db.First(&requestLoan, requestLoanID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Request Loan not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Request Loan retrieved successfully",
+			"data":    requestLoan,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func UpdateRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		// Parse the token to get admin's username
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Extract ID parameter from the request
+		id := c.Param("id")
+
+		// Parse ID to uint
+		requestLoanID, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve advance salary data from the database by ID
+		var requestLoan models.RequestLoan
+		result = db.First(&requestLoan, requestLoanID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Request Loan not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Bind the updated data from the request body
+		var updatedData models.RequestLoan
+		if err := c.Bind(&updatedData); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Update only the fields that are provided in the request body
+		if updatedData.Amount != 0 {
+			requestLoan.Amount = updatedData.Amount
+		}
+		if updatedData.OneTimeDeduct != "" {
+			requestLoan.OneTimeDeduct = updatedData.OneTimeDeduct
+		}
+		if updatedData.MonthlyInstallmentAmt != 0 {
+			requestLoan.MonthlyInstallmentAmt = updatedData.MonthlyInstallmentAmt
+		}
+		if updatedData.Reason != "" {
+			requestLoan.Reason = updatedData.Reason
+		}
+		if updatedData.Emi != 0 {
+			requestLoan.Emi = updatedData.Emi
+		}
+		if updatedData.Paid != 0 {
+			requestLoan.Paid = updatedData.Paid
+			requestLoan.Remaining = requestLoan.Amount - updatedData.Paid
+		}
+
+		if updatedData.Status != "" {
+			requestLoan.Status = updatedData.Status
+		}
+
+		if updatedData.EmployeeID != 0 {
+			// Retrieve employee data by ID
+			var employee models.Employee
+			result := db.First(&employee, updatedData.EmployeeID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			requestLoan.EmployeeID = updatedData.EmployeeID
+			requestLoan.FullnameEmployee = employee.FullName
+		}
+
+		// Update the AdvanceSalary in the database
+		db.Save(&requestLoan)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Request Loan updated successfully",
+			"data":    requestLoan,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func DeleteRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		// Parse the token to get admin's username
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Extract ID parameter from the request
+		id := c.Param("id")
+
+		// Parse ID to uint
+		requestLoanID, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve advance salary data from the database by ID
+		var requestLoan models.RequestLoan
+		result = db.First(&requestLoan, requestLoanID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Request Loan not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Delete the AdvanceSalary from the database
+		db.Delete(&requestLoan)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Request Loan deleted successfully",
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
