@@ -12,3 +12,17 @@ type PayrollInfo struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+type AdvanceSalary struct {
+	ID                    uint      `gorm:"primaryKey" json:"id"`
+	EmployeeID            uint      `json:"employee_id"`
+	FullnameEmployee      string    `json:"fullname_employee"`
+	MonthAndYear          string    `json:"month_and_year"` // Format: yyyy-mm
+	Amount                int       `json:"amount"`
+	OneTimeDeduct         string    `json:"one_time_deduct"`
+	MonthlyInstallmentAmt int       `json:"monthly_installment_amount"`
+	Reason                string    `json:"reason"`
+	Emi                   int       `json:"emi"`
+	Paid                  int       `json:"paid"`
+	CreatedAt             time.Time `json:"created_at"`
+}
