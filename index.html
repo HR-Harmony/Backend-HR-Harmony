@@ -170,6 +170,14 @@
                 <li class="nav-item"><a class="nav-link" href="#UpdatePayrollsStatus">View List All Employee Payroll</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewPayrollsHistory">View List All Payroll Transaction</a></li>
 
+                <li class="nav-item"><a class="nav-link" href="#CreateAdvanceSalarys">Create Advance Salarys</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewAdvanceSalarys">View List All Advance Salarys</a></li>
+                <li class="nav-item"><a class="nav-link" href="#ViewAdvanceSalarysById">View List Advance Salarys By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#UpdateAdvanceSalarysById">Edit Advance Salarys By ID</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DeleteAdvanceSalarysById">Delete Advance Salarys By ID</a></li>
+
+
+
                 <li class="nav-item"><a class="nav-link" href="#CreateFinances">Create Finances</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewFinances">View List Finances</a></li>
                 <li class="nav-item"><a class="nav-link" href="#ViewFinancesByID">View List Finances By ID</a></li>
@@ -1972,8 +1980,11 @@
     "estimated_hour" : int,
     "project_id" : int,
     "summary" : string,
-    "description" : string
-    "status" : string
+    "description" : string,
+    "status" : string,
+    "progress_bar" : int,
+    "notes" : string
+
 }
                             </pre>
                     <p><strong>Note</strong></p>
@@ -1994,7 +2005,9 @@
         "project_name": string,
         "summary": string,
         "description": string,
-        "status" : string                 
+        "status" : string,
+        "progress_bar" : int,
+        "notes" : string,
         "created_at": time,
         "updated_at": time
     }
@@ -3601,8 +3614,205 @@
                 </div>
             </div>
 
+        <div id="CreateAdvanceSalarys" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create Advance Salarys</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "month_and_year" : string (yyyy-mm),
+    "amount" : int,
+    "one_time_deduct" : string,
+    "monthly_installment_amount" : int,
+    "reason" : string
+}
 
-            <div id="CreateFinances" class="card mb-4 anchor">
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string",
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Advance Salary created successfully"
+}
+
+                        </pre>
+            </div>
+        </div>
+
+        <div id="ViewAdvanceSalarys" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List All Advance Salarys - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "employee_id": int,
+            "fullname_employee": string,
+            "month_and_year": string,
+            "amount": int,
+            "one_time_deduct": string,
+            "monthly_installment_amount": int,
+            "reason": string,
+            "emi": int,
+            "paid": int,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "employee_id": int,
+            "fullname_employee": string,
+            "month_and_year": string,
+            "amount": int,
+            "one_time_deduct": string,
+            "monthly_installment_amount": int,
+            "reason": string,
+            "emi": int,
+            "paid": int,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Advance Salary history retrieved successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewAdvanceSalarysById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List Advance Salarys By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string,
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Advance Salary retrieved successfully"
+}                  </pre>
+            </div>
+        </div>
+
+
+        <div id="UpdateAdvanceSalarysById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit Advance Salarys By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "month_and_year" : string (yyyy-mm),
+    "amount" : int,
+    "one_time_deduct" : string,
+    "monthly_installment_amount" : int,
+    "reason" : string
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string",
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Advance Salary updated successfully"
+}
+
+
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteAdvanceSalarysById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete Advance Salarys By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Advance Salary deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+
+        <div id="CreateFinances" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>Create Finances</h2>
                     <p><strong>URL</strong></p>

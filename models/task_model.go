@@ -15,6 +15,8 @@ type Task struct {
 	Summary       string     `json:"summary"`
 	Description   string     `json:"description"`
 	Status        string     `json:"status"`
+	ProgressBar   int        `json:"progress_bar"`
+	Notes         string     `json:"notes"`
 	CreatedAt     *time.Time `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
 }
