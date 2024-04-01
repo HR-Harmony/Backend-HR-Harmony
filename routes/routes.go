@@ -82,6 +82,10 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/tasks/:id", controllers.UpdateTaskByIDByAdmin(db, secretKey))
 	e.DELETE("/tasks/:id", controllers.DeleteTaskByIDByAdmin(db, secretKey))
 
+	//note
+	e.POST("/tasks/notes", controllers.CreateNoteByAdmin(db, secretKey))
+	e.DELETE("/tasks/notes/:id", controllers.DeleteNoteForTaskByAdmin(db, secretKey))
+
 	//Case Admin
 	e.POST("/cases", controllers.CreateCaseByAdmin(db, secretKey))
 	e.GET("/cases", controllers.GetAllCasesByAdmin(db, secretKey))
