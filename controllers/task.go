@@ -12,6 +12,147 @@ import (
 	"time"
 )
 
+// CreateNoteForTask endpoint allows admin to add a note to a task
+func CreateNoteByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Get token from request header
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Validate token format
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Extract token from authParts
+		tokenString = authParts[1]
+
+		// Verify token and get username
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if user is admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// If user is not admin, return access denied
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Parse request body
+		var note models.Note
+		if err := c.Bind(&note); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		note.Fullname = adminUser.FirstName + " " + adminUser.LastName
+
+		// Check if the task with the given ID exists
+		var existingTask models.Task
+		result = db.First(&existingTask, note.TaskID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Set the created timestamp
+		currentTime := time.Now()
+		note.CreatedAt = &currentTime
+
+		// Create the note in the database
+		db.Create(&note)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Note created successfully",
+			"note":    &note,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+// DeleteNoteForTask endpoint allows admin to delete a note by its ID
+func DeleteNoteForTaskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Get token from request header
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Validate token format
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Extract token from authParts
+		tokenString = authParts[1]
+
+		// Verify token and get username
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if user is admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// If user is not admin, return access denied
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Get note ID from request parameter
+		noteID := c.Param("id")
+
+		// Check if the note with the given ID exists
+		var note models.Note
+		result = db.First(&note, noteID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Note not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Delete the note from the database
+		db.Delete(&note)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Note deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
 func CreateTaskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -104,6 +245,7 @@ func CreateTaskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllTasksByAdmin endpoint retrieves all tasks for admin
 func GetAllTasksByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -140,9 +282,13 @@ func GetAllTasksByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all tasks from the database
+		// Retrieve all tasks from the database including notes
 		var tasks []models.Task
-		db.Find(&tasks)
+		result = db.Preload("Notes").Find(&tasks)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
 
 		// Respond with success
 		successResponse := helper.Response{
@@ -155,6 +301,7 @@ func GetAllTasksByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetTaskByIDByAdmin endpoint retrieves a task by its ID for admin
 func GetTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -199,9 +346,9 @@ func GetTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve task from the database based on ID
+		// Retrieve task from the database based on ID including notes
 		var task models.Task
-		result = db.First(&task, uint(taskID))
+		result = db.Preload("Notes").First(&task, uint(taskID))
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
