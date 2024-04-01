@@ -16,7 +16,15 @@ type Task struct {
 	Description   string     `json:"description"`
 	Status        string     `json:"status"`
 	ProgressBar   int        `json:"progress_bar"`
-	Notes         string     `json:"notes"`
+	Notes         []Note     `json:"notes" gorm:"foreignKey:TaskID"`
 	CreatedAt     *time.Time `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
+type Note struct {
+	ID        uint       `gorm:"primaryKey" json:"id"`
+	TaskID    uint       `json:"task_id"`
+	NoteText  string     `json:"note_text"`
+	Fullname  string     `json:"fullname"`
+	CreatedAt *time.Time `json:"created_at"`
 }
