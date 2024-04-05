@@ -70,6 +70,7 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.AdvanceSalary{})
 	db.AutoMigrate(&models.RequestLoan{})
 	db.AutoMigrate(&models.Note{})
+	db.AutoMigrate(&models.KPAIndicator{})
 
 	return db, nil
 }
