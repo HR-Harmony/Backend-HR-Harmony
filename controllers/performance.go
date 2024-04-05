@@ -1128,3 +1128,370 @@ func DeleteKPIIndicatorByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+
+// KPA Indicator
+
+func CreateKPAIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Bind the KPA Indicator data from the request body
+		var kpaIndicator models.KPAIndicator
+		if err := c.Bind(&kpaIndicator); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate KPA Indicator data
+		// Check if designation_id is provided
+		if kpaIndicator.EmployeeID == 0 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Employee ID is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve the designation name based on designation_id
+		var employee models.Employee
+		result = db.First(&employee, kpaIndicator.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		kpaIndicator.EmployeeName = employee.FirstName + " " + employee.LastName
+
+		// Validate KPA scores
+		if !helper.IsValidScoreKPA(kpaIndicator) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid score. Scores should be between 0 and 5"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Calculate the result based on technical and organizational scores
+		totalScores := helper.CalculateTotalScoresKPA(kpaIndicator)
+		kpaIndicator.Result = totalScores / 36
+
+		// Set admin ID and username
+		kpaIndicator.AdminId = adminUser.ID
+		kpaIndicator.AdminName = adminUser.FirstName + " " + adminUser.LastName
+
+		// Create the KPI Indicator in the database
+		db.Create(&kpaIndicator)
+
+		successResponse := map[string]interface{}{
+			"code":          http.StatusCreated,
+			"error":         false,
+			"message":       "KPA Indicator created successfully",
+			"kpi_indicator": &kpaIndicator,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+func GetAllKPAIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Fetch searching query parameter
+		searching := c.QueryParam("searching")
+
+		// Fetch performances data from database with optional search filters
+		var kpaIndicator []models.KPAIndicator
+		query := db.Model(&kpaIndicator)
+		if searching != "" {
+			searchingPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where("LOWER(title) LIKE ? OR LOWER(employee_name) LIKE ?", searchingPattern, searchingPattern)
+		}
+		query.Find(&kpaIndicator)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "KPA Indicator fetched successfully",
+			"data":    kpaIndicator,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetKPAIndicatorsByIdByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve performance ID from the URL parameter
+		performanceIDStr := c.Param("id")
+		performanceID, err := strconv.ParseUint(performanceIDStr, 10, 32)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid KPA Indicator ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve the performance from the database
+		var kpaIndicator models.KPAIndicator
+		result = db.First(&kpaIndicator, uint(performanceID))
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "KPA Indicator not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "KPA Indicator retrieved successfully",
+			"data":    kpaIndicator,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func EditKPAIndicatorByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve KPA Indicator ID from the URL parameter
+		kpaIndicatorIDStr := c.Param("id")
+		kpaIndicatorID, err := strconv.ParseUint(kpaIndicatorIDStr, 10, 32)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid KPA Indicator ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve the KPA Indicator from the database
+		var kpaIndicator models.KPAIndicator
+		result = db.First(&kpaIndicator, uint(kpaIndicatorID))
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "KPA Indicator not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Bind the updated KPA Indicator data from the request body
+		var updateData models.KPAIndicator
+		if err := c.Bind(&updateData); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate and update KPA Indicator data
+		if updateData.EmployeeID != 0 {
+			// Retrieve the designation name based on the new designation ID
+			var newEmployee models.Employee
+			result = db.First(&newEmployee, updateData.EmployeeID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			kpaIndicator.EmployeeName = newEmployee.FirstName + " " + newEmployee.LastName
+		}
+
+		// Update only the provided fields
+		db.Model(&kpaIndicator).Updates(updateData)
+
+		// Recalculate the result based on the updated scores
+		totalScores := helper.CalculateTotalScoresKPA(kpaIndicator)
+		kpaIndicator.Result = totalScores / 36
+
+		// Save the updated KPA Indicator
+		db.Save(&kpaIndicator)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "KPA Indicator updated successfully",
+			"data":    kpaIndicator,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func DeleteKPAIndicatorByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Retrieve KPI Indicator ID from the URL parameter
+		kpaIndicatorIDStr := c.Param("id")
+		kpaIndicatorID, err := strconv.ParseUint(kpaIndicatorIDStr, 10, 32)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid KPA Indicator ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve the KPI Indicator from the database
+		var kpaIndicator models.KPAIndicator
+		result = db.First(&kpaIndicator, uint(kpaIndicatorID))
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "KPA Indicator not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Delete the KPI Indicator
+		db.Delete(&kpaIndicator)
+
+		// Respond with success
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "KPA Indicator deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
