@@ -199,12 +199,19 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/trainings/:id", controllers.UpdateTrainingByIDByAdmin(db, secretKey))
 	e.DELETE("/trainings/:id", controllers.DeleteTrainingByIDByAdmin(db, secretKey))
 
-	//Performance
+	//Performance KPI Indicator
 	e.POST("/kpi_indicators", controllers.CreateKPIIndicatorByAdmin(db, secretKey))
 	e.GET("/kpi_indicators", controllers.GetAllKPIIndicatorsByAdmin(db, secretKey))
 	e.GET("/kpi_indicators/:id", controllers.GetKPIIndicatorsByIdByAdmin(db, secretKey))
 	e.PUT("/kpi_indicators/:id", controllers.EditKPIIndicatorByIDByAdmin(db, secretKey))
 	e.DELETE("/kpi_indicators/:id", controllers.DeleteKPIIndicatorByIDByAdmin(db, secretKey))
+	
+	//Performance KPA Indicator
+	e.POST("/kpa_indicators", controllers.CreateKPAIndicatorByAdmin(db, secretKey))
+	e.GET("/kpa_indicators", controllers.GetAllKPAIndicatorsByAdmin(db, secretKey))
+	e.GET("/kpa_indicators/:id", controllers.GetKPAIndicatorsByIdByAdmin(db, secretKey))
+	e.PUT("/kpa_indicators/:id", controllers.EditKPAIndicatorByIDByAdmin(db, secretKey))
+	e.DELETE("/kpa_indicators/:id", controllers.DeleteKPAIndicatorByIDByAdmin(db, secretKey))
 
 	//Exit Admin
 	e.POST("/exits", controllers.CreateExitStatusByAdmin(db, secretKey))
