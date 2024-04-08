@@ -409,9 +409,9 @@ func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve task from the database based on ID
+		// Retrieve task from the database based on ID including notes
 		var existingTask models.Task
-		result = db.First(&existingTask, uint(taskID))
+		result = db.Preload("Notes").First(&existingTask, uint(taskID))
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -426,7 +426,7 @@ func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Validate that at least one field is updated
 		if updatedTask.Title == "" && updatedTask.StartDate == "" && updatedTask.EndDate == "" && updatedTask.EstimatedHour == 0 &&
-			updatedTask.ProjectID == 0 && updatedTask.Summary == "" && updatedTask.Description == "" {
+			updatedTask.ProjectID == 0 && updatedTask.Summary == "" && updatedTask.Description == "" && updatedTask.ProgressBar == 0 && updatedTask.Status == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "At least one field must be updated"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
@@ -474,6 +474,10 @@ func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if updatedTask.Status != "" {
 			existingTask.Status = updatedTask.Status
+		}
+
+		if updatedTask.ProgressBar != 0 {
+			existingTask.ProgressBar = updatedTask.ProgressBar
 		}
 
 		db.Save(&existingTask)
