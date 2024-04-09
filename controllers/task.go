@@ -539,16 +539,19 @@ func DeleteTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Retrieve task from the database based on ID
 		var existingTask models.Task
-		result = db.First(&existingTask, uint(taskID))
+		result = db.Preload("Notes").First(&existingTask, uint(taskID))
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete task from the database
+		// Hapus Notes
+		for _, note := range existingTask.Notes {
+			db.Delete(&note)
+		}
+
 		db.Delete(&existingTask)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
