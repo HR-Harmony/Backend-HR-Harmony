@@ -357,6 +357,11 @@ func UpdateProjectByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			existingProject.Status = updatedProject.Status
 		}
 
+		if updatedProject.ProjectBar != 0 {
+			existingProject.ProjectBar = updatedProject.ProjectBar
+
+		}
+
 		// Set the updated timestamp
 		currentTime := time.Now()
 		existingProject.UpdatedAt = currentTime
