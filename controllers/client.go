@@ -112,6 +112,8 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 		employee.Password = string(hashedPassword)
 
+		employee.FullName = employee.FirstName + " " + employee.LastName
+
 		employee.IsClient = true
 
 		// Create the employee account in the database
@@ -342,6 +344,8 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			}
 			existingEmployee.Password = string(hashedPassword)
 		}
+
+		updatedEmployee.FullName = updatedEmployee.FirstName + " " + updatedEmployee.LastName
 
 		passwordWithNoHash := updatedEmployee.Password
 
