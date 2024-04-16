@@ -99,6 +99,7 @@ func CreateProjectByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Set the Username and DepartmentName
 		project.Username = existingEmployee.Username
 		project.DepartmentName = existingDepartment.DepartmentName
+		project.ClientName = existingEmployee.FirstName + " " + existingEmployee.LastName
 
 		project.Status = "Not Started"
 
@@ -314,6 +315,7 @@ func UpdateProjectByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				return c.JSON(http.StatusNotFound, errorResponse)
 			}
 			existingProject.Username = employee.Username
+			existingProject.ClientName = employee.FirstName + " " + employee.LastName
 		}
 
 		if updatedProject.EstimatedHour != 0 {
