@@ -9,6 +9,7 @@ type Project struct {
 	Title          string     `json:"title"`
 	EmployeeID     uint       `json:"employee_id"`
 	Username       string     `json:"username"`
+	ClientName     string     `json:"client_name"`
 	EstimatedHour  int        `json:"estimated_hour"`
 	Priority       string     `json:"priority" `
 	StartDate      string     `json:"start_date"`
