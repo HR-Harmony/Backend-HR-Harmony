@@ -4,6 +4,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -13,6 +14,7 @@ import (
 	"hrsale/models"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -848,6 +850,122 @@ func DeleteExitEmployeeByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			Code:    http.StatusOK,
 			Error:   false,
 			Message: "ExitEmployee record deleted successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+// UpdateEmployeePasswordByAdmin handles updating an employee's password by admin
+func UpdateEmployeePasswordByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Get employee ID from request parameters
+		employeeID := c.Param("id")
+		if employeeID == "" {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Employee ID is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Convert employee ID to uint
+		employeeIDUint, err := strconv.ParseUint(employeeID, 10, 64)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid employee ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Bind the new password and repeat password from the request body
+		var newPassword struct {
+			NewPassword    string `json:"new_password"`
+			RepeatPassword string `json:"repeat_password"`
+		}
+		if err := c.Bind(&newPassword); err != nil {
+			// Handle invalid request body
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate the new password and repeat password
+		if newPassword.NewPassword == "" || newPassword.RepeatPassword == "" {
+			// Handle missing new password or repeat password
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "New password and repeat password are required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if newPassword.NewPassword != newPassword.RepeatPassword {
+			// Handle mismatch between new password and repeat password
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "New password and repeat password do not match"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve the employee from the database
+		var employee models.Employee
+		result = db.First(&employee, "id = ?", employeeIDUint)
+		if result.Error != nil {
+			if result.Error == gorm.ErrRecordNotFound {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			} else {
+				errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch employee data"}
+				return c.JSON(http.StatusInternalServerError, errorResponse)
+			}
+		}
+
+		// Hash the new password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword.NewPassword), bcrypt.DefaultCost)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to hash password"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Update employee's password
+		employee.Password = string(hashedPassword)
+		db.Save(&employee)
+
+		// Send password change notification to the employee
+		go func(email, fullName, newPassword string) {
+			if err := helper.SendPasswordChangeNotification(email, fullName, newPassword); err != nil {
+				fmt.Println("Failed to send password change notification email:", err)
+			}
+		}(employee.Email, employee.FirstName+" "+employee.LastName, newPassword.NewPassword)
+
+		// Respond with success
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "Employee password updated successfully",
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
