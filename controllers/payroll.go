@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -48,9 +49,9 @@ func GetAllEmployeesPayrollInfo(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all employees' payroll information
+		// Retrieve only non-client employees' payroll information
 		var employees []models.Employee
-		result = db.Find(&employees)
+		result = db.Where("is_client = ?", false).Find(&employees)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve employees"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -62,6 +63,7 @@ func GetAllEmployeesPayrollInfo(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			payrollInfo := map[string]interface{}{
 				"payroll_id":   employee.PayrollID,
 				"username":     employee.Username,
+				"full_name":    employee.FullName,
 				"employee_id":  employee.ID,
 				"payslip_type": employee.PaySlipType,
 				"basic_salary": employee.BasicSalary,
@@ -136,10 +138,19 @@ func UpdatePaidStatusByPayrollID(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			EmployeeID:  employee.ID,
 			BasicSalary: employee.BasicSalary,
 			PayslipType: employee.PaySlipType,
+			PaidStatus:  employee.PaidStatus,
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
 		db.Create(&payrollInfo)
+
+		// Send salary transfer notification to the employee
+		go func(email, fullName string, basicSalary float64) {
+			if err := helper.SendSalaryTransferNotification(email, fullName, basicSalary); err != nil {
+				fmt.Println("Failed to send salary transfer notification email:", err)
+				// You can handle the failure here, e.g., log it or send an alert
+			}
+		}(employee.Email, employee.FirstName+" "+employee.LastName, employee.BasicSalary)
 
 		// Respond with success excluding PayrollInfo
 		successResponse := map[string]interface{}{
@@ -151,6 +162,7 @@ func UpdatePaidStatusByPayrollID(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 				"payroll_id":     employee.PayrollID,
 				"first_name":     employee.FirstName,
 				"last_name":      employee.LastName,
+				"full_name":      employee.FullName,
 				"contact_number": employee.ContactNumber,
 				"gender":         employee.Gender,
 				"email":          employee.Email,
@@ -286,7 +298,10 @@ func CreateAdvanceSalaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		if advanceSalary.OneTimeDeduct == "Yes" {
 			advanceSalary.MonthlyInstallmentAmt = advanceSalary.Amount
+			advanceSalary.Emi = advanceSalary.MonthlyInstallmentAmt
 		}
+
+		advanceSalary.Emi = advanceSalary.MonthlyInstallmentAmt
 
 		// Validate date format
 		_, err = time.Parse("2006-01", advanceSalary.MonthAndYear)

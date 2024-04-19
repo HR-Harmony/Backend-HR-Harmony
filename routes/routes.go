@@ -205,7 +205,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/kpi_indicators/:id", controllers.GetKPIIndicatorsByIdByAdmin(db, secretKey))
 	e.PUT("/kpi_indicators/:id", controllers.EditKPIIndicatorByIDByAdmin(db, secretKey))
 	e.DELETE("/kpi_indicators/:id", controllers.DeleteKPIIndicatorByIDByAdmin(db, secretKey))
-	
+
 	//Performance KPA Indicator
 	e.POST("/kpa_indicators", controllers.CreateKPAIndicatorByAdmin(db, secretKey))
 	e.GET("/kpa_indicators", controllers.GetAllKPAIndicatorsByAdmin(db, secretKey))
@@ -277,6 +277,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 
 	//Cooperation Message
 	e.POST("/cooperation", controllers.CreateCooperationMessage(db))
+
+	//Update Employee Password
+	e.PUT("change-password/:id", controllers.UpdateEmployeePasswordByAdmin(db, secretKey))
 
 	//Employee Login
 	e.POST("/employee/signin", controllers.EmployeeLogin(db, secretKey))
