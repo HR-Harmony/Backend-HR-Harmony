@@ -288,6 +288,9 @@
                 <li class="nav-item"><a class="nav-link" href="#DeleteKpaIndicatorsByID">Delete List Kpa Indicators By ID</a></li>
 
 
+                <li class="nav-item"><a class="nav-link" href="#ChangePasswordEmployeeByAdmin">Change Password Employee By Admin</a></li>
+
+
                 <li class="nav-item"><a class="nav-link" href="#CooperationMessage">Create New Cooperation Message</a></li>
 
                 <!-- Employee -->
@@ -7370,6 +7373,33 @@
             </div>
         </div>
 
+        <div id="ChangePasswordEmployeeByAdmin" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Change Password Employee By Admin</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/change-password/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "new_password" : string,
+    "repeat_password" : string
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Employee password updated successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
             <div id="Chatbot" class="card mb-4 anchor">
                 <div class="card-body">
                     <h2>Chatbot HR Harmony</h2>
@@ -7394,6 +7424,8 @@
                         </pre>
                 </div>
             </div>
+
+
 
 
         </div>
