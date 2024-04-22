@@ -1211,7 +1211,7 @@ func CreateKPAIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"code":          http.StatusCreated,
 			"error":         false,
 			"message":       "KPA Indicator created successfully",
-			"kpi_indicator": &kpaIndicator,
+			"kpa_indicator": &kpaIndicator,
 		}
 		return c.JSON(http.StatusCreated, successResponse)
 	}
