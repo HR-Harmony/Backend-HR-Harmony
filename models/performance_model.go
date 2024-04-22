@@ -45,6 +45,7 @@ type KPIIndicator struct {
 	TimeManagement                    uint      `json:"time_management"`
 	DisciplineExecution               uint      `json:"discipline_execution"`
 	QualityOrientation                uint      `json:"quality_orientation"`
+	ResultOrientation                 uint      `json:"result_orientation"`
 	Result                            float64   `json:"result"`
 	CreatedAt                         time.Time `json:"created_at"`
 	UpdatedAt                         time.Time `json:"updated_at"`
@@ -93,6 +94,7 @@ type KPAIndicator struct {
 	TimeManagement                    uint      `json:"time_management"`
 	DisciplineExecution               uint      `json:"discipline_execution"`
 	QualityOrientation                uint      `json:"quality_orientation"`
+	ResultOrientation                 uint      `json:"result_orientation"`
 	Result                            float64   `json:"result"`
 	CreatedAt                         time.Time `json:"created_at"`
 	UpdatedAt                         time.Time `json:"updated_at"`

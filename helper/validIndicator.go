@@ -122,13 +122,16 @@ func IsValidScore(kpiIndicator models.KPIIndicator) bool {
 	if kpiIndicator.QualityOrientation < 0 || kpiIndicator.QualityOrientation > 5 {
 		return false
 	}
+	if kpiIndicator.ResultOrientation < 0 || kpiIndicator.ResultOrientation > 5 {
+		return false
+	}
 
 	return true
 }
 
 // Function to calculate total scores
 func CalculateTotalScores(kpiIndicator models.KPIIndicator) float64 {
-	return float64(kpiIndicator.BddSellingSkill + kpiIndicator.BddHandlingObjection + kpiIndicator.BddNegotiationSkill + kpiIndicator.BddProposalDevelopment + kpiIndicator.BddAfterSalesManagement + kpiIndicator.BddCustomerRelationshipManagement + kpiIndicator.BddHubunganInterpersonal + kpiIndicator.BddCommunicationSkill + kpiIndicator.BsdProductKnowledge + kpiIndicator.BsdProjectManagement + kpiIndicator.BsdDeliveringProceduresOrProcess + kpiIndicator.BsdCollaboratingProcess + kpiIndicator.BsdCustomerSatisfaction + kpiIndicator.BsdSelfConfidence + kpiIndicator.BsdEmphaty + kpiIndicator.TidComputerLiteracy + kpiIndicator.TidSystemDatabaseManagement + kpiIndicator.TidNetworkManagement + kpiIndicator.TidProgramDevelopment + kpiIndicator.TidCodingManagement + kpiIndicator.TidSystemAnalyze + kpiIndicator.TidUserExperienceManagement + kpiIndicator.Creativity + kpiIndicator.UltimateSpeed + kpiIndicator.Reliable + kpiIndicator.OpenMinded + kpiIndicator.SuperiorService + kpiIndicator.Integrity + kpiIndicator.AgileEntrepreneur + kpiIndicator.DayaTahanStress + kpiIndicator.StabilitasEmosi + kpiIndicator.MotivasiBerprestasi + kpiIndicator.AttentionToDetail + kpiIndicator.TimeManagement + kpiIndicator.DisciplineExecution + kpiIndicator.QualityOrientation)
+	return float64(kpiIndicator.BddSellingSkill + kpiIndicator.BddHandlingObjection + kpiIndicator.BddNegotiationSkill + kpiIndicator.BddProposalDevelopment + kpiIndicator.BddAfterSalesManagement + kpiIndicator.BddCustomerRelationshipManagement + kpiIndicator.BddHubunganInterpersonal + kpiIndicator.BddCommunicationSkill + kpiIndicator.BsdProductKnowledge + kpiIndicator.BsdProjectManagement + kpiIndicator.BsdDeliveringProceduresOrProcess + kpiIndicator.BsdCollaboratingProcess + kpiIndicator.BsdCustomerSatisfaction + kpiIndicator.BsdSelfConfidence + kpiIndicator.BsdEmphaty + kpiIndicator.TidComputerLiteracy + kpiIndicator.TidSystemDatabaseManagement + kpiIndicator.TidNetworkManagement + kpiIndicator.TidProgramDevelopment + kpiIndicator.TidCodingManagement + kpiIndicator.TidSystemAnalyze + kpiIndicator.TidUserExperienceManagement + kpiIndicator.Creativity + kpiIndicator.UltimateSpeed + kpiIndicator.Reliable + kpiIndicator.OpenMinded + kpiIndicator.SuperiorService + kpiIndicator.Integrity + kpiIndicator.AgileEntrepreneur + kpiIndicator.DayaTahanStress + kpiIndicator.StabilitasEmosi + kpiIndicator.MotivasiBerprestasi + kpiIndicator.AttentionToDetail + kpiIndicator.TimeManagement + kpiIndicator.DisciplineExecution + kpiIndicator.QualityOrientation + kpiIndicator.ResultOrientation)
 }
 
 // Function to validate KPI scores
@@ -251,11 +254,14 @@ func IsValidScoreKPA(kpaIndicator models.KPAIndicator) bool {
 	if kpaIndicator.QualityOrientation < 0 || kpaIndicator.QualityOrientation > 5 {
 		return false
 	}
+	if kpaIndicator.ResultOrientation < 0 || kpaIndicator.ResultOrientation > 5 {
+		return false
+	}
 
 	return true
 }
 
 // Function to calculate total scores
 func CalculateTotalScoresKPA(kpaIndicator models.KPAIndicator) float64 {
-	return float64(kpaIndicator.BddSellingSkill + kpaIndicator.BddHandlingObjection + kpaIndicator.BddNegotiationSkill + kpaIndicator.BddProposalDevelopment + kpaIndicator.BddAfterSalesManagement + kpaIndicator.BddCustomerRelationshipManagement + kpaIndicator.BddHubunganInterpersonal + kpaIndicator.BddCommunicationSkill + kpaIndicator.BsdProductKnowledge + kpaIndicator.BsdProjectManagement + kpaIndicator.BsdDeliveringProceduresOrProcess + kpaIndicator.BsdCollaboratingProcess + kpaIndicator.BsdCustomerSatisfaction + kpaIndicator.BsdSelfConfidence + kpaIndicator.BsdEmphaty + kpaIndicator.TidComputerLiteracy + kpaIndicator.TidSystemDatabaseManagement + kpaIndicator.TidNetworkManagement + kpaIndicator.TidProgramDevelopment + kpaIndicator.TidCodingManagement + kpaIndicator.TidSystemAnalyze + kpaIndicator.TidUserExperienceManagement + kpaIndicator.Creativity + kpaIndicator.UltimateSpeed + kpaIndicator.Reliable + kpaIndicator.OpenMinded + kpaIndicator.SuperiorService + kpaIndicator.Integrity + kpaIndicator.AgileEntrepreneur + kpaIndicator.DayaTahanStress + kpaIndicator.StabilitasEmosi + kpaIndicator.MotivasiBerprestasi + kpaIndicator.AttentionToDetail + kpaIndicator.TimeManagement + kpaIndicator.DisciplineExecution + kpaIndicator.QualityOrientation)
+	return float64(kpaIndicator.BddSellingSkill + kpaIndicator.BddHandlingObjection + kpaIndicator.BddNegotiationSkill + kpaIndicator.BddProposalDevelopment + kpaIndicator.BddAfterSalesManagement + kpaIndicator.BddCustomerRelationshipManagement + kpaIndicator.BddHubunganInterpersonal + kpaIndicator.BddCommunicationSkill + kpaIndicator.BsdProductKnowledge + kpaIndicator.BsdProjectManagement + kpaIndicator.BsdDeliveringProceduresOrProcess + kpaIndicator.BsdCollaboratingProcess + kpaIndicator.BsdCustomerSatisfaction + kpaIndicator.BsdSelfConfidence + kpaIndicator.BsdEmphaty + kpaIndicator.TidComputerLiteracy + kpaIndicator.TidSystemDatabaseManagement + kpaIndicator.TidNetworkManagement + kpaIndicator.TidProgramDevelopment + kpaIndicator.TidCodingManagement + kpaIndicator.TidSystemAnalyze + kpaIndicator.TidUserExperienceManagement + kpaIndicator.Creativity + kpaIndicator.UltimateSpeed + kpaIndicator.Reliable + kpaIndicator.OpenMinded + kpaIndicator.SuperiorService + kpaIndicator.Integrity + kpaIndicator.AgileEntrepreneur + kpaIndicator.DayaTahanStress + kpaIndicator.StabilitasEmosi + kpaIndicator.MotivasiBerprestasi + kpaIndicator.AttentionToDetail + kpaIndicator.TimeManagement + kpaIndicator.DisciplineExecution + kpaIndicator.QualityOrientation + kpaIndicator.ResultOrientation)
 }

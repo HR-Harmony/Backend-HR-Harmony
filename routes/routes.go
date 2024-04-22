@@ -285,6 +285,13 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.POST("/employee/signin", controllers.EmployeeLogin(db, secretKey))
 	e.GET("/profile", controllers.EmployeeProfile(db, secretKey))
 
+	//Employee Attandance
+	// Tambahkan pada main atau tempat lainnya
+	e.POST("/employee/checkin", controllers.EmployeeCheckIn(db, secretKey))
+	e.PUT("/employee/checkout", controllers.EmployeeCheckOut(db, secretKey))
+	// Tambahkan pada main atau tempat lainnya
+	e.GET("/employee/attendance", controllers.EmployeeAttendance(db, secretKey))
+
 	// Chatbot untuk user dapat bertanya dengan Debot rekomendasi tempat wisata
 	harmonyUsecase := controllers.NewHarmonyUsecase()
 	e.POST("/chatbot", func(c echo.Context) error {
