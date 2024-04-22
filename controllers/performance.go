@@ -831,7 +831,7 @@ func CreateKPIIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Calculate the result based on technical and organizational scores
 		totalScores := helper.CalculateTotalScores(kpiIndicator)
-		kpiIndicator.Result = totalScores / 36
+		kpiIndicator.Result = totalScores / 37
 
 		// Set admin ID and username
 		kpiIndicator.AdminId = adminUser.ID
@@ -1048,7 +1048,7 @@ func EditKPIIndicatorByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 		// Recalculate the result based on the updated scores
 		totalScores := helper.CalculateTotalScores(kpiIndicator)
-		kpiIndicator.Result = totalScores / 36
+		kpiIndicator.Result = totalScores / 37
 
 		// Save the updated KPI Indicator
 		db.Save(&kpiIndicator)
@@ -1198,7 +1198,7 @@ func CreateKPAIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Calculate the result based on technical and organizational scores
 		totalScores := helper.CalculateTotalScoresKPA(kpaIndicator)
-		kpaIndicator.Result = totalScores / 36
+		kpaIndicator.Result = totalScores / 37
 
 		// Set admin ID and username
 		kpaIndicator.AdminId = adminUser.ID
@@ -1415,7 +1415,7 @@ func EditKPAIndicatorByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 		// Recalculate the result based on the updated scores
 		totalScores := helper.CalculateTotalScoresKPA(kpaIndicator)
-		kpaIndicator.Result = totalScores / 36
+		kpaIndicator.Result = totalScores / 37
 
 		// Save the updated KPA Indicator
 		db.Save(&kpaIndicator)
