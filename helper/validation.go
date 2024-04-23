@@ -3,6 +3,7 @@ package helper
 import (
 	"regexp"
 	"strconv"
+	"time"
 )
 
 // IsValidPassword checks if the password meets the required criteria
@@ -66,4 +67,10 @@ func ParseStringToInt(s string) int {
 		return 0
 	}
 	return i
+}
+
+func IsValidAppraisalDateFormat(date string) bool {
+	// Check if date has format mm-yy
+	_, err := time.Parse("01-2006", date)
+	return err == nil
 }
