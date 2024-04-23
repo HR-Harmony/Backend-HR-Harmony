@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -1204,8 +1205,29 @@ func CreateKPAIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		kpaIndicator.AdminId = adminUser.ID
 		kpaIndicator.AdminName = adminUser.FirstName + " " + adminUser.LastName
 
+		// Validate appraisal_date format
+		if kpaIndicator.AppraisalDate == "" || !helper.IsValidAppraisalDateFormat(kpaIndicator.AppraisalDate) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid appraisal date format. Please use mm-yyyy format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Convert appraisal_date to time.Time
+		appraisalTime, err := time.Parse("01-2006", kpaIndicator.AppraisalDate)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid appraisal date format. Please use mm-yyyy format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		kpaIndicator.AppraisalDate = appraisalTime.Format("2006-01")
+
 		// Create the KPI Indicator in the database
 		db.Create(&kpaIndicator)
+
+		// Kirim notifikasi email ke karyawan
+		err = helper.SendKPAAppraisalNotification(employee.Email, kpaIndicator.AppraisalDate, kpaIndicator.Result)
+		if err != nil {
+			// Handle error
+			fmt.Println("Failed to send KPA appraisal notification:", err)
+		}
 
 		successResponse := map[string]interface{}{
 			"code":          http.StatusCreated,

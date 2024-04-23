@@ -58,6 +58,7 @@ type KPAIndicator struct {
 	EmployeeName                      string    `json:"employee_name"`
 	AdminId                           uint      `json:"admin_id"`
 	AdminName                         string    `json:"admin_name"`
+	AppraisalDate                     string    `json:"appraisal_date"`
 	BddSellingSkill                   uint      `json:"bdd_selling_skill"`
 	BddHandlingObjection              uint      `json:"bdd_handling_objection"`
 	BddNegotiationSkill               uint      `json:"bdd_negotiation_skill"`
