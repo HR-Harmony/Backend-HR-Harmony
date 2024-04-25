@@ -441,6 +441,10 @@ func CreateGoalByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			goal.EndDate = endDate.Format("2006-01-02")
 		}
 
+		goal.GoalRating = 0
+		goal.ProgressBar = 0
+		goal.Status = "Not Started"
+
 		// Set created_at
 		goal.CreatedAt = time.Now().Format("2006-01-02")
 
@@ -657,6 +661,38 @@ func UpdateGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			goal.GoalTypeName = updatedGoal.GoalTypeName
 		}
 
+		if updatedGoal.ProjectID != 0 {
+			goal.ProjectID = updatedGoal.ProjectID
+			var project models.Project
+			result := db.First(&project, updatedGoal.ProjectID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Project not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			goal.ProjectName = project.Title
+		}
+
+		if updatedGoal.TaskID != 0 {
+			goal.TaskID = updatedGoal.TaskID
+			var task models.Task
+			result := db.First(&task, updatedGoal.TaskID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			goal.TaskName = task.Title
+		}
+
+		if updatedGoal.TrainingID != 0 {
+			goal.TrainingID = updatedGoal.TrainingID
+			var training models.Training
+			result := db.First(&training, updatedGoal.TrainingID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Training not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+		}
+
 		if updatedGoal.Subject != "" {
 			goal.Subject = updatedGoal.Subject
 		}
@@ -679,8 +715,21 @@ func UpdateGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 			goal.EndDate = endDate.Format("2006-01-02")
 		}
+
 		if updatedGoal.Description != "" {
 			goal.Description = updatedGoal.Description
+		}
+
+		if updatedGoal.GoalRating != 0 {
+			goal.GoalRating = updatedGoal.GoalRating
+		}
+
+		if updatedGoal.ProgressBar != 0 {
+			goal.ProgressBar = updatedGoal.ProgressBar
+		}
+
+		if updatedGoal.Status != "" {
+			goal.Status = updatedGoal.Status
 		}
 
 		// Simpan perubahan ke database
