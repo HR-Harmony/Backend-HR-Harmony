@@ -693,6 +693,17 @@ func UpdateGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 		}
 
+		if updatedGoal.TrainingSkillID != 0 {
+			goal.TrainingSkillID = updatedGoal.TrainingSkillID
+			var trainingSkill models.TrainingSkill
+			result := db.First(&trainingSkill, updatedGoal.TrainingSkillID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Training Skill ID not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			goal.TrainingSkillName = trainingSkill.TrainingSkill
+		}
+
 		if updatedGoal.Subject != "" {
 			goal.Subject = updatedGoal.Subject
 		}
@@ -722,6 +733,11 @@ func UpdateGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if updatedGoal.GoalRating != 0 {
 			goal.GoalRating = updatedGoal.GoalRating
+		}
+
+		if updatedGoal.GoalRating < 0 || updatedGoal.GoalRating > 5 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid GoalRating. Must be between 0 and 5."}
+			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
 		if updatedGoal.ProgressBar != 0 {

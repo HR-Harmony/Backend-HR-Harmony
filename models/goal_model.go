@@ -17,6 +17,8 @@ type Goal struct {
 	TaskID            uint   `json:"task_id"`
 	TaskName          string `json:"task_name"`
 	TrainingID        uint   `json:"training_id"`
+	TrainingSkillID   uint   `json:"training_skill_id"`
+	TrainingSkillName string `json:"training_skill_name"`
 	Subject           string `json:"subject"`
 	TargetAchievement string `json:"target_achievement"`
 	StartDate         string `json:"start_date"`
