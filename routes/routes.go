@@ -292,6 +292,44 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	// Tambahkan pada main atau tempat lainnya
 	e.GET("/employee/attendance", controllers.EmployeeAttendance(db, secretKey))
 
+	//Project Employee
+	e.POST("/employee/projects", controllers.AddProjectByEmployee(db, secretKey))
+	e.GET("/employee/projects", controllers.GetAllProjectsByEmployee(db, secretKey))
+	e.GET("/employee/projects/:id", controllers.GetProjectByIDByEmployee(db, secretKey))
+	e.PUT("/employee/projects/:id", controllers.UpdateProjectByIDByEmployee(db, secretKey))
+	e.DELETE("/employee/projects/:id", controllers.DeleteProjectByIDByEmployee(db, secretKey))
+
+	//Task Employee
+	e.POST("/employee/tasks", controllers.CreateTaskByEmployee(db, secretKey))
+	e.GET("/employee/tasks", controllers.GetAllTasksByEmployee(db, secretKey))
+	e.GET("/employee/tasks/:id", controllers.GetTaskByIDByEmployee(db, secretKey))
+	e.PUT("/employee/tasks/:id", controllers.UpdateTaskByIDByEmployee(db, secretKey))
+	e.DELETE("/employee/tasks/:id", controllers.DeleteTaskByIDByEmployee(db, secretKey))
+
+	//Notes Employee for Tasks
+	e.POST("/employee/tasks/notes", controllers.CreateNoteByEmployee(db, secretKey))
+	e.DELETE("/employee/tasks/notes/:id", controllers.DeleteNoteForTaskByEmployee(db, secretKey))
+
+	//Overtime Request Employee
+	e.POST("/employee/overtime_requests", controllers.CreateOvertimeRequestByEmployee(db, secretKey))
+	e.GET("/employee/overtime_requests", controllers.GetAllOvertimeRequestsByEmployee(db, secretKey))
+	e.GET("/employee/overtime_requests/:id", controllers.GetOvertimeRequestByIDByEmployee(db, secretKey))
+	e.PUT("/employee/overtime_requests/:id", controllers.UpdateOvertimeRequestByIDByEmployee(db, secretKey))
+	e.DELETE("/employee/overtime_requests/:id", controllers.DeleteOvertimeRequestByIDByEmployee(db, secretKey))
+
+	//Training Employee
+	e.GET("/employee/trainings", controllers.GetTrainingByEmployeeID(db, secretKey))
+
+	//Payroll Employee
+	e.GET("/employee/payrolls", controllers.GetPayrollInfoByEmployeeID(db, secretKey))
+
+	//Request Loan Employee
+	e.POST("/employee/request_loans", controllers.CreateRequestLoanByEmployee(db, secretKey))
+	e.GET("/employee/request_loans", controllers.GetAllRequestLoanByEmployee(db, secretKey))
+	e.GET("/employee/request_loans/:id", controllers.GetRequestLoanByIDByEmployee(db, secretKey))
+	e.PUT("/employee/request_loans/:id", controllers.UpdateRequestLoanByIDByEmployee(db, secretKey))
+	e.DELETE("/employee/request_loans/:id", controllers.DeleteRequestLoanByIDByEmployee(db, secretKey))
+
 	// Chatbot untuk user dapat bertanya dengan Debot rekomendasi tempat wisata
 	harmonyUsecase := controllers.NewHarmonyUsecase()
 	e.POST("/chatbot", func(c echo.Context) error {
