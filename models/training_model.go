@@ -30,6 +30,9 @@ type Training struct {
 	TrainingCost     int        `json:"training_cost"`
 	EmployeeID       uint       `json:"employee_id"`
 	FullNameEmployee string     `json:"full_name_employee"`
+	GoalTypeID       uint       `json:"goal_type_id"`
+	GoalType         string     `json:"goal_type"`
+	Performance      string     `json:"performance"`
 	StartDate        string     `json:"start_date"`
 	EndDate          string     `json:"end_date"`
 	Status           string     `json:"status"`
