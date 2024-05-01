@@ -966,6 +966,27 @@ func UpdateTrainingByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			training.EmployeeID = updatedTraining.EmployeeID
 			training.FullNameEmployee = employee.FullName
 		}
+
+		// Update field yang diizinkan diubah
+		if updatedTraining.GoalTypeID != 0 {
+			var goalType models.GoalType
+			result = db.First(&goalType, "id = ?", updatedTraining.GoalTypeID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid goal type ID. Goal type not found."}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			updatedTraining.GoalTypeID = goalType.ID
+			updatedTraining.GoalType = goalType.GoalType
+
+			// Set nilai pada goal
+			training.GoalTypeID = updatedTraining.GoalTypeID
+			training.GoalType = updatedTraining.GoalType
+		}
+
+		if updatedTraining.Performance != "" {
+			training.Performance = updatedTraining.Performance
+		}
+
 		if updatedTraining.StartDate != "" {
 			training.StartDate = updatedTraining.StartDate
 		}
