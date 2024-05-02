@@ -27,6 +27,7 @@ type Employee struct {
 	IsClient      bool        `json:"is_client" gorm:"default:false"`
 	IsActive      bool        `json:"is_active" gorm:"default:true"`
 	PaidStatus    bool        `json:"paid_status" gorm:"default:false"`
+	Country       string      `json:"country"`
 	PayrollInfo   PayrollInfo `gorm:"foreignKey:EmployeeID"`
 	CreatedAt     *time.Time  `json:"created_at"`
 	UpdatedAt     time.Time
