@@ -116,6 +116,8 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		employee.IsClient = true
 
+		employee.IsActive = true
+
 		// Create the employee account in the database
 		db.Create(&employee)
 
@@ -136,10 +138,13 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 				"id":             employee.ID,
 				"first_name":     employee.FirstName,
 				"last_name":      employee.LastName,
+				"full_name":      employee.FullName,
 				"contact_number": employee.ContactNumber,
 				"gender":         employee.Gender,
 				"email":          employee.Email,
 				"username":       employee.Username,
+				"country":        employee.Country,
+				"is_active":      employee.IsActive,
 			},
 		}
 		return c.JSON(http.StatusCreated, successResponse)
@@ -187,13 +192,16 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			ID            uint   `json:"id"`
 			FirstName     string `json:"first_name"`
 			LastName      string `json:"last_name"`
+			FullName      string `json:"full_name"`
 			ContactNumber string `json:"contact_number"`
 			Gender        string `json:"gender"`
 			Email         string `json:"email"`
 			Username      string `json:"username"`
+			Country       string `json:"country"`
+			IsActive      bool   `json:"is_active"`
 		}
 		db.Model(&models.Employee{}).Where("is_client = ?", true).
-			Select("id", "first_name", "last_name", "contact_number", "gender", "email", "username").
+			Select("id", "first_name", "last_name", "full_name", "contact_number", "gender", "email", "username", "country", "is_active").
 			Find(&clientEmployees)
 
 		// Respond with success
@@ -258,10 +266,13 @@ func GetClientByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"id":             employee.ID,
 			"first_name":     employee.FirstName,
 			"last_name":      employee.LastName,
+			"full_name":      employee.FullName,
 			"contact_number": employee.ContactNumber,
 			"gender":         employee.Gender,
 			"email":          employee.Email,
 			"username":       employee.Username,
+			"country":        employee.Country,
+			"is_active":      employee.IsActive,
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
@@ -320,10 +331,13 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		if updatedEmployee.FirstName != "" {
 			existingEmployee.FirstName = updatedEmployee.FirstName
+			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
 		if updatedEmployee.LastName != "" {
 			existingEmployee.LastName = updatedEmployee.LastName
+			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
+
 		if updatedEmployee.ContactNumber != "" {
 			existingEmployee.ContactNumber = updatedEmployee.ContactNumber
 		}
@@ -333,6 +347,17 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		if updatedEmployee.Email != "" {
 			existingEmployee.Email = updatedEmployee.Email
 		}
+
+		if updatedEmployee.Country != "" {
+			existingEmployee.Country = updatedEmployee.Country
+		}
+
+		if updatedEmployee.IsActive {
+			existingEmployee.IsActive = updatedEmployee.IsActive
+		} else {
+			existingEmployee.IsActive = false
+		}
+
 		if updatedEmployee.Username != "" {
 			existingEmployee.Username = updatedEmployee.Username
 		}
@@ -364,10 +389,13 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			"id":             existingEmployee.ID,
 			"first_name":     existingEmployee.FirstName,
 			"last_name":      existingEmployee.LastName,
+			"full_name":      existingEmployee.FullName,
 			"contact_number": existingEmployee.ContactNumber,
 			"gender":         existingEmployee.Gender,
 			"email":          existingEmployee.Email,
 			"username":       existingEmployee.Username,
+			"country":        existingEmployee.Country,
+			"is_active":      existingEmployee.IsActive,
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
