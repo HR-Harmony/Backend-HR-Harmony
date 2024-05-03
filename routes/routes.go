@@ -291,6 +291,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/employee/checkout", controllers.EmployeeCheckOut(db, secretKey))
 	// Tambahkan pada main atau tempat lainnya
 	e.GET("/employee/attendance", controllers.EmployeeAttendance(db, secretKey))
+	e.GET("/employee/attendance/:id", controllers.EmployeeAttendanceByID(db, secretKey))
 
 	//Project Employee
 	e.POST("/employee/projects", controllers.AddProjectByEmployee(db, secretKey))
@@ -319,9 +320,18 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 
 	//Training Employee
 	e.GET("/employee/trainings", controllers.GetTrainingByEmployeeID(db, secretKey))
+	e.GET("/employee/trainings/:id", controllers.GetTrainingByIDByEmployee(db, secretKey))
 
 	//Payroll Employee
 	e.GET("/employee/payrolls", controllers.GetPayrollInfoByEmployeeID(db, secretKey))
+	e.GET("/employee/payrolls/:id", controllers.GetPayrollInfoByIDAndEmployeeID(db, secretKey))
+
+	//Request Advance Salary Employee
+	e.POST("/employee/advance_salaries", controllers.CreateAdvanceSalaryByEmployee(db, secretKey))
+	e.GET("/employee/advance_salaries", controllers.GetAdvanceSalariesForEmployee(db, secretKey))
+	e.GET("/employee/advance_salaries/:id", controllers.GetAdvanceSalaryByIDForEmployee(db, secretKey))
+	e.PUT("/employee/advance_salaries/:id", controllers.UpdateAdvanceSalaryByIDForEmployee(db, secretKey))
+	e.DELETE("/employee/advance_salaries/:id", controllers.DeleteAdvanceSalaryByIDForEmployee(db, secretKey))
 
 	//Request Loan Employee
 	e.POST("/employee/request_loans", controllers.CreateRequestLoanByEmployee(db, secretKey))
