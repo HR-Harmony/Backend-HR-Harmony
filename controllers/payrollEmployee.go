@@ -59,8 +59,76 @@ func GetPayrollInfoByEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 	}
 }
 
+// GetPayrollInfoByIDAndEmployeeID mengambil data payroll info milik karyawan berdasarkan ID payrollInfo dan ID karyawan
+func GetPayrollInfoByIDAndEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Retrieve the employee based on the username
+		var employee models.Employee
+		result := db.Where("username = ?", username).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch employee data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Extract payrollInfoID from the request parameters
+		payrollInfoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid payrollInfo ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Retrieve payroll info data for the specified ID
+		var payrollInfo models.PayrollInfo
+		result = db.Where("id = ?", payrollInfoID).First(&payrollInfo)
+		if result.Error != nil {
+			// Check if the payrollInfo ID is not found
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "PayrollInfo ID not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch payrollInfo data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Check if the retrieved payrollInfo belongs to the employee
+		if payrollInfo.EmployeeID != employee.ID {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "PayrollInfo does not belong to the employee"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Return the payroll info data
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Payroll info data retrieved successfully",
+			"data":    payrollInfo,
+		})
+	}
+}
+
 // CreateAdvanceSalaryForEmployee memungkinkan karyawan untuk menambahkan data advance salary untuk dirinya sendiri
-func CreateAdvanceSalaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+func CreateAdvanceSalaryByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
@@ -328,6 +396,8 @@ func UpdateAdvanceSalaryByIDForEmployee(db *gorm.DB, secretKey []byte) echo.Hand
 		// Update only the fields that are provided in the request body
 		if updatedData.Amount != 0 {
 			advanceSalary.Amount = updatedData.Amount
+			advanceSalary.Emi = updatedData.Amount
+			advanceSalary.MonthlyInstallmentAmt = updatedData.Amount
 		}
 		if updatedData.OneTimeDeduct != "" {
 			advanceSalary.OneTimeDeduct = updatedData.OneTimeDeduct
@@ -494,6 +564,7 @@ func CreateRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		// Set Monthly Installment Amount based on One Time Deduct
 		if requestLoan.OneTimeDeduct == "Yes" {
 			requestLoan.MonthlyInstallmentAmt = requestLoan.Amount
+			requestLoan.Emi = requestLoan.MonthlyInstallmentAmt
 		}
 
 		// Validate date format
@@ -712,6 +783,8 @@ func UpdateRequestLoanByIDByEmployee(db *gorm.DB, secretKey []byte) echo.Handler
 		// Update only the fields that are provided in the request body
 		if updatedData.Amount != 0 {
 			requestLoan.Amount = updatedData.Amount
+			requestLoan.Emi = updatedData.Amount
+			requestLoan.MonthlyInstallmentAmt = updatedData.Amount
 		}
 		if updatedData.OneTimeDeduct != "" {
 			requestLoan.OneTimeDeduct = updatedData.OneTimeDeduct

@@ -515,7 +515,10 @@ func UpdateAdvanceSalaryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 		// Update only the fields that are provided in the request body
 		if updatedData.Amount != 0 {
 			advanceSalary.Amount = updatedData.Amount
+			advanceSalary.Emi = updatedData.Amount
+			advanceSalary.MonthlyInstallmentAmt = updatedData.Amount
 		}
+
 		if updatedData.OneTimeDeduct != "" {
 			advanceSalary.OneTimeDeduct = updatedData.OneTimeDeduct
 		}
@@ -915,6 +918,8 @@ func UpdateRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		// Update only the fields that are provided in the request body
 		if updatedData.Amount != 0 {
 			requestLoan.Amount = updatedData.Amount
+			requestLoan.Emi = updatedData.Amount
+			requestLoan.MonthlyInstallmentAmt = updatedData.Amount
 		}
 		if updatedData.OneTimeDeduct != "" {
 			requestLoan.OneTimeDeduct = updatedData.OneTimeDeduct
