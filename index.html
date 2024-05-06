@@ -74,6 +74,7 @@
             <ul class="nav flex-column">
                 <!-- Admin -->
                 <li class="nav-item"><a class="nav-link" href="#endpoint">Endpoint</a></li>
+                <li class="nav-item"><a class="nav-link" href="#DashboardAdmin">Dashboard Admin</a></li>
                 <li class="nav-item"><a class="nav-link" href="#RegisterAdmin">Register Admin HR Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#LoginAdmin">Login Admin HR Account</a></li>
                 <li class="nav-item"><a class="nav-link" href="#CreateShift">Create Shift Admin HR</a></li>
@@ -361,6 +362,156 @@
             <div id="endpoint" class="anchor">
                 <h2 class="my-4">Endpoint</h2>
                 <p><a href="https://hr-harmony.uc.r.appspot.com/">https://hr-harmony.uc.r.appspot.com/</a></p>
+            </div>
+
+            <div id="DashboardAdmin" class="card mb-4 anchor">
+                <div class="card-body">
+                    <h2>Dashboard Admin</h2>
+                    <p><strong>URL</strong></p>
+                    <p><code>/admin/dashboard</code></p>
+                    <p><strong>Method</strong></p>
+                    <p><code>GET</code></p>
+                    <p><strong>Request Body</strong></p>
+                    <p><strong>Note</strong></p>
+                    <p><code>Include authorization token in headers</code></p>
+                    <p><strong>Response</strong></p>
+                    <pre>
+{
+    "code": 200,
+    "dashboard": {
+        "project_status": {
+            "Cancelled": int,
+            "Completed": int,
+            "In Progress": int,
+            "Not Started": int,
+            "On Hold": int
+        },
+        "departments": {
+            "Engineering Department": int,
+            "Information Technology Department": int,
+            "Logistics": int,
+            "Product Development Department": int
+        },
+        "designations": {
+            "IT Manager": int,
+            "Software Engineer": int,
+            "UX/UI Designer": int
+        },
+        "attendance_summary": {
+            "absent": int,
+            "present": int,
+            "total_staff": int
+        },
+        "project_summary": [
+            {
+                "project_bar": int,
+                "project_id": int,
+                "project_name": string
+            },
+            {
+                "project_bar": int,
+                "project_id": int,
+                "project_name": string
+            },
+            {
+                "project_bar": int,
+                "project_id": int,
+                "project_name": string
+            },
+            {
+                "project_bar": int,
+                "project_id": int,
+                "project_name": string
+            },
+            {
+                "project_bar": int,
+                "project_id": int,
+                "project_name": string
+            },
+            {
+                "project_bar": int,
+                "project_id": int,
+                "project_name": string
+            }
+        ],
+        "task_summary": [
+            {
+                "progress_bar": int,
+                "task_id": int,
+                "title": string
+            },
+            {
+                "progress_bar": int,
+                "task_id": int,
+                "title": string
+            },
+            {
+                "progress_bar": int,
+                "task_id": int,
+                "title": string
+            },
+            {
+                "progress_bar": int,
+                "task_id": int,
+                "title": string
+            }
+        ],
+        "payroll_summary": [
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            },
+            {
+                "month": string,
+                "amount": int
+            }
+        ]
+    },
+    "error": false,
+    "message": "Dashboard summary retrieved successfully"
+}
+               </pre>
+                </div>
             </div>
 
             <div id="RegisterAdmin" class="card mb-4">
@@ -3681,6 +3832,406 @@
                             </pre>
                 </div>
             </div>
+
+
+        <div id="CreateAdvanceSalarys" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create Advance Salarys</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "month_and_year" : string (yyyy-mm),
+    "amount" : int,
+    "one_time_deduct" : string,
+    "monthly_installment_amount" : int,
+    "reason" : string
+}
+
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string",
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "status": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Advance Salary created successfully"
+}
+
+                        </pre>
+            </div>
+        </div>
+
+        <div id="ViewAdvanceSalarys" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List All Advance Salarys - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "employee_id": int,
+            "fullname_employee": string,
+            "month_and_year": string,
+            "amount": int,
+            "one_time_deduct": string,
+            "monthly_installment_amount": int,
+            "reason": string,
+            "emi": int,
+            "paid": int,
+            "status": string,
+            "created_at": time
+        },
+        {
+            "id": int,
+            "employee_id": int,
+            "fullname_employee": string,
+            "month_and_year": string,
+            "amount": int,
+            "one_time_deduct": string,
+            "monthly_installment_amount": int,
+            "reason": string,
+            "emi": int,
+            "paid": int,
+            "status": string,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Advance Salary history retrieved successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewAdvanceSalarysById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List Advance Salarys By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string,
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "status": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Advance Salary retrieved successfully"
+}                  </pre>
+            </div>
+        </div>
+
+
+        <div id="UpdateAdvanceSalarysById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit Advance Salarys By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "month_and_year" : string (yyyy-mm),
+    "amount" : int,
+    "one_time_deduct" : string,
+    "monthly_installment_amount" : int,
+    "reason" : string,
+    "status" : string
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string",
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "status": string,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Advance Salary updated successfully"
+}
+
+
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteAdvanceSalarysById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete Advance Salarys By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/advance_salaries/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Advance Salary deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="CreateRequestLoans" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Create Request Loans</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>POST</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "month_and_year" : string (yyyy-mm),
+    "amount" : int,
+    "one_time_deduct" : string,
+    "monthly_installment_amount" : int,
+    "reason" : string
+}
+
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 201,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string,
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "status": string,
+        "remaining": int,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Request Loan created successfully"
+}
+
+                        </pre>
+            </div>
+        </div>
+
+        <div id="ViewRequestLoans" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List All Request Loans - Gunakan Query Params (searching) untuk melakukan pencarian</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "employee_id": int,
+            "fullname_employee": string,
+            "month_and_year": string,
+            "amount": int,
+            "one_time_deduct": string,
+            "monthly_installment_amount": int,
+            "reason": string,
+            "emi": int,
+            "paid": int,
+            "status": string,
+            "remaining": int,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Request Loan history retrieved successfully"
+}
+                    </pre>
+            </div>
+        </div>
+
+        <div id="ViewRequestLoansById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>View List Request Loans By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+                    {
+    "code": 200,
+    "data": [
+        {
+            "id": int,
+            "employee_id": int,
+            "fullname_employee": string,
+            "month_and_year": string,
+            "amount": int,
+            "one_time_deduct": string,
+            "monthly_installment_amount": int,
+            "reason": string,
+            "emi": int,
+            "paid": int,
+            "status": string,
+            "remaining": int,
+            "created_at": time
+        }
+    ],
+    "error": false,
+    "message": "Request Loan retrieved successfully"
+}
+             </pre>
+            </div>
+        </div>
+
+
+        <div id="UpdateRequestLoansById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Edit Request LoansBy ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>PUT</code></p>
+                <p><strong>Request Body - Raw Json</strong></p>
+                <pre>
+{
+    "employee_id" : int,
+    "month_and_year" : string,
+    "amount" : int,
+    "one_time_deduct" : string,
+    "monthly_installment_amount": int,
+    "reason" : string,
+    "status" : string,
+    "paid" : int
+}
+                            </pre>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "data": {
+        "id": int,
+        "employee_id": int,
+        "fullname_employee": string,
+        "month_and_year": string",
+        "amount": int,
+        "one_time_deduct": string,
+        "monthly_installment_amount": int,
+        "reason": string,
+        "emi": int,
+        "paid": int,
+        "status": string,
+        "remaining": int,
+        "created_at": time
+    },
+    "error": false,
+    "message": "Request Loan updated successfully"
+}
+
+
+                            </pre>
+            </div>
+        </div>
+
+
+        <div id="DeleteRequestLoansById" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Delete Request Loans By ID</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/request_loans/:id</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>DELETE</code></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers.</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Request Loan deleted successfully"
+}
+                            </pre>
+            </div>
+        </div>
 
 
 
