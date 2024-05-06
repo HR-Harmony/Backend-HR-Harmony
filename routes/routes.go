@@ -340,6 +340,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/employee/request_loans/:id", controllers.UpdateRequestLoanByIDByEmployee(db, secretKey))
 	e.DELETE("/employee/request_loans/:id", controllers.DeleteRequestLoanByIDByEmployee(db, secretKey))
 
+	//Dashboard Admin
+	e.GET("/admin/dashboard", controllers.GetDashboardSummaryForAdmin(db, secretKey))
+
 	// Chatbot untuk user dapat bertanya dengan Debot rekomendasi tempat wisata
 	harmonyUsecase := controllers.NewHarmonyUsecase()
 	e.POST("/chatbot", func(c echo.Context) error {
