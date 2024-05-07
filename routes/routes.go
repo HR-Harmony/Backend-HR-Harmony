@@ -340,6 +340,13 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/employee/request_loans/:id", controllers.UpdateRequestLoanByIDByEmployee(db, secretKey))
 	e.DELETE("/employee/request_loans/:id", controllers.DeleteRequestLoanByIDByEmployee(db, secretKey))
 
+	//Helpdesk Employee
+	e.POST("/employee/helpdesks", controllers.CreateHelpdeskByEmployee(db, secretKey))
+	e.GET("/employee/helpdesks", controllers.GetAllHelpdeskByEmployee(db, secretKey))
+	e.GET("/employee/helpdesks/:id", controllers.GetHelpdeskByIDByEmployee(db, secretKey))
+	e.PUT("/employee/helpdesks/:id", controllers.UpdateHelpdeskByIDByEmployee(db, secretKey))
+	e.DELETE("/employee/helpdesks/:id", controllers.DeleteHelpdeskByIDByEmployee(db, secretKey))
+
 	//Dashboard Admin
 	e.GET("/admin/dashboard", controllers.GetDashboardSummaryForAdmin(db, secretKey))
 
