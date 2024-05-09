@@ -394,6 +394,7 @@ func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 		leaveRequest.Username = employee.Username
+		leaveRequest.FullNameEmployee = employee.FirstName + " " + employee.LastName
 
 		// Add leave type based on leave type ID
 		var leaveType models.LeaveRequestType
@@ -644,6 +645,7 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			}
 			leaveRequest.Username = employee.Username
 			leaveRequest.EmployeeID = updatedLeaveRequest.EmployeeID
+			leaveRequest.FullNameEmployee = employee.FirstName + " " + employee.LastName
 		}
 		if updatedLeaveRequest.LeaveTypeID != 0 {
 			// Update leave type based on the new leave type ID

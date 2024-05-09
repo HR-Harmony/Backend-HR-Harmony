@@ -82,6 +82,8 @@ func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		helpdesk.EmployeeUsername = existingEmployee.Username
 		helpdesk.EmployeeFullName = existingEmployee.FirstName + " " + existingEmployee.LastName
 
+		helpdesk.Status = "Open"
+
 		// Set the created timestamp
 		currentTime := time.Now()
 		helpdesk.CreatedAt = &currentTime
@@ -280,6 +282,10 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if updatedHelpdesk.Priority != "" {
 			helpdesk.Priority = updatedHelpdesk.Priority
+		}
+
+		if updatedHelpdesk.Status != "" {
+			helpdesk.Status = updatedHelpdesk.Status
 		}
 
 		if updatedHelpdesk.DepartmentID != 0 {

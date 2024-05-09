@@ -58,11 +58,12 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Record the check-in time
 		currentTime := time.Now()
 		attendance := models.Attendance{
-			EmployeeID:     employee.ID,
-			Username:       employee.Username,
-			AttendanceDate: today,
-			InTime:         currentTime.Format("15:04:05"),
-			CreatedAt:      &currentTime,
+			EmployeeID:       employee.ID,
+			Username:         employee.Username,
+			FullNameEmployee: employee.FirstName + " " + employee.LastName,
+			AttendanceDate:   today,
+			InTime:           currentTime.Format("15:04:05"),
+			CreatedAt:        &currentTime,
 		}
 		db.Create(&attendance)
 

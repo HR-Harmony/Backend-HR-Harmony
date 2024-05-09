@@ -13,6 +13,7 @@ type Disciplinary struct {
 	ID               uint       `gorm:"primaryKey" json:"id"`
 	EmployeeID       uint       `json:"employee_id"`
 	UsernameEmployee string     `json:"username_employee"`
+	FullNameEmployee string     `json:"full_name_employee"`
 	CaseID           uint       `json:"case_id"`
 	CaseName         string     `json:"case_name"`
 	Subject          string     `json:"subject"`
