@@ -319,6 +319,10 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			helpdesk.Description = updatedHelpdesk.Description
 		}
 
+		if updatedHelpdesk.TicketStatus != "" {
+			helpdesk.TicketStatus = updatedHelpdesk.TicketStatus
+		}
+
 		// Set the updated timestamp
 		currentTime := time.Now()
 		helpdesk.UpdatedAt = currentTime

@@ -1,0 +1,18 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/dev-arfara/Backend-HR-Harmony', '.']
+
+  # Push the container image to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/dev-arfara/Backend-HR-Harmony']
+
+  # Deploy the container image to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'Backend-HR-Harmony'
+      - '--image=gcr.io/dev-arfara/Backend-HR-Harmony'
+      - '--platform=managed'
+      - '--region=us-central1'
