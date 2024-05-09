@@ -70,6 +70,7 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 
 		attendance.Username = employee.Username
+		attendance.FullNameEmployee = employee.FirstName + " " + employee.LastName
 
 		// Validate attandance_date format
 		_, err = time.Parse("2006-01-02", attendance.AttendanceDate)
@@ -317,6 +318,7 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			}
 			attendance.EmployeeID = updatedAttendance.EmployeeID
 			attendance.Username = employee.Username
+			attendance.FullNameEmployee = employee.FirstName + " " + employee.LastName
 		}
 		if updatedAttendance.AttendanceDate != "" {
 			// Validate attendance_date format
@@ -492,6 +494,7 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 
 		overtime.Username = employee.Username
+		overtime.FullNameEmployee = employee.FirstName + " " + employee.LastName
 
 		// Validate attandance_date format
 		_, err = time.Parse("2006-01-02", overtime.Date)
@@ -746,6 +749,7 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			}
 			overtime.EmployeeID = updatedOvertime.EmployeeID
 			overtime.Username = employee.Username
+			overtime.FullNameEmployee = employee.FirstName + " " + employee.LastName
 		}
 		if updatedOvertime.Date != "" {
 			// Validate attendance_date format

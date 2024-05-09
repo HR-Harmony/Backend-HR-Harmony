@@ -89,6 +89,7 @@ func CreateDisciplinaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Set UsernameEmployee and CaseName
 		disciplinary.UsernameEmployee = existingEmployee.Username
+		disciplinary.FullNameEmployee = existingEmployee.FirstName + " " + existingEmployee.LastName
 		disciplinary.CaseName = existingCase.CaseName
 
 		// Set the created timestamp
@@ -294,6 +295,7 @@ func UpdateDisciplinaryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			// Set UsernameEmployee
 			disciplinary.EmployeeID = updatedDisciplinary.EmployeeID
 			disciplinary.UsernameEmployee = existingEmployee.Username
+			disciplinary.FullNameEmployee = existingEmployee.FirstName + " " + existingEmployee.LastName
 		}
 
 		if updatedDisciplinary.CaseID != 0 {
