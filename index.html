@@ -294,6 +294,9 @@
 
                 <li class="nav-item"><a class="nav-link" href="#CooperationMessage">Create New Cooperation Message</a></li>
 
+
+                <li class="nav-item"><a class="nav-link" href="#DashboardEmployee">Dashboard Employee</a></li>
+
                 <!-- Employee -->
                 <li class="nav-item"><a class="nav-link" href="#LoginEmployee">Login Employee Account</a></li>
 
@@ -7543,6 +7546,185 @@
     "message": "Employee password updated successfully"
 }
                             </pre>
+            </div>
+        </div>
+
+        <div id="DashboardEmployee" class="card mb-4 anchor">
+            <div class="card-body">
+                <h2>Dashboard Employee</h2>
+                <p><strong>URL</strong></p>
+                <p><code>/employee/dashboard</code></p>
+                <p><strong>Method</strong></p>
+                <p><code>GET</code></p>
+                <p><strong>Request Body</strong></p>
+                <p><strong>Note</strong></p>
+                <p><code>Include authorization token in headers</code></p>
+                <p><strong>Response</strong></p>
+                <pre>
+{
+    "code": 200,
+    "error": false,
+    "message": "Dashboard summary retrieved successfully",
+    "total_overtime": int,
+    "total_leave": int,
+    "total_projects": int,
+    "project_summaries": [
+        {
+            "project_bar": int,
+            "project_id": int,
+            "project_name": string
+        },
+        {
+            "project_bar": int,
+            "project_id": int,
+            "project_name": string
+        },
+        {
+            "project_bar": int,
+            "project_id": int,
+            "project_name": string
+        },
+        {
+            "project_bar": int,
+            "project_id": int,
+            "project_name": string
+        },
+        {
+            "project_bar": int,
+            "project_id": int,
+            "project_name": string
+        },
+        {
+            "project_bar": int,
+            "project_id": int,
+            "project_name": string
+        }
+    ],
+    "total_tasks": 4,
+    "task_summaries": [
+        {
+            "progress_bar": int,
+            "task_id": string,
+            "title": string
+        },
+        {
+            "progress_bar": int,
+            "task_id": string,
+            "title": string
+        },
+        {
+            "progress_bar": int,
+            "task_id": string,
+            "title": string
+        },
+        {
+            "progress_bar": int,
+            "task_id": string,
+            "title": string
+        }
+    ],
+    "payroll_summary": [
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        },
+        {
+            "month": string,
+            "amount": int
+        }
+    ],
+    "training_summary": [
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        },
+        {
+            "month": string,
+            "total_training": int
+        }
+    ]
+}
+               </pre>
             </div>
         </div>
 
