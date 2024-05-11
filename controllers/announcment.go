@@ -7,6 +7,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -107,7 +108,7 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAnnouncementsByAdmin retrieves all announcements for admin
+// GetAnnouncementsByAdmin retrieves all announcements for admin with pagination
 func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -144,21 +145,40 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all announcements
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve announcements with pagination
 		var announcements []models.Announcement
-		result = db.Find(&announcements)
-		if result.Error != nil {
+		query := db.Offset(offset).Limit(perPage).Find(&announcements)
+		if query.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching announcements"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Respond with success
-		successResponse := helper.Response{
-			Code:          http.StatusOK,
-			Error:         false,
-			Message:       "Announcements retrieved successfully",
-			Announcements: announcements,
+		// Count total records for pagination
+		var totalCount int64
+		db.Model(&models.Announcement{}).Count(&totalCount)
+
+		successResponse := map[string]interface{}{
+			"code":          http.StatusOK,
+			"error":         false,
+			"message":       "Announcements retrieved successfully",
+			"announcements": announcements,
+			"pagination":    map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
+
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }

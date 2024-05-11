@@ -245,7 +245,7 @@ func CreateTaskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllTasksByAdmin endpoint retrieves all tasks for admin
+// GetAllTasksByAdmin endpoint retrieves all tasks for admin with pagination
 func GetAllTasksByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -282,20 +282,43 @@ func GetAllTasksByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all tasks from the database including notes
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve all tasks from the database including notes with pagination
 		var tasks []models.Task
-		result = db.Preload("Notes").Find(&tasks)
+		result = db.Preload("Notes").Offset(offset).Limit(perPage).Find(&tasks)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Get total count of tasks
+		var totalCount int64
+		db.Model(&models.Task{}).Count(&totalCount)
+
 		// Respond with success
-		successResponse := helper.Response{
-			Code:    http.StatusOK,
-			Error:   false,
-			Message: "Tasks retrieved successfully",
-			Tasks:   tasks,
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Tasks retrieved successfully",
+			"tasks":   tasks,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

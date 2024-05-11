@@ -81,33 +81,32 @@ func CreateGoalTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllGoalTypesByAdmin retrieves all goal types information with pagination
 func GetAllGoalTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Mendapatkan token dari header Authorization
+		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Memeriksa format token
 		authParts := strings.SplitN(tokenString, " ", 2)
 		if len(authParts) != 2 || authParts[0] != "Bearer" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Mendapatkan nilai token
 		tokenString = authParts[1]
 
-		// Verifikasi token
+		// Parse the token to get admin's username
 		username, err := middleware.VerifyToken(tokenString, secretKey)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Mencari admin berdasarkan username
+		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -115,24 +114,42 @@ func GetAllGoalTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Memeriksa apakah pengguna adalah admin HR
 		if !adminUser.IsAdminHR {
 			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Mendapatkan semua data goal type
-		var goalTypes []models.GoalType
-		db.Find(&goalTypes)
-
-		// Response sukses
-		response := map[string]interface{}{
-			"code":      http.StatusOK,
-			"error":     false,
-			"message":   "All goal types retrieved successfully",
-			"goalTypes": goalTypes,
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
 		}
-		return c.JSON(http.StatusOK, response)
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch all goal types with pagination
+		var goalTypes []models.GoalType
+		db.Offset(offset).Limit(perPage).Find(&goalTypes)
+
+		// Get total count of goal types
+		var totalCount int64
+		db.Model(&models.GoalType{}).Count(&totalCount)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "All goal types retrieved successfully",
+			"goalTypes":  goalTypes,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+		return c.JSON(http.StatusOK, successResponse)
 	}
 }
 
@@ -462,33 +479,32 @@ func CreateGoalByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllGoalsByAdmin retrieves all goals information with pagination
 func GetAllGoalsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Mendapatkan token dari header Authorization
+		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Memeriksa format token
 		authParts := strings.SplitN(tokenString, " ", 2)
 		if len(authParts) != 2 || authParts[0] != "Bearer" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Mendapatkan nilai token
 		tokenString = authParts[1]
 
-		// Verifikasi token
+		// Parse the token to get admin's username
 		username, err := middleware.VerifyToken(tokenString, secretKey)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Mencari admin berdasarkan username
+		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -496,24 +512,42 @@ func GetAllGoalsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Memeriksa apakah pengguna adalah admin HR
 		if !adminUser.IsAdminHR {
 			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Mencari semua data tracking goals
-		var goals []models.Goal
-		db.Find(&goals)
-
-		// Response sukses
-		response := map[string]interface{}{
-			"code":    http.StatusOK,
-			"error":   false,
-			"message": "All goals retrieved successfully",
-			"goals":   goals,
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
 		}
-		return c.JSON(http.StatusOK, response)
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch all goals with pagination
+		var goals []models.Goal
+		db.Offset(offset).Limit(perPage).Find(&goals)
+
+		// Get total count of goals
+		var totalCount int64
+		db.Model(&models.Goal{}).Count(&totalCount)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "All goals retrieved successfully",
+			"goals":      goals,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+		return c.JSON(http.StatusOK, successResponse)
 	}
 }
 
@@ -916,6 +950,7 @@ func CreateKPIIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllKPIIndicatorsByAdmin retrieves all KPI indicators with pagination
 func GetAllKPIIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -952,24 +987,35 @@ func GetAllKPIIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Fetch searching query parameter
-		searching := c.QueryParam("searching")
-
-		// Fetch performances data from database with optional search filters
-		var kpiIndicator []models.KPIIndicator
-		query := db.Model(&kpiIndicator)
-		if searching != "" {
-			searchingPattern := "%" + strings.ToLower(searching) + "%"
-			query = query.Where("LOWER(title) LIKE ? OR LOWER(designation_name) LIKE ?", searchingPattern, searchingPattern)
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
 		}
-		query.Find(&kpiIndicator)
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch KPI indicators with pagination
+		var kpiIndicators []models.KPIIndicator
+		db.Offset(offset).Limit(perPage).Find(&kpiIndicators)
+
+		// Get total count of KPI indicators
+		var totalCount int64
+		db.Model(&models.KPIIndicator{}).Count(&totalCount)
 
 		// Respond with success
 		successResponse := map[string]interface{}{
-			"code":    http.StatusOK,
-			"error":   false,
-			"message": "KPI Indicator fetched successfully",
-			"data":    kpiIndicator,
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "KPI indicators fetched successfully",
+			"data":       kpiIndicators,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
@@ -1304,6 +1350,7 @@ func CreateKPAIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllKPAIndicatorsByAdmin retrieves all KPA indicators with pagination
 func GetAllKPAIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -1340,24 +1387,35 @@ func GetAllKPAIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Fetch searching query parameter
-		searching := c.QueryParam("searching")
-
-		// Fetch performances data from database with optional search filters
-		var kpaIndicator []models.KPAIndicator
-		query := db.Model(&kpaIndicator)
-		if searching != "" {
-			searchingPattern := "%" + strings.ToLower(searching) + "%"
-			query = query.Where("LOWER(title) LIKE ? OR LOWER(employee_name) LIKE ?", searchingPattern, searchingPattern)
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
 		}
-		query.Find(&kpaIndicator)
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch KPA indicators with pagination
+		var kpaIndicators []models.KPAIndicator
+		db.Offset(offset).Limit(perPage).Find(&kpaIndicators)
+
+		// Get total count of KPA indicators
+		var totalCount int64
+		db.Model(&models.KPAIndicator{}).Count(&totalCount)
 
 		// Respond with success
 		successResponse := map[string]interface{}{
-			"code":    http.StatusOK,
-			"error":   false,
-			"message": "KPA Indicator fetched successfully",
-			"data":    kpaIndicator,
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "KPA indicators fetched successfully",
+			"data":       kpaIndicators,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

@@ -88,7 +88,7 @@ func CreateExitStatusByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllExitStatusByAdmin handles the retrieval of all exit statuses by admin
+// GetAllExitStatusByAdmin handles the retrieval of all exit statuses by admin with pagination
 func GetAllExitStatusByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -125,16 +125,37 @@ func GetAllExitStatusByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all exit statuses from the database
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve all exit statuses from the database with pagination
 		var exitStatuses []models.Exit
-		db.Find(&exitStatuses)
+		var totalCount int64
+		db.Model(&models.Exit{}).Count(&totalCount)
+		db.Offset(offset).Limit(perPage).Find(&exitStatuses)
 
 		// Respond with the list of exit statuses
-		successResponse := helper.Response{
-			Code:    http.StatusOK,
-			Error:   false,
-			Message: "Exit statuses retrieved successfully",
-			Exits:   exitStatuses,
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Exit statuses retrieved successfully",
+			"exits":   exitStatuses,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

@@ -7,6 +7,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -98,6 +99,7 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllNewJobsByAdmin handles the retrieval of all new jobs by admin with pagination
 func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -133,16 +135,41 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Fetch all new jobs from the database
-		var newJobs []models.NewJob
-		db.Find(&newJobs)
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
 
-		return c.JSON(http.StatusOK, map[string]interface{}{
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve new jobs from the database with pagination
+		var newJobs []models.NewJob
+		db.Offset(offset).Limit(perPage).Find(&newJobs)
+
+		// Get total count of new jobs
+		var totalCount int64
+		db.Model(&models.NewJob{}).Count(&totalCount)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
 			"code":     http.StatusOK,
 			"error":    false,
 			"message":  "All new jobs retrieved successfully",
 			"new_jobs": newJobs,
-		})
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
 	}
 }
 

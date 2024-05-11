@@ -90,7 +90,7 @@ func CreateRoleByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllRolesByAdmin handles the retrieval of all roles by admin
+// GetAllRolesByAdmin handles the retrieval of all roles by admin with pagination
 func GetAllRolesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -127,16 +127,39 @@ func GetAllRolesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all roles from the database
-		var roles []models.Role
-		db.Find(&roles)
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
 
-		// Respond with the list of roles
-		successResponse := helper.Response{
-			Code:    http.StatusOK,
-			Error:   false,
-			Message: "Roles retrieved successfully",
-			Roles:   roles,
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve roles from the database with pagination
+		var roles []models.Role
+		db.Offset(offset).Limit(perPage).Find(&roles)
+
+		// Get total count of roles
+		var totalCount int64
+		db.Model(&models.Role{}).Count(&totalCount)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Roles retrieved successfully",
+			"roles":   roles,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

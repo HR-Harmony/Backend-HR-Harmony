@@ -75,6 +75,7 @@ func CreateTrainerByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllTrainersByAdmin endpoint retrieves all trainers for admin with pagination
 func GetAllTrainersByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -108,7 +109,21 @@ func GetAllTrainersByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Fetch searching query parameter
 		searching := c.QueryParam("searching")
 
-		// Fetch trainers data from database with optional search filters
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch trainers data from database with optional search filters and pagination
 		var trainers []models.Trainer
 		query := db.Model(&trainers)
 		if searching != "" {
@@ -119,14 +134,23 @@ func GetAllTrainersByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				"%"+strings.ToLower(searching)+"%",
 			)
 		}
-		query.Find(&trainers)
+		query.Offset(offset).Limit(perPage).Find(&trainers)
 
-		// Provide success response
+		// Get total count of trainers
+		var totalCount int64
+		db.Model(&models.Trainer{}).Count(&totalCount)
+
+		// Provide success response with pagination information
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Trainers fetched successfully",
 			"data":    trainers,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
@@ -412,6 +436,7 @@ func CreateTrainingSkillByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 	}
 }
 
+// GetAllTrainingSkillsByAdmin endpoint retrieves all training skills for admin with pagination
 func GetAllTrainingSkillsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -451,20 +476,43 @@ func GetAllTrainingSkillsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		// Fetch searching query parameter
 		searching := strings.ToLower(c.QueryParam("searching"))
 
-		// Fetch TrainingSkills data from database with optional search filter
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch TrainingSkills data from database with optional search filter and pagination
 		var trainingSkills []models.TrainingSkill
 		query := db.Model(&trainingSkills)
 		if searching != "" {
 			query = query.Where("LOWER(training_skill) LIKE ?", "%"+searching+"%")
 		}
-		query.Find(&trainingSkills)
+		query.Offset(offset).Limit(perPage).Find(&trainingSkills)
 
-		// Provide success response
+		// Get total count of training skills
+		var totalCount int64
+		db.Model(&models.TrainingSkill{}).Count(&totalCount)
+
+		// Provide success response with pagination information
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "TrainingSkills fetched successfully",
 			"data":    trainingSkills,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
@@ -762,6 +810,7 @@ func CreateTrainingByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllTrainingsByAdmin endpoint retrieves all trainings for admin with pagination
 func GetAllTrainingsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -795,7 +844,21 @@ func GetAllTrainingsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Fetch searching query parameter
 		searching := c.QueryParam("searching")
 
-		// Fetch trainings data from database with optional search filters
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch trainings data from database with optional search filters and pagination
 		var trainings []models.Training
 		query := db.Model(&trainings)
 		if searching != "" {
@@ -808,13 +871,23 @@ func GetAllTrainingsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				searching,
 			)
 		}
-		query.Find(&trainings)
-		// Provide success response
+		query.Offset(offset).Limit(perPage).Find(&trainings)
+
+		// Get total count of trainings
+		var totalCount int64
+		db.Model(&models.Training{}).Count(&totalCount)
+
+		// Provide success response with pagination information
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Trainings fetched successfully",
 			"data":    trainings,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
