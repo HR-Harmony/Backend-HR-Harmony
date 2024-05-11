@@ -300,6 +300,9 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/employee/projects/:id", controllers.UpdateProjectByIDByEmployee(db, secretKey))
 	e.DELETE("/employee/projects/:id", controllers.DeleteProjectByIDByEmployee(db, secretKey))
 
+	e.GET("/employee/departments", controllers.GetAllDepartmentsByEmployee(db, secretKey))
+	e.GET("/employee/clients", controllers.GetAllClientsByEmployee(db, secretKey))
+
 	//Task Employee
 	e.POST("/employee/tasks", controllers.CreateTaskByEmployee(db, secretKey))
 	e.GET("/employee/tasks", controllers.GetAllTasksByEmployee(db, secretKey))
