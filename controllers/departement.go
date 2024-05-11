@@ -99,7 +99,7 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllDepartmentsByAdmin handles the retrieval of all departments by admin
+// GetAllDepartmentsByAdmin handles the retrieval of all departments by admin with pagination
 func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -136,16 +136,37 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all departments from the database
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve all departments from the database with pagination
 		var departments []models.Department
-		db.Find(&departments)
+		var totalCount int64
+		db.Model(&models.Department{}).Count(&totalCount)
+		db.Offset(offset).Limit(perPage).Find(&departments)
 
 		// Respond with the list of departments
-		successResponse := helper.Response{
-			Code:        http.StatusOK,
-			Error:       false,
-			Message:     "Departments retrieved successfully",
-			Departments: departments,
+		successResponse := map[string]interface{}{
+			"code":        http.StatusOK,
+			"error":       false,
+			"message":     "Departments retrieved successfully",
+			"departments": departments,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

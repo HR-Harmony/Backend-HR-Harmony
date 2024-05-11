@@ -84,7 +84,7 @@ func CreatePolicyByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllPoliciesByAdmin handles the retrieval of all policies by admin
+// GetAllPoliciesByAdmin handles the retrieval of all policies by admin with pagination
 func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -121,16 +121,35 @@ func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all policies from the database
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve policies from the database with pagination
 		var policies []models.Policy
-		db.Find(&policies)
+		db.Offset(offset).Limit(perPage).Find(&policies)
+
+		// Get total count of policies
+		var totalCount int64
+		db.Model(&models.Policy{}).Count(&totalCount)
 
 		// Respond with success
-		successResponse := helper.Response{
-			Code:     http.StatusOK,
-			Error:    false,
-			Message:  "Policies retrieved successfully",
-			Policies: policies,
+		successResponse := map[string]interface{}{
+			"Code":       http.StatusOK,
+			"Error":      false,
+			"Message":    "Policies retrieved successfully",
+			"Policies":   policies,
+			"Pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

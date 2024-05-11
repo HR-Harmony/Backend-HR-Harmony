@@ -93,7 +93,7 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetDesignationsByAdmin handles the retrieval of all designations by admin
+// GetAllDesignationsByAdmin handles the retrieval of all designations by admin with pagination
 func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -130,16 +130,37 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all designations from the database
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve all designations from the database with pagination
 		var designations []models.Designation
-		db.Find(&designations)
+		var totalCount int64
+		db.Model(&models.Designation{}).Count(&totalCount)
+		db.Offset(offset).Limit(perPage).Find(&designations)
 
 		// Respond with success
-		successResponse := helper.Response{
-			Code:         http.StatusOK,
-			Error:        false,
-			Message:      "Designations retrieved successfully",
-			Designations: designations,
+		successResponse := map[string]interface{}{
+			"code":         http.StatusOK,
+			"error":        false,
+			"message":      "Designations retrieved successfully",
+			"designations": designations,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

@@ -87,6 +87,7 @@ func CreateShiftByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllShiftsByAdmin handles the retrieval of all shifts by admin with pagination
 func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -123,16 +124,39 @@ func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all shifts from the database
-		var shifts []models.Shift
-		db.Find(&shifts)
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
 
-		// Respond with the list of shifts
-		successResponse := helper.Response{
-			Code:    http.StatusOK,
-			Error:   false,
-			Message: "Shifts retrieved successfully",
-			Shifts:  shifts,
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve shifts from the database with pagination
+		var shifts []models.Shift
+		db.Offset(offset).Limit(perPage).Find(&shifts)
+
+		// Get total count of shifts
+		var totalCount int64
+		db.Model(&models.Shift{}).Count(&totalCount)
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Shifts retrieved successfully",
+			"shifts":  shifts,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

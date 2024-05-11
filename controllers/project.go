@@ -121,7 +121,7 @@ func CreateProjectByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllProjectsByAdmin handles the retrieval of all projects by admin
+// GetAllProjectsByAdmin handles the retrieval of all projects by admin with pagination
 func GetAllProjectsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -158,20 +158,35 @@ func GetAllProjectsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all projects
-		var projects []models.Project
-		result = db.Find(&projects)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve projects"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
 		}
 
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve projects from the database with pagination
+		var projects []models.Project
+		db.Offset(offset).Limit(perPage).Find(&projects)
+
+		// Get total count of projects
+		var totalCount int64
+		db.Model(&models.Project{}).Count(&totalCount)
+
 		// Respond with success
-		successResponse := helper.Response{
-			Code:     http.StatusOK,
-			Error:    false,
-			Message:  "Projects retrieved successfully",
-			Projects: projects,
+		successResponse := map[string]interface{}{
+			"Code":       http.StatusOK,
+			"Error":      false,
+			"Message":    "Projects retrieved successfully",
+			"Projects":   projects,
+			"Pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

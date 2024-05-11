@@ -110,6 +110,7 @@ func CreateDisciplinaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllDisciplinaryByAdmin handles the retrieval of all disciplinary data by admin with pagination
 func GetAllDisciplinaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -146,16 +147,37 @@ func GetAllDisciplinaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve all disciplinary data from the database
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Retrieve all disciplinary data from the database with pagination
 		var disciplinaries []models.Disciplinary
-		db.Find(&disciplinaries)
+		var totalCount int64
+		db.Model(&models.Disciplinary{}).Count(&totalCount)
+		db.Offset(offset).Limit(perPage).Find(&disciplinaries)
 
 		// Respond with success
-		successResponse := helper.Response{
-			Code:           http.StatusOK,
-			Error:          false,
-			Message:        "All disciplinary data retrieved successfully",
-			Disciplinaries: disciplinaries,
+		successResponse := map[string]interface{}{
+			"code":           http.StatusOK,
+			"error":          false,
+			"message":        "All disciplinary data retrieved successfully",
+			"disciplinaries": disciplinaries,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
