@@ -10,6 +10,7 @@ import (
 	"hrsale/models"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -151,6 +152,7 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 	}
 }
 
+// GetAllClientsByAdmin handles the retrieval of client data by admin with pagination
 func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -187,7 +189,21 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Fetch client employees from the database
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch client employees from the database with pagination
 		var clientEmployees []struct {
 			ID            uint   `json:"id"`
 			FirstName     string `json:"first_name"`
@@ -200,16 +216,23 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			Country       string `json:"country"`
 			IsActive      bool   `json:"is_active"`
 		}
+		var totalCount int64
 		db.Model(&models.Employee{}).Where("is_client = ?", true).
 			Select("id", "first_name", "last_name", "full_name", "contact_number", "gender", "email", "username", "country", "is_active").
-			Find(&clientEmployees)
+			Count(&totalCount).
+			Offset(offset).Limit(perPage).Find(&clientEmployees)
 
 		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
-			"message": "Client  data retrieved successfully",
+			"message": "Client data retrieved successfully",
 			"data":    clientEmployees,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

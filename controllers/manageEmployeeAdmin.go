@@ -191,6 +191,7 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 	}
 }
 
+// GetAllEmployeesByAdmin handles the retrieval of all employees by admin with pagination
 func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -225,8 +226,22 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
 		var employees []models.Employee
-		db.Where("is_client = ?", false).Find(&employees)
+		db.Where("is_client = ?", false).Offset(offset).Limit(perPage).Find(&employees)
 
 		var employeesResponse []helper.EmployeeResponse
 		for _, emp := range employees {
@@ -259,11 +274,19 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			employeesResponse = append(employeesResponse, employeeResponse)
 		}
 
+		var totalCount int64
+		db.Model(&models.Employee{}).Where("is_client = ?", false).Count(&totalCount)
+
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"code":      http.StatusOK,
 			"error":     false,
 			"message":   "All employees retrieved successfully",
 			"employees": employeesResponse,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		})
 	}
 }
@@ -679,7 +702,7 @@ func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllExitEmployees returns all ExitEmployee records for admin
+// GetAllExitEmployees returns all ExitEmployee records for admin with pagination
 func GetAllExitEmployees(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -716,19 +739,42 @@ func GetAllExitEmployees(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Fetch all ExitEmployee records
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Fetch all ExitEmployee records with pagination
 		var exitEmployees []models.ExitEmployee
-		if err := db.Find(&exitEmployees).Error; err != nil {
+		if err := db.Offset(offset).Limit(perPage).Find(&exitEmployees).Error; err != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch ExitEmployee records"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Get total count of ExitEmployee records
+		var totalCount int64
+		db.Model(&models.ExitEmployee{}).Count(&totalCount)
+
 		// Respond with success
-		successResponse := helper.Response{
-			Code:          http.StatusOK,
-			Error:         false,
-			Message:       "ExitEmployee records retrieved successfully",
-			ExitEmployees: exitEmployees,
+		successResponse := map[string]interface{}{
+			"Code":          http.StatusOK,
+			"Error":         false,
+			"Message":       "ExitEmployee records retrieved successfully",
+			"ExitEmployees": exitEmployees,
+			"Pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}

@@ -115,7 +115,7 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 	}
 }
 
-// GetAttendanceByAdmin handles the retrieval of attendance data by admin
+// GetAllAttendanceByAdmin handles the retrieval of attendance data by admin with pagination
 func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -152,6 +152,20 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
 		// Get query parameters
 		date := c.QueryParam("date")
 		employeeID := c.QueryParam("employee_id")
@@ -167,20 +181,21 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			query = query.Where("employee_id = ?", employeeID)
 		}
 
-		// Fetch attendance data
+		// Count total records for pagination
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Fetch attendance data with pagination
 		var attendance []models.Attendance
-		result = query.Find(&attendance)
-		if result.Error != nil {
-			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch attendance data"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
+		query.Offset(offset).Limit(perPage).Find(&attendance)
 
 		// Respond with success
 		successResponse := map[string]interface{}{
-			"code":    http.StatusOK,
-			"error":   false,
-			"message": "Attendance data retrieved successfully",
-			"data":    attendance,
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "Attendance data retrieved successfully",
+			"data":       attendance,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
@@ -548,6 +563,7 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 	}
 }
 
+// GetAllOvertimeRequestsByAdmin handles the retrieval of overtime requests data by admin with pagination
 func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -584,6 +600,20 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
 		// Get query parameters
 		date := c.QueryParam("date")
 		employeeID := c.QueryParam("employee_id")
@@ -599,20 +629,21 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			query = query.Where("employee_id = ?", employeeID)
 		}
 
-		// Fetch attendance data
+		// Count total records for pagination
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Fetch overtime request data with pagination
 		var overtime []models.OvertimeRequest
-		result = query.Find(&overtime)
-		if result.Error != nil {
-			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch Overtime Request data"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
+		query.Offset(offset).Limit(perPage).Find(&overtime)
 
 		// Respond with success
 		successResponse := map[string]interface{}{
-			"code":    http.StatusOK,
-			"error":   false,
-			"message": "Overtime Request  retrieved successfully",
-			"data":    overtime,
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "Overtime Request data retrieved successfully",
+			"data":       overtime,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
