@@ -446,8 +446,18 @@ func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		// If is_half_day is true, set end_date to be the same as start_date
+		if leaveRequest.IsHalfDay {
+			endDate = startDate
+		}
+
 		// Calculate the difference in days
-		days := int(endDate.Sub(startDate).Hours() / 24)
+		days := endDate.Sub(startDate).Hours() / 24
+
+		// If it's a half-day, set days to 0.5
+		if leaveRequest.IsHalfDay {
+			days = 0.5
+		}
 
 		// Assign the calculated days to leaveRequest
 		leaveRequest.Days = days
@@ -726,26 +736,42 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			}
 			leaveRequest.EndDate = endDate.Format("2006-01-02")
 		}
-		if updatedLeaveRequest.IsHalfDay {
+
+		// Handle is_half_day logic
+		if updatedLeaveRequest.IsHalfDay != leaveRequest.IsHalfDay {
 			leaveRequest.IsHalfDay = updatedLeaveRequest.IsHalfDay
+
+			// Update end_date and days if is_half_day is true
+			if updatedLeaveRequest.IsHalfDay {
+				leaveRequest.EndDate = leaveRequest.StartDate
+				leaveRequest.Days = 0.5
+			} else {
+				// Recalculate the days if it was previously a half day
+				if leaveRequest.StartDate != "" && leaveRequest.EndDate != "" {
+					startDate, _ := time.Parse("2006-01-02", leaveRequest.StartDate)
+					endDate, _ := time.Parse("2006-01-02", leaveRequest.EndDate)
+					days := endDate.Sub(startDate).Hours() / 24
+					leaveRequest.Days = days
+				}
+			}
+		} else {
+			// Recalculate the days based on start and end dates if is_half_day is false
+			if leaveRequest.StartDate != "" && leaveRequest.EndDate != "" {
+				startDate, _ := time.Parse("2006-01-02", leaveRequest.StartDate)
+				endDate, _ := time.Parse("2006-01-02", leaveRequest.EndDate)
+				days := endDate.Sub(startDate).Hours() / 24
+				leaveRequest.Days = days
+			}
 		}
+
 		if updatedLeaveRequest.Remarks != "" {
 			leaveRequest.Remarks = updatedLeaveRequest.Remarks
 		}
 		if updatedLeaveRequest.LeaveReason != "" {
 			leaveRequest.LeaveReason = updatedLeaveRequest.LeaveReason
 		}
-
 		if updatedLeaveRequest.Status != "" {
 			leaveRequest.Status = updatedLeaveRequest.Status
-		}
-
-		// Update the days based on the updated start and end dates
-		if leaveRequest.StartDate != "" && leaveRequest.EndDate != "" {
-			startDate, _ := time.Parse("2006-01-02", leaveRequest.StartDate)
-			endDate, _ := time.Parse("2006-01-02", leaveRequest.EndDate)
-			days := int(endDate.Sub(startDate).Hours() / 24) // Calculate the difference in days
-			leaveRequest.Days = days
 		}
 
 		// Save the updated leave request to the database
