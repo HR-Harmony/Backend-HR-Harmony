@@ -21,7 +21,7 @@ type LeaveRequest struct {
 	IsHalfDay        bool       `json:"is_half_day"`
 	Remarks          string     `json:"remarks"`
 	LeaveReason      string     `json:"leave_reason"`
-	Days             int        `json:"days"`
+	Days             float64    `json:"days"`
 	Status           string     `json:"status"`
 	CreatedAt        *time.Time `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
