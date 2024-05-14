@@ -76,9 +76,17 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		}
 
 		// Map project status counts to a more readable format
-		projectStatus := make(map[string]int)
+		projectStatus := map[string]int{
+			"Cancelled":   0,
+			"Completed":   0,
+			"Not_Started": 0,
+			"On_Hold":     0,
+			"In_Progress": 0,
+		}
 		for _, count := range projectStatusCounts {
-			projectStatus[count.Status] = count.Count
+			// Replace spaces with underscores in status names
+			statusKey := strings.ReplaceAll(count.Status, " ", "_")
+			projectStatus[statusKey] = count.Count
 		}
 
 		// Retrieve all departments
