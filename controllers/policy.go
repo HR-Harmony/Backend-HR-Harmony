@@ -12,10 +12,8 @@ import (
 	"time"
 )
 
-// CreatePolicyByAdmin creates a new policy by admin
 func CreatePolicyByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -36,7 +34,6 @@ func CreatePolicyByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -49,31 +46,25 @@ func CreatePolicyByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the policy data from the request body
 		var policy models.Policy
 		if err := c.Bind(&policy); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate policy data
 		if policy.Title == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Policy title is required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		policy.CreatedAt = &currentTime
 
-		// Set the ID and username of the admin creator
 		policy.CreatedByAdminID = adminUser.ID
 		policy.CreatedByAdminUsername = adminUser.Username
 
-		// Create the policy in the database
 		db.Create(&policy)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusCreated,
 			Error:   false,
@@ -84,10 +75,8 @@ func CreatePolicyByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllPoliciesByAdmin handles the retrieval of all policies by admin with pagination
 func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -108,7 +97,6 @@ func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -121,7 +109,6 @@ func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -129,21 +116,17 @@ func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Retrieve policies from the database with pagination
 		var policies []models.Policy
 		db.Offset(offset).Limit(perPage).Find(&policies)
 
-		// Get total count of policies
 		var totalCount int64
 		db.Model(&models.Policy{}).Count(&totalCount)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"Code":       http.StatusOK,
 			"Error":      false,
@@ -155,10 +138,8 @@ func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetPolicyByIDByAdmin handles the retrieval of a policy by ID for admin
 func GetPolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -179,7 +160,6 @@ func GetPolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -192,14 +172,12 @@ func GetPolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get policy ID from the request parameters
 		policyID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid policy ID"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve policy by ID from the database
 		var policy models.Policy
 		result = db.First(&policy, policyID)
 		if result.Error != nil {
@@ -207,7 +185,6 @@ func GetPolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
@@ -218,10 +195,8 @@ func GetPolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// UpdatePolicyByIDByAdmin handles the update of a policy by ID for admin
 func UpdatePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -242,7 +217,6 @@ func UpdatePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -255,14 +229,12 @@ func UpdatePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get policy ID from the request parameters
 		policyID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid policy ID"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve policy by ID from the database
 		var existingPolicy models.Policy
 		result = db.First(&existingPolicy, policyID)
 		if result.Error != nil {
@@ -270,14 +242,12 @@ func UpdatePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind the updated policy data from the request body
 		var updatedPolicy models.Policy
 		if err := c.Bind(&updatedPolicy); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update only the specified fields
 		if updatedPolicy.Title != "" {
 			existingPolicy.Title = updatedPolicy.Title
 		}
@@ -286,10 +256,8 @@ func UpdatePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			existingPolicy.Description = updatedPolicy.Description
 		}
 
-		// Save the updated policy to the database
 		db.Save(&existingPolicy)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
@@ -300,10 +268,8 @@ func UpdatePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// DeletePolicyByIDByAdmin handles the deletion of a policy by ID for admin
 func DeletePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -324,7 +290,6 @@ func DeletePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -337,14 +302,12 @@ func DeletePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get policy ID from the request parameters
 		policyID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid policy ID"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve policy by ID from the database
 		var existingPolicy models.Policy
 		result = db.First(&existingPolicy, policyID)
 		if result.Error != nil {
@@ -352,10 +315,8 @@ func DeletePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the policy from the database
 		db.Delete(&existingPolicy)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,

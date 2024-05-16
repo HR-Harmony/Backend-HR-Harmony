@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-// DashboardSummaryResponse represents the response structure for the dashboard summary endpoint
 type DashboardSummaryResponse struct {
 	Code             int                      `json:"code"`
 	Error            bool                     `json:"error"`
@@ -28,7 +27,6 @@ type DashboardSummaryResponse struct {
 	TrainingSummary  []TrainingSummaryItem    `json:"training_summary"`
 }
 
-// DashboardSummaryItem represents an item in project and task summaries
 type DashboardSummaryItem struct {
 	ID          uint    `json:"id"`
 	Title       string  `json:"title"`
@@ -40,10 +38,8 @@ type TrainingSummaryItem struct {
 	TotalTrainings float64 `json:"total_training"`
 }
 
-// GetDashboardSummaryForEmployee retrieves dashboard summary for employee dashboard
 func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -64,7 +60,6 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Retrieve the employee based on the username
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -72,22 +67,18 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Count the total number of overtime requests for the employee
 		var totalOvertime int64
 		db.Model(&models.OvertimeRequest{}).Where("employee_id = ?", employee.ID).Count(&totalOvertime)
 
-		// Count the total number of leave requests for the employee
 		var totalLeave int64
 		db.Model(&models.LeaveRequest{}).Where("employee_id = ?", employee.ID).Count(&totalLeave)
 
-		// Retrieve project summary
 		var projects []models.Project
 		if err := db.Find(&projects).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to retrieve project data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Map project data to project summaries
 		projectSummaries := make([]map[string]interface{}, 0)
 		for _, project := range projects {
 			projectSummary := map[string]interface{}{
@@ -98,14 +89,12 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 			projectSummaries = append(projectSummaries, projectSummary)
 		}
 
-		// Retrieve task summary
 		var tasks []models.Task
 		if err := db.Find(&tasks).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to retrieve task data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Map task data to task summaries
 		taskSummaries := make([]map[string]interface{}, 0)
 		for _, task := range tasks {
 			taskSummary := map[string]interface{}{
@@ -116,16 +105,13 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 			taskSummaries = append(taskSummaries, taskSummary)
 		}
 
-		// Retrieve payroll summary for the current year
 		currentYear := time.Now().Year()
 		payrollSummary := make([]PayrollSummaryItem, 0, 12)
 
 		for month := time.January; month <= time.December; month++ {
-			// Get the start and end of the month
 			startOfMonth := time.Date(currentYear, month, 1, 0, 0, 0, 0, time.UTC)
 			endOfMonth := startOfMonth.AddDate(0, 1, -1).Add(24 * time.Hour)
 
-			// Retrieve total basic salary for the month
 			var totalBasicSalary float64
 			if err := db.Model(&models.PayrollInfo{}).
 				Where("employee_id = ? AND created_at BETWEEN ? AND ?", employee.ID, startOfMonth, endOfMonth).
@@ -135,22 +121,18 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 				return err
 			}
 
-			// Store the total basic salary for the month
 			payrollSummary = append(payrollSummary, PayrollSummaryItem{
 				Month:  startOfMonth.Format("January 2006"),
 				Amount: totalBasicSalary,
 			})
 		}
 
-		// Retrieve training summary for the current year
 		trainingSummary := make([]TrainingSummaryItem, 0, 12)
 
 		for month := time.January; month <= time.December; month++ {
-			// Get the start and end of the month
 			startOfMonth := fmt.Sprintf("%d-%02d-01", currentYear, month)
 			endOfMonth := time.Date(currentYear, month+1, 0, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
 
-			// Retrieve total number of trainings for the month
 			var totalTrainings int64
 			if err := db.Model(&models.Training{}).
 				Where("employee_id = ? AND start_date BETWEEN ? AND ?", employee.ID, startOfMonth, endOfMonth).
@@ -158,14 +140,12 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 				return err
 			}
 
-			// Store the total number of trainings for the month
 			trainingSummary = append(trainingSummary, TrainingSummaryItem{
 				Month:          time.Month(month).String() + " " + strconv.Itoa(currentYear),
 				TotalTrainings: float64(totalTrainings),
 			})
 		}
 
-		// Respond with success
 		response := DashboardSummaryResponse{
 			Code:             http.StatusOK,
 			Error:            false,

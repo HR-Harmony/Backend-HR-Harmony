@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-// CreateNoteForTask endpoint allows admin to add a note to a task
 func CreateNoteByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -36,7 +35,6 @@ func CreateNoteByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an employee
 		var employeeUser models.Employee
 		result := db.Where("username = ?", username).First(&employeeUser)
 		if result.Error != nil {
@@ -44,7 +42,6 @@ func CreateNoteByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Parse request body
 		var note models.Note
 		if err := c.Bind(&note); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
@@ -53,7 +50,6 @@ func CreateNoteByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		note.Fullname = employeeUser.FirstName + " " + employeeUser.LastName
 
-		// Check if the task with the given ID exists
 		var existingTask models.Task
 		result = db.First(&existingTask, note.TaskID)
 		if result.Error != nil {
@@ -61,14 +57,11 @@ func CreateNoteByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		note.CreatedAt = &currentTime
 
-		// Create the note in the database
 		db.Create(&note)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -79,10 +72,8 @@ func CreateNoteByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// DeleteNoteForTask endpoint allows admin to delete a note by its ID
 func DeleteNoteForTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -103,7 +94,6 @@ func DeleteNoteForTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an employee
 		var employeeUser models.Employee
 		result := db.Where("username = ?", username).First(&employeeUser)
 		if result.Error != nil {
@@ -111,10 +101,8 @@ func DeleteNoteForTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Get note ID from request parameter
 		noteID := c.Param("id")
 
-		// Check if the note with the given ID exists
 		var note models.Note
 		result = db.First(&note, noteID)
 		if result.Error != nil {
@@ -122,10 +110,8 @@ func DeleteNoteForTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the note from the database
 		db.Delete(&note)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -137,7 +123,6 @@ func DeleteNoteForTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 func CreateTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -158,7 +143,6 @@ func CreateTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an employee
 		var employeeUser models.Employee
 		result := db.Where("username = ?", username).First(&employeeUser)
 		if result.Error != nil {
@@ -183,18 +167,15 @@ func CreateTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Parse end date from string to time.Time
 		endDate, err := time.Parse("2006-01-02", task.EndDate)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid EndDate format"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Format start date and end date in "yyyy-mm-dd" format
 		task.StartDate = startDate.Format("2006-01-02")
 		task.EndDate = endDate.Format("2006-01-02")
 
-		// Check if the project with the given ID exists
 		var existingProject models.Project
 		result = db.First(&existingProject, task.ProjectID)
 		if result.Error != nil {
@@ -202,18 +183,14 @@ func CreateTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Set the ProjectName
 		task.ProjectName = existingProject.Title
 		task.Status = "Not Started"
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		task.CreatedAt = &currentTime
 
-		// Create the task in the database
 		db.Create(&task)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusCreated,
 			Error:   false,
@@ -224,10 +201,8 @@ func CreateTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllTasksByAdmin endpoint retrieves all tasks for admin
 func GetAllTasksByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -248,7 +223,6 @@ func GetAllTasksByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an employee
 		var employeeUser models.Employee
 		result := db.Where("username = ?", username).First(&employeeUser)
 		if result.Error != nil {
@@ -256,7 +230,6 @@ func GetAllTasksByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Retrieve all tasks from the database including notes
 		var tasks []models.Task
 		result = db.Preload("Notes").Find(&tasks)
 		if result.Error != nil {
@@ -264,7 +237,6 @@ func GetAllTasksByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
@@ -275,10 +247,8 @@ func GetAllTasksByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetTaskByIDByAdmin endpoint retrieves a task by its ID for admin
 func GetTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -299,7 +269,6 @@ func GetTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an employee
 		var employeeUser models.Employee
 		result := db.Where("username = ?", username).First(&employeeUser)
 		if result.Error != nil {
@@ -307,7 +276,6 @@ func GetTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Extract task ID from the request params
 		taskIDStr := c.Param("id")
 		taskID, err := strconv.ParseUint(taskIDStr, 10, 32)
 		if err != nil {
@@ -315,7 +283,6 @@ func GetTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve task from the database based on ID including notes
 		var task models.Task
 		result = db.Preload("Notes").First(&task, uint(taskID))
 		if result.Error != nil {
@@ -323,7 +290,6 @@ func GetTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
@@ -336,7 +302,6 @@ func GetTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -357,7 +322,6 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an employee
 		var employeeUser models.Employee
 		result := db.Where("username = ?", username).First(&employeeUser)
 		if result.Error != nil {
@@ -365,7 +329,6 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Extract task ID from the request params
 		taskIDStr := c.Param("id")
 		taskID, err := strconv.ParseUint(taskIDStr, 10, 32)
 		if err != nil {
@@ -373,7 +336,6 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve task from the database based on ID including notes
 		var existingTask models.Task
 		result = db.Preload("Notes").First(&existingTask, uint(taskID))
 		if result.Error != nil {
@@ -381,21 +343,18 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind updated task data from the request body
 		var updatedTask models.Task
 		if err := c.Bind(&updatedTask); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate that at least one field is updated
 		if updatedTask.Title == "" && updatedTask.StartDate == "" && updatedTask.EndDate == "" && updatedTask.EstimatedHour == 0 &&
 			updatedTask.ProjectID == 0 && updatedTask.Summary == "" && updatedTask.Description == "" && updatedTask.ProgressBar == 0 && updatedTask.Status == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "At least one field must be updated"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update task data selectively
 		if updatedTask.Title != "" {
 			existingTask.Title = updatedTask.Title
 		}
@@ -420,7 +379,6 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		if updatedTask.ProjectID != 0 {
 			existingTask.ProjectID = updatedTask.ProjectID
-			// Update ProjectName based on the new ProjectID
 			var existingProject models.Project
 			result := db.First(&existingProject, updatedTask.ProjectID)
 			if result.Error != nil {
@@ -446,7 +404,6 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		db.Save(&existingTask)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
@@ -459,7 +416,6 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func DeleteTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -480,7 +436,6 @@ func DeleteTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an employee
 		var employeeUser models.Employee
 		result := db.Where("username = ?", username).First(&employeeUser)
 		if result.Error != nil {
@@ -488,7 +443,6 @@ func DeleteTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Extract task ID from the request params
 		taskIDStr := c.Param("id")
 		taskID, err := strconv.ParseUint(taskIDStr, 10, 32)
 		if err != nil {
@@ -496,7 +450,6 @@ func DeleteTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve task from the database based on ID
 		var existingTask models.Task
 		result = db.Preload("Notes").First(&existingTask, uint(taskID))
 		if result.Error != nil {
@@ -504,7 +457,6 @@ func DeleteTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Hapus Notes
 		for _, note := range existingTask.Notes {
 			db.Delete(&note)
 		}

@@ -19,8 +19,6 @@ func SignInAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: err.Error()}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
-
-		// Validasi apakah username dan password telah diisi
 		if admin.Username == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Username is required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -30,7 +28,6 @@ func SignInAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Mengecek apakah username ada dalam database
 		var existingAdmin models.Admin
 		result := db.Where("username = ?", admin.Username).First(&existingAdmin)
 		if result.Error != nil {
@@ -43,7 +40,6 @@ func SignInAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 		}
 
-		// Membandingkan password yang dimasukkan dengan password yang di-hash
 		err := bcrypt.CompareHashAndPassword([]byte(existingAdmin.Password), []byte(admin.Password))
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid password"}
@@ -55,21 +51,18 @@ func SignInAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Generate JWT token
 		tokenString, err := middleware.GenerateToken(existingAdmin.Username, secretKey)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to generate token"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Goroutine untuk mengirimkan email notifikasi
 		go func(email, username string) {
 			if err := helper.SendLoginNotification(email, username); err != nil {
 				fmt.Println("Failed to send notification email:", err)
 			}
 		}(existingAdmin.Email, existingAdmin.FirstName+" "+existingAdmin.LastName)
 
-		// Menyertakan ID pengguna dalam respons
 		return c.JSON(http.StatusOK, map[string]interface{}{"code": http.StatusOK, "error": false, "message": "Admin login successful", "token": tokenString, "id": existingAdmin.ID})
 	}
 }

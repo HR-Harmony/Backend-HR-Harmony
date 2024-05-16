@@ -16,7 +16,6 @@ import (
 
 func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the token from the request header
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -31,14 +30,12 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		tokenString = authParts[1]
 
-		// Verify the token and extract the username
 		username, err := middleware.VerifyToken(tokenString, secretKey)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Retrieve the employee based on the username
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -46,7 +43,6 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Check if the employee has already checked in for the day
 		today := time.Now().Format("2006-01-02")
 		var existingAttendance models.Attendance
 		result = db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
@@ -55,7 +51,6 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Record the check-in time
 		currentTime := time.Now()
 		attendance := models.Attendance{
 			EmployeeID:       employee.ID,
@@ -67,7 +62,6 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		db.Create(&attendance)
 
-		// Kirim notifikasi email ke karyawan
 		err = helper.SendAttendanceCheckinNotification(employee.Email, employee.FirstName+" "+employee.LastName, attendance.InTime)
 		if err != nil {
 			// Handle error
@@ -85,7 +79,6 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the token from the request header
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -100,14 +93,12 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		tokenString = authParts[1]
 
-		// Verify the token and extract the username
 		username, err := middleware.VerifyToken(tokenString, secretKey)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Retrieve the employee based on the username
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -115,7 +106,6 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Check if the employee has checked in for the day
 		today := time.Now().Format("2006-01-02")
 		var existingAttendance models.Attendance
 		result = db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
@@ -124,7 +114,6 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update the check-out time and calculate total work
 		currentTime := time.Now()
 		existingAttendance.OutTime = currentTime.Format("15:04:05")
 		inTime, _ := time.Parse("15:04:05", existingAttendance.InTime)
@@ -132,10 +121,8 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		totalWork := outTime.Sub(inTime).Round(time.Minute)
 		existingAttendance.TotalWork = totalWork.String()
 
-		// Update the attendance record
 		db.Save(&existingAttendance)
 
-		// Kirim notifikasi email ke karyawan
 		err = helper.SendAttendanceCheckoutNotification(employee.Email, employee.FirstName+" "+employee.LastName, existingAttendance.OutTime, existingAttendance.TotalWork)
 		if err != nil {
 			// Handle error
@@ -154,7 +141,6 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the token from the request header
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -169,14 +155,12 @@ func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		tokenString = authParts[1]
 
-		// Verify the token and extract the username
 		username, err := middleware.VerifyToken(tokenString, secretKey)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Retrieve the employee based on the username
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -184,7 +168,6 @@ func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Retrieve attendance records for the employee
 		var attendances []models.Attendance
 		result = db.Where("employee_id = ?", employee.ID).Find(&attendances)
 		if result.Error != nil {
@@ -192,7 +175,6 @@ func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Return the attendance records
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,
@@ -202,10 +184,8 @@ func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAttendanceByIDAndEmployeeID mengambil data attendance milik karyawan berdasarkan ID attendance dan ID karyawan
 func EmployeeAttendanceByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -226,7 +206,6 @@ func EmployeeAttendanceByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Retrieve the employee based on the username
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -234,18 +213,15 @@ func EmployeeAttendanceByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Extract attendanceID from the request parameters
 		attendanceID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance ID format"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve attendance data for the specified ID
 		var attendance models.Attendance
 		result = db.Where("id = ?", attendanceID).First(&attendance)
 		if result.Error != nil {
-			// Check if the attendance ID is not found
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Attendance ID not found"}
 				return c.JSON(http.StatusNotFound, errorResponse)
@@ -254,13 +230,11 @@ func EmployeeAttendanceByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Check if the retrieved attendance belongs to the employee
 		if attendance.EmployeeID != employee.ID {
 			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Attendance does not belong to the employee"}
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Return the attendance data
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,

@@ -12,10 +12,8 @@ import (
 	"time"
 )
 
-// CreateAnnouncementByAdmin handles the creation of a new announcement by admin
 func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -36,7 +34,6 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -49,38 +46,32 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the announcement data from the request body
 		var announcement models.Announcement
 		if err := c.Bind(&announcement); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate announcement data
 		if announcement.Title == "" || announcement.Summary == "" || announcement.Description == "" || announcement.StartDate == "" || announcement.EndDate == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "All fields are required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Parse start date from string to time.Time
 		startDate, err := time.Parse("2006-01-02", announcement.StartDate)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid StartDate format"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Parse end date from string to time.Time
 		endDate, err := time.Parse("2006-01-02", announcement.EndDate)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid EndDate format"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Format start date and end date in "yyyy-mm-dd" format
 		announcement.StartDate = startDate.Format("2006-01-02")
 		announcement.EndDate = endDate.Format("2006-01-02")
 
-		// Check if the department with the given ID exists
 		var existingDepartment models.Department
 		result = db.First(&existingDepartment, announcement.DepartmentID)
 		if result.Error != nil {
@@ -90,14 +81,11 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		announcement.DepartmentName = existingDepartment.DepartmentName
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		announcement.CreatedAt = &currentTime
 
-		// Create the announcement in the database
 		db.Create(&announcement)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:         http.StatusCreated,
 			Error:        false,
@@ -108,10 +96,8 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAnnouncementsByAdmin retrieves all announcements for admin with pagination
 func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -132,7 +118,6 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -145,7 +130,6 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -153,13 +137,11 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Retrieve announcements with pagination
 		var announcements []models.Announcement
 		query := db.Offset(offset).Limit(perPage).Find(&announcements)
 		if query.Error != nil {
@@ -186,7 +168,6 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 // GetAnnouncementByIDForAdmin retrieves announcement data by ID for admin
 func GetAnnouncementByIDForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -206,8 +187,6 @@ func GetAnnouncementByIDForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
-
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -220,10 +199,8 @@ func GetAnnouncementByIDForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract announcement ID from the request
 		announcementID := c.Param("id")
 
-		// Retrieve announcement by ID
 		var announcement models.Announcement
 		result = db.First(&announcement, announcementID)
 		if result.Error != nil {
@@ -231,7 +208,6 @@ func GetAnnouncementByIDForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:         http.StatusOK,
 			Error:        false,
@@ -242,10 +218,8 @@ func GetAnnouncementByIDForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 	}
 }
 
-// UpdateAnnouncementForAdmin handles the update of an announcement by admin
 func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -266,7 +240,6 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -279,10 +252,8 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract announcement ID from the request
 		announcementID := c.Param("id")
 
-		// Retrieve announcement by ID
 		var announcement models.Announcement
 		result = db.First(&announcement, announcementID)
 		if result.Error != nil {
@@ -290,20 +261,17 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind the updated announcement data from the request body
 		var updatedAnnouncement models.Announcement
 		if err := c.Bind(&updatedAnnouncement); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate and update the announcement fields
 		if updatedAnnouncement.Title != "" {
 			announcement.Title = updatedAnnouncement.Title
 		}
 
 		if updatedAnnouncement.DepartmentID != 0 {
-			// Check if the new department ID exists
 			var newDepartment models.Department
 			result = db.First(&newDepartment, updatedAnnouncement.DepartmentID)
 			if result.Error != nil {
@@ -323,7 +291,6 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 
 		if updatedAnnouncement.StartDate != "" {
-			// Parse and update start date
 			startDate, err := time.Parse("2006-01-02", updatedAnnouncement.StartDate)
 			if err != nil {
 				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid StartDate format"}
@@ -333,7 +300,6 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 
 		if updatedAnnouncement.EndDate != "" {
-			// Parse and update end date
 			endDate, err := time.Parse("2006-01-02", updatedAnnouncement.EndDate)
 			if err != nil {
 				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid EndDate format"}
@@ -342,10 +308,8 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			announcement.EndDate = endDate.Format("2006-01-02")
 		}
 
-		// Update the announcement in the database
 		db.Save(&announcement)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:         http.StatusOK,
 			Error:        false,
@@ -356,10 +320,8 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 	}
 }
 
-// DeleteAnnouncementForAdmin handles the deletion of an announcement by admin
 func DeleteAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -380,7 +342,6 @@ func DeleteAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -393,10 +354,8 @@ func DeleteAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract announcement ID from the request
 		announcementID := c.Param("id")
 
-		// Retrieve announcement by ID
 		var announcement models.Announcement
 		result = db.First(&announcement, announcementID)
 		if result.Error != nil {
@@ -404,10 +363,8 @@ func DeleteAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the announcement from the database
 		db.Delete(&announcement)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,

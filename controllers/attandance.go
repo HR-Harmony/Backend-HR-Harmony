@@ -14,7 +14,6 @@ import (
 
 func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -35,7 +34,6 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -48,20 +46,17 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the attendance data from the request body
 		var attendance models.Attendance
 		if err := c.Bind(&attendance); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate attendance data
 		if attendance.EmployeeID == 0 || attendance.AttendanceDate == "" || attendance.InTime == "" || attendance.OutTime == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance data. All fields are required."}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Check if the employee ID exists
 		var employee models.Employee
 		result = db.First(&employee, attendance.EmployeeID)
 		if result.Error != nil {
@@ -72,14 +67,12 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		attendance.Username = employee.Username
 		attendance.FullNameEmployee = employee.FirstName + " " + employee.LastName
 
-		// Validate attandance_date format
 		_, err = time.Parse("2006-01-02", attendance.AttendanceDate)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Calculate total work duration
 		inTime, err := time.Parse("15:04", attendance.InTime)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
@@ -92,19 +85,14 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 		workDuration := outTime.Sub(inTime)
 
-		// Convert work duration to hours
 		totalWorkHours := workDuration.Hours()
 
-		// Convert totalWorkHours to string
 		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
 
-		// Add total_work to attendance data
 		attendance.TotalWork = totalWork
 
-		// Create the attendance in the database
 		db.Create(&attendance)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -115,10 +103,8 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 	}
 }
 
-// GetAllAttendanceByAdmin handles the retrieval of attendance data by admin with pagination
 func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -139,7 +125,6 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -152,7 +137,6 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -160,17 +144,14 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Get query parameters
 		date := c.QueryParam("date")
 		employeeID := c.QueryParam("employee_id")
 
-		// Prepare query based on filters
 		query := db.Model(&models.Attendance{})
 
 		if date != "" {
@@ -181,15 +162,12 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			query = query.Where("employee_id = ?", employeeID)
 		}
 
-		// Count total records for pagination
 		var totalCount int64
 		query.Count(&totalCount)
 
-		// Fetch attendance data with pagination
 		var attendance []models.Attendance
 		query.Offset(offset).Limit(perPage).Find(&attendance)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,
@@ -201,10 +179,8 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAttendanceByIDByAdmin handles the retrieval of attendance data by admin based on attendance ID
 func GetAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -225,7 +201,6 @@ func GetAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -238,14 +213,12 @@ func GetAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get attendance ID from path parameter
 		attendanceID := c.Param("id")
 		if attendanceID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Attendance ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch attendance data by ID
 		var attendance models.Attendance
 		result = db.First(&attendance, "id = ?", attendanceID)
 		if result.Error != nil {
@@ -253,7 +226,6 @@ func GetAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -266,7 +238,6 @@ func GetAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -287,7 +258,6 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -300,14 +270,12 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get attendance ID from path parameter
 		attendanceID := c.Param("id")
 		if attendanceID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Attendance ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch attendance data by ID
 		var attendance models.Attendance
 		result = db.First(&attendance, "id = ?", attendanceID)
 		if result.Error != nil {
@@ -315,16 +283,13 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind updated attendance data from the request body
 		var updatedAttendance models.Attendance
 		if err := c.Bind(&updatedAttendance); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update fields that are allowed to be changed
 		if updatedAttendance.EmployeeID != 0 {
-			// Fetch employee data by ID
 			var employee models.Employee
 			result = db.First(&employee, "id = ?", updatedAttendance.EmployeeID)
 			if result.Error != nil {
@@ -336,7 +301,6 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			attendance.FullNameEmployee = employee.FirstName + " " + employee.LastName
 		}
 		if updatedAttendance.AttendanceDate != "" {
-			// Validate attendance_date format
 			_, err := time.Parse("2006-01-02", updatedAttendance.AttendanceDate)
 			if err != nil {
 				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"}
@@ -351,7 +315,6 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			attendance.OutTime = updatedAttendance.OutTime
 		}
 
-		// Recalculate total work duration
 		inTime, err := time.Parse("15:04", attendance.InTime)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
@@ -364,19 +327,14 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		}
 		workDuration := outTime.Sub(inTime)
 
-		// Convert work duration to hours
 		totalWorkHours := workDuration.Hours()
 
-		// Convert totalWorkHours to string
 		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
 
-		// Update total work
 		attendance.TotalWork = totalWork
 
-		// Save the updated attendance data to the database
 		db.Save(&attendance)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -389,7 +347,6 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 func DeleteAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -410,7 +367,6 @@ func DeleteAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -423,14 +379,12 @@ func DeleteAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get attendance ID from path parameter
 		attendanceID := c.Param("id")
 		if attendanceID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Attendance ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch attendance data by ID
 		var attendance models.Attendance
 		result = db.First(&attendance, "id = ?", attendanceID)
 		if result.Error != nil {
@@ -438,10 +392,8 @@ func DeleteAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the attendance data from the database
 		db.Delete(&attendance)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -453,7 +405,6 @@ func DeleteAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -474,7 +425,6 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -487,20 +437,17 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the attendance data from the request body
 		var overtime models.OvertimeRequest
 		if err := c.Bind(&overtime); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate attendance data
 		if overtime.EmployeeID == 0 || overtime.Date == "" || overtime.InTime == "" || overtime.OutTime == "" || overtime.Reason == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid Overtime Request. All fields are required."}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Check if the employee ID exists
 		var employee models.Employee
 		result = db.First(&employee, overtime.EmployeeID)
 		if result.Error != nil {
@@ -511,21 +458,18 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		overtime.Username = employee.Username
 		overtime.FullNameEmployee = employee.FirstName + " " + employee.LastName
 
-		// Validate attandance_date format
 		_, err = time.Parse("2006-01-02", overtime.Date)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid Overtime Request date format. Required format: yyyy-mm-dd"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate attandance_date format
 		_, err = time.Parse("2006-01-02", overtime.Date)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Calculate total work duration
 		inTime, err := time.Parse("15:04", overtime.InTime)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
@@ -538,21 +482,16 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 		workDuration := outTime.Sub(inTime)
 
-		// Convert work duration to hours
 		totalWorkHours := workDuration.Hours()
 
-		// Convert totalWorkHours to string
 		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
 
-		// Add total_work to attendance data
 		overtime.TotalWork = totalWork
 
 		overtime.Status = "Pending"
 
-		// Create the attendance in the database
 		db.Create(&overtime)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -563,10 +502,8 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 	}
 }
 
-// GetAllOvertimeRequestsByAdmin handles the retrieval of overtime requests data by admin with pagination
 func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -587,7 +524,6 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -600,7 +536,6 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -608,17 +543,14 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Get query parameters
 		date := c.QueryParam("date")
 		employeeID := c.QueryParam("employee_id")
 
-		// Prepare query based on filters
 		query := db.Model(&models.OvertimeRequest{})
 
 		if date != "" {
@@ -629,15 +561,12 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			query = query.Where("employee_id = ?", employeeID)
 		}
 
-		// Count total records for pagination
 		var totalCount int64
 		query.Count(&totalCount)
 
-		// Fetch overtime request data with pagination
 		var overtime []models.OvertimeRequest
 		query.Offset(offset).Limit(perPage).Find(&overtime)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,
@@ -651,7 +580,7 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
+
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -672,7 +601,6 @@ func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -685,14 +613,12 @@ func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get attendance ID from path parameter
 		overtimeID := c.Param("id")
 		if overtimeID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Overtime ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch attendance data by ID
 		var overtime models.OvertimeRequest
 		result = db.First(&overtime, "id = ?", overtimeID)
 		if result.Error != nil {
@@ -700,7 +626,6 @@ func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -713,7 +638,6 @@ func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -734,7 +658,6 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -747,14 +670,12 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get attendance ID from path parameter
 		overtimeID := c.Param("id")
 		if overtimeID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Overtime ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch attendance data by ID
 		var overtime models.OvertimeRequest
 		result = db.First(&overtime, "id = ?", overtimeID)
 		if result.Error != nil {
@@ -762,16 +683,13 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind updated attendance data from the request body
 		var updatedOvertime models.OvertimeRequest
 		if err := c.Bind(&updatedOvertime); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update fields that are allowed to be changed
 		if updatedOvertime.EmployeeID != 0 {
-			// Fetch employee data by ID
 			var employee models.Employee
 			result = db.First(&employee, "id = ?", updatedOvertime.EmployeeID)
 			if result.Error != nil {
@@ -783,7 +701,6 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			overtime.FullNameEmployee = employee.FirstName + " " + employee.LastName
 		}
 		if updatedOvertime.Date != "" {
-			// Validate attendance_date format
 			_, err := time.Parse("2006-01-02", updatedOvertime.Date)
 			if err != nil {
 				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid Overtime Request date format. Required format: yyyy-mm-dd"}
@@ -806,14 +723,12 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			overtime.Status = updatedOvertime.Status
 		}
 
-		// Validate attandance_date format
 		_, err = time.Parse("2006-01-02", overtime.Date)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Calculate total work duration
 		inTime, err := time.Parse("15:04", overtime.InTime)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
@@ -826,19 +741,14 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 		}
 		workDuration := outTime.Sub(inTime)
 
-		// Convert work duration to hours
 		totalWorkHours := workDuration.Hours()
 
-		// Convert totalWorkHours to string
 		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
 
-		// Add total_work to attendance data
 		overtime.TotalWork = totalWork
 
-		// Save the updated attendance data to the database
 		db.Save(&overtime)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -851,7 +761,6 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 
 func DeleteOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -872,7 +781,6 @@ func DeleteOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -885,14 +793,12 @@ func DeleteOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get attendance ID from path parameter
 		overtimeID := c.Param("id")
 		if overtimeID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Overtime ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch attendance data by ID
 		var overtime models.OvertimeRequest
 		result = db.First(&overtime, "id = ?", overtimeID)
 		if result.Error != nil {
@@ -900,10 +806,8 @@ func DeleteOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the attendance data from the database
 		db.Delete(&overtime)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
