@@ -246,30 +246,56 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		var employeesResponse []helper.EmployeeResponse
 		for _, emp := range employees {
 			employeeResponse := helper.EmployeeResponse{
-				ID:            emp.ID,
-				PayrollID:     emp.PayrollID,
-				FirstName:     emp.FirstName,
-				LastName:      emp.LastName,
-				ContactNumber: emp.ContactNumber,
-				Gender:        emp.Gender,
-				Email:         emp.Email,
-				Username:      emp.Username,
-				Password:      emp.Password,
-				ShiftID:       emp.ShiftID,
-				Shift:         emp.Shift,
-				RoleID:        emp.RoleID,
-				Role:          emp.Role,
-				DepartmentID:  emp.DepartmentID,
-				Department:    emp.Department,
-				DesignationID: emp.DesignationID,
-				Designation:   emp.Designation,
-				BasicSalary:   emp.BasicSalary,
-				HourlyRate:    emp.HourlyRate,
-				PaySlipType:   emp.PaySlipType,
-				IsActive:      emp.IsActive,
-				PaidStatus:    emp.PaidStatus,
-				CreatedAt:     emp.CreatedAt,
-				UpdatedAt:     emp.UpdatedAt,
+				ID:                       emp.ID,
+				PayrollID:                emp.PayrollID,
+				FirstName:                emp.FirstName,
+				LastName:                 emp.LastName,
+				ContactNumber:            emp.ContactNumber,
+				Gender:                   emp.Gender,
+				Email:                    emp.Email,
+				Username:                 emp.Username,
+				Password:                 emp.Password,
+				ShiftID:                  emp.ShiftID,
+				Shift:                    emp.Shift,
+				RoleID:                   emp.RoleID,
+				Role:                     emp.Role,
+				DepartmentID:             emp.DepartmentID,
+				Department:               emp.Department,
+				DesignationID:            emp.DesignationID,
+				Designation:              emp.Designation,
+				BasicSalary:              emp.BasicSalary,
+				HourlyRate:               emp.HourlyRate,
+				PaySlipType:              emp.PaySlipType,
+				IsActive:                 emp.IsActive,
+				PaidStatus:               emp.PaidStatus,
+				MaritalStatus:            emp.MaritalStatus,
+				Religion:                 emp.Religion,
+				BloodGroup:               emp.BloodGroup,
+				Nationality:              emp.Nationality,
+				Citizenship:              emp.Citizenship,
+				BpjsKesehatan:            emp.BpjsKesehatan,
+				Address1:                 emp.Address1,
+				Address2:                 emp.Address2,
+				City:                     emp.City,
+				StateProvince:            emp.StateProvince,
+				ZipPostalCode:            emp.ZipPostalCode,
+				Bio:                      emp.Bio,
+				FacebookURL:              emp.FacebookURL,
+				InstagramURL:             emp.InstagramURL,
+				TwitterURL:               emp.TwitterURL,
+				LinkedinURL:              emp.LinkedinURL,
+				AccountTitle:             emp.AccountTitle,
+				AccountNumber:            emp.AccountNumber,
+				BankName:                 emp.BankName,
+				Iban:                     emp.Iban,
+				SwiftCode:                emp.SwiftCode,
+				BankBranch:               emp.BankBranch,
+				EmergencyContactFullName: emp.EmergencyContactFullName,
+				EmergencyContactNumber:   emp.EmergencyContactNumber,
+				EmergencyContactEmail:    emp.EmergencyContactEmail,
+				EmergencyContactAddress:  emp.EmergencyContactAddress,
+				CreatedAt:                emp.CreatedAt,
+				UpdatedAt:                emp.UpdatedAt,
 			}
 			employeesResponse = append(employeesResponse, employeeResponse)
 		}
@@ -339,30 +365,56 @@ func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		employeeResponse := helper.EmployeeResponse{
-			ID:            employee.ID,
-			PayrollID:     employee.PayrollID,
-			FirstName:     employee.FirstName,
-			LastName:      employee.LastName,
-			ContactNumber: employee.ContactNumber,
-			Gender:        employee.Gender,
-			Email:         employee.Email,
-			Username:      employee.Username,
-			Password:      employee.Password,
-			ShiftID:       employee.ShiftID,
-			Shift:         employee.Shift,
-			RoleID:        employee.RoleID,
-			Role:          employee.Role,
-			DepartmentID:  employee.DepartmentID,
-			Department:    employee.Department,
-			DesignationID: employee.DesignationID,
-			Designation:   employee.Designation,
-			BasicSalary:   employee.BasicSalary,
-			HourlyRate:    employee.HourlyRate,
-			PaySlipType:   employee.PaySlipType,
-			IsActive:      employee.IsActive,
-			PaidStatus:    employee.PaidStatus,
-			CreatedAt:     employee.CreatedAt,
-			UpdatedAt:     employee.UpdatedAt,
+			ID:                       employee.ID,
+			PayrollID:                employee.PayrollID,
+			FirstName:                employee.FirstName,
+			LastName:                 employee.LastName,
+			ContactNumber:            employee.ContactNumber,
+			Gender:                   employee.Gender,
+			Email:                    employee.Email,
+			Username:                 employee.Username,
+			Password:                 employee.Password,
+			ShiftID:                  employee.ShiftID,
+			Shift:                    employee.Shift,
+			RoleID:                   employee.RoleID,
+			Role:                     employee.Role,
+			DepartmentID:             employee.DepartmentID,
+			Department:               employee.Department,
+			DesignationID:            employee.DesignationID,
+			Designation:              employee.Designation,
+			BasicSalary:              employee.BasicSalary,
+			HourlyRate:               employee.HourlyRate,
+			PaySlipType:              employee.PaySlipType,
+			IsActive:                 employee.IsActive,
+			PaidStatus:               employee.PaidStatus,
+			MaritalStatus:            employee.MaritalStatus,
+			Religion:                 employee.Religion,
+			BloodGroup:               employee.BloodGroup,
+			Nationality:              employee.Nationality,
+			Citizenship:              employee.Citizenship,
+			BpjsKesehatan:            employee.BpjsKesehatan,
+			Address1:                 employee.Address1,
+			Address2:                 employee.Address2,
+			City:                     employee.City,
+			StateProvince:            employee.StateProvince,
+			ZipPostalCode:            employee.ZipPostalCode,
+			Bio:                      employee.Bio,
+			FacebookURL:              employee.FacebookURL,
+			InstagramURL:             employee.InstagramURL,
+			TwitterURL:               employee.TwitterURL,
+			LinkedinURL:              employee.LinkedinURL,
+			AccountTitle:             employee.AccountTitle,
+			AccountNumber:            employee.AccountNumber,
+			BankName:                 employee.BankName,
+			Iban:                     employee.Iban,
+			SwiftCode:                employee.SwiftCode,
+			BankBranch:               employee.BankBranch,
+			EmergencyContactFullName: employee.EmergencyContactFullName,
+			EmergencyContactNumber:   employee.EmergencyContactNumber,
+			EmergencyContactEmail:    employee.EmergencyContactEmail,
+			EmergencyContactAddress:  employee.EmergencyContactAddress,
+			CreatedAt:                employee.CreatedAt,
+			UpdatedAt:                employee.UpdatedAt,
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
@@ -448,8 +500,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.Password = string(hashedPassword)
 		}
 
-		passwordWithNoHash := updatedEmployee.Password
-
 		if updatedEmployee.ShiftID != 0 {
 			var officeShift models.Shift
 			result = db.First(&officeShift, "id = ?", updatedEmployee.ShiftID)
@@ -496,43 +546,162 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.PaySlipType = updatedEmployee.PaySlipType
 		}
 
+		if updatedEmployee.MaritalStatus != "" {
+			existingEmployee.MaritalStatus = updatedEmployee.MaritalStatus
+		}
+
+		if updatedEmployee.Religion != "" {
+			existingEmployee.Religion = updatedEmployee.Religion
+		}
+
+		if updatedEmployee.BloodGroup != "" {
+			existingEmployee.BloodGroup = updatedEmployee.BloodGroup
+		}
+
+		if updatedEmployee.Nationality != "" {
+			existingEmployee.Nationality = updatedEmployee.Nationality
+		}
+
+		if updatedEmployee.Citizenship != "" {
+			existingEmployee.Citizenship = updatedEmployee.Citizenship
+		}
+
+		if updatedEmployee.BpjsKesehatan != "" {
+			existingEmployee.BpjsKesehatan = updatedEmployee.BpjsKesehatan
+		}
+
+		if updatedEmployee.Address2 != "" {
+			existingEmployee.Address2 = updatedEmployee.Address2
+		}
+
+		if updatedEmployee.City != "" {
+			existingEmployee.City = updatedEmployee.City
+		}
+
+		if updatedEmployee.StateProvince != "" {
+			existingEmployee.StateProvince = updatedEmployee.StateProvince
+		}
+
+		if updatedEmployee.ZipPostalCode != "" {
+			existingEmployee.ZipPostalCode = updatedEmployee.ZipPostalCode
+		}
+
+		if updatedEmployee.Bio != "" {
+			existingEmployee.Bio = updatedEmployee.Bio
+		}
+
+		if updatedEmployee.FacebookURL != "" {
+			existingEmployee.FacebookURL = updatedEmployee.FacebookURL
+		}
+
+		if updatedEmployee.InstagramURL != "" {
+			existingEmployee.InstagramURL = updatedEmployee.InstagramURL
+		}
+
+		if updatedEmployee.TwitterURL != "" {
+			existingEmployee.TwitterURL = updatedEmployee.TwitterURL
+		}
+
+		if updatedEmployee.LinkedinURL != "" {
+			existingEmployee.LinkedinURL = updatedEmployee.LinkedinURL
+		}
+
+		if updatedEmployee.AccountTitle != "" {
+			existingEmployee.AccountTitle = updatedEmployee.AccountTitle
+		}
+
+		if updatedEmployee.AccountNumber != "" {
+			existingEmployee.AccountNumber = updatedEmployee.AccountNumber
+		}
+
+		if updatedEmployee.BankName != "" {
+			existingEmployee.BankName = updatedEmployee.BankName
+		}
+
+		if updatedEmployee.Iban != "" {
+			existingEmployee.Iban = updatedEmployee.Iban
+		}
+
+		if updatedEmployee.SwiftCode != "" {
+			existingEmployee.SwiftCode = updatedEmployee.SwiftCode
+		}
+
+		if updatedEmployee.BankBranch != "" {
+			existingEmployee.BankBranch = updatedEmployee.BankBranch
+		}
+
+		if updatedEmployee.EmergencyContactFullName != "" {
+			existingEmployee.EmergencyContactFullName = updatedEmployee.EmergencyContactFullName
+		}
+
+		if updatedEmployee.EmergencyContactNumber != "" {
+			existingEmployee.EmergencyContactNumber = updatedEmployee.EmergencyContactNumber
+		}
+
+		if updatedEmployee.EmergencyContactEmail != "" {
+			existingEmployee.EmergencyContactEmail = updatedEmployee.EmergencyContactEmail
+		}
+
+		if updatedEmployee.EmergencyContactAddress != "" {
+			existingEmployee.EmergencyContactAddress = updatedEmployee.EmergencyContactAddress
+		}
+
 		if err := db.Save(&existingEmployee).Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to update employee data"})
 		}
 
-		// Send email notification to the employee with the plain text password
-		err = helper.SendEmployeeAccountNotificationWithPlainTextPassword(existingEmployee.Email, existingEmployee.FirstName+" "+existingEmployee.LastName, existingEmployee.Username, passwordWithNoHash)
-		if err != nil {
-			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send welcome email"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
-
 		// Exclude PayrollInfo from the response
 		employeeWithoutPayrollInfo := helper.EmployeeResponse{
-			ID:            existingEmployee.ID,
-			PayrollID:     existingEmployee.PayrollID,
-			FirstName:     existingEmployee.FirstName,
-			LastName:      existingEmployee.LastName,
-			ContactNumber: existingEmployee.ContactNumber,
-			Gender:        existingEmployee.Gender,
-			Email:         existingEmployee.Email,
-			Username:      existingEmployee.Username,
-			Password:      existingEmployee.Password,
-			ShiftID:       existingEmployee.ShiftID,
-			Shift:         existingEmployee.Shift,
-			RoleID:        existingEmployee.RoleID,
-			Role:          existingEmployee.Role,
-			DepartmentID:  existingEmployee.DepartmentID,
-			Department:    existingEmployee.Department,
-			DesignationID: existingEmployee.DesignationID,
-			Designation:   existingEmployee.Designation,
-			BasicSalary:   existingEmployee.BasicSalary,
-			HourlyRate:    existingEmployee.HourlyRate,
-			PaySlipType:   existingEmployee.PaySlipType,
-			IsActive:      existingEmployee.IsActive,
-			PaidStatus:    existingEmployee.PaidStatus,
-			CreatedAt:     existingEmployee.CreatedAt,
-			UpdatedAt:     existingEmployee.UpdatedAt,
+			ID:                       existingEmployee.ID,
+			PayrollID:                existingEmployee.PayrollID,
+			FirstName:                existingEmployee.FirstName,
+			LastName:                 existingEmployee.LastName,
+			ContactNumber:            existingEmployee.ContactNumber,
+			Gender:                   existingEmployee.Gender,
+			Email:                    existingEmployee.Email,
+			Username:                 existingEmployee.Username,
+			Password:                 existingEmployee.Password,
+			ShiftID:                  existingEmployee.ShiftID,
+			Shift:                    existingEmployee.Shift,
+			RoleID:                   existingEmployee.RoleID,
+			Role:                     existingEmployee.Role,
+			DepartmentID:             existingEmployee.DepartmentID,
+			Department:               existingEmployee.Department,
+			DesignationID:            existingEmployee.DesignationID,
+			Designation:              existingEmployee.Designation,
+			BasicSalary:              existingEmployee.BasicSalary,
+			HourlyRate:               existingEmployee.HourlyRate,
+			PaySlipType:              existingEmployee.PaySlipType,
+			IsActive:                 existingEmployee.IsActive,
+			PaidStatus:               existingEmployee.PaidStatus,
+			MaritalStatus:            existingEmployee.MaritalStatus,
+			Religion:                 existingEmployee.Religion,
+			BloodGroup:               existingEmployee.BloodGroup,
+			Nationality:              existingEmployee.Nationality,
+			Citizenship:              existingEmployee.Citizenship,
+			BpjsKesehatan:            existingEmployee.BpjsKesehatan,
+			Address1:                 existingEmployee.Address1,
+			Address2:                 existingEmployee.Address2,
+			City:                     existingEmployee.City,
+			StateProvince:            existingEmployee.StateProvince,
+			ZipPostalCode:            existingEmployee.ZipPostalCode,
+			Bio:                      existingEmployee.Bio,
+			FacebookURL:              existingEmployee.FacebookURL,
+			InstagramURL:             existingEmployee.InstagramURL,
+			TwitterURL:               existingEmployee.TwitterURL,
+			LinkedinURL:              existingEmployee.LinkedinURL,
+			AccountTitle:             existingEmployee.AccountTitle,
+			AccountNumber:            existingEmployee.AccountNumber,
+			BankName:                 existingEmployee.BankName,
+			Iban:                     existingEmployee.Iban,
+			SwiftCode:                existingEmployee.SwiftCode,
+			BankBranch:               existingEmployee.BankBranch,
+			EmergencyContactFullName: existingEmployee.EmergencyContactFullName,
+			EmergencyContactNumber:   existingEmployee.EmergencyContactNumber,
+			EmergencyContactEmail:    existingEmployee.EmergencyContactEmail,
+			EmergencyContactAddress:  existingEmployee.EmergencyContactAddress,
+			CreatedAt:                existingEmployee.CreatedAt,
+			UpdatedAt:                existingEmployee.UpdatedAt,
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{

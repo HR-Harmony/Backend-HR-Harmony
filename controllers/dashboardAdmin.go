@@ -11,7 +11,6 @@ import (
 	"time"
 )
 
-// DashboardSummary represents the aggregated data for admin dashboard
 type DashboardSummary struct {
 	ProjectStatus     map[string]int           `json:"project_status"`
 	Departments       map[string]int           `json:"departments"`
@@ -22,16 +21,13 @@ type DashboardSummary struct {
 	PayrollSummary    []PayrollSummaryItem     `json:"payroll_summary"`
 }
 
-// PayrollSummaryItem represents an item in payroll summary
 type PayrollSummaryItem struct {
 	Month  string  `json:"month"`
 	Amount float64 `json:"amount"`
 }
 
-// GetDashboardSummaryForAdmin retrieves aggregated dashboard summary for admin dashboard
 func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -52,7 +48,6 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -65,7 +60,6 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve project counts by status
 		var projectStatusCounts []struct {
 			Status string
 			Count  int
@@ -75,7 +69,6 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Map project status counts to a more readable format
 		projectStatus := map[string]int{
 			"Cancelled":   0,
 			"Completed":   0,
@@ -84,19 +77,16 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			"In_Progress": 0,
 		}
 		for _, count := range projectStatusCounts {
-			// Replace spaces with underscores in status names
 			statusKey := strings.ReplaceAll(count.Status, " ", "_")
 			projectStatus[statusKey] = count.Count
 		}
 
-		// Retrieve all departments
 		var departments []models.Department
 		if err := db.Find(&departments).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to retrieve departments"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Retrieve employee count for each department
 		departmentEmployeeCounts := make(map[string]int)
 		for _, department := range departments {
 			var employeeCount int64
@@ -107,14 +97,12 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			departmentEmployeeCounts[department.DepartmentName] = int(employeeCount)
 		}
 
-		// Retrieve all designations
 		var designations []models.Designation
 		if err := db.Find(&designations).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to retrieve designations"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Retrieve employee count for each designation
 		designationEmployeeCounts := make(map[string]int)
 		for _, designation := range designations {
 			var employeeCount int64
@@ -125,10 +113,8 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			designationEmployeeCounts[designation.DesignationName] = int(employeeCount)
 		}
 
-		// Get current date
 		currentDate := time.Now().Format("2006-01-02")
 
-		// Fetch attendance data for today for non-client employees
 		var presentCount int64
 		if err := db.Model(&models.Attendance{}).
 			Joins("JOIN employees ON attendances.employee_id = employees.id").
@@ -138,24 +124,20 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Fetch total number of non-client employees
 		var totalStaffCount int64
 		if err := db.Model(&models.Employee{}).Where("is_client = ?", false).Count(&totalStaffCount).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch total staff count"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Calculate absent count
 		absentCount := totalStaffCount - presentCount
 
-		// Retrieve project summary
 		var projects []models.Project
 		if err := db.Find(&projects).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to retrieve project data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Map project data to project summaries
 		projectSummaries := make([]map[string]interface{}, 0)
 		for _, project := range projects {
 			projectSummary := map[string]interface{}{
@@ -166,14 +148,12 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			projectSummaries = append(projectSummaries, projectSummary)
 		}
 
-		// Retrieve task summary
 		var tasks []models.Task
 		if err := db.Find(&tasks).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to retrieve task data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Map task data to task summaries
 		taskSummaries := make([]map[string]interface{}, 0)
 		for _, task := range tasks {
 			taskSummary := map[string]interface{}{
@@ -184,16 +164,13 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			taskSummaries = append(taskSummaries, taskSummary)
 		}
 
-		// Retrieve payroll summary for the current year
 		currentYear := time.Now().Year()
 		payrollSummary := make([]PayrollSummaryItem, 0, 12)
 
 		for month := time.January; month <= time.December; month++ {
-			// Get the start and end of the month
 			startOfMonth := time.Date(currentYear, month, 1, 0, 0, 0, 0, time.UTC)
 			endOfMonth := startOfMonth.AddDate(0, 1, -1).Add(24 * time.Hour)
 
-			// Retrieve total basic salary for the month
 			var totalBasicSalary float64
 			if err := db.Model(&models.PayrollInfo{}).
 				Where("created_at BETWEEN ? AND ?", startOfMonth, endOfMonth).
@@ -203,14 +180,12 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 				return err
 			}
 
-			// Store the total basic salary for the month
 			payrollSummary = append(payrollSummary, PayrollSummaryItem{
 				Month:  startOfMonth.Format("January 2006"),
 				Amount: totalBasicSalary,
 			})
 		}
 
-		// Construct aggregated dashboard summary
 		dashboardSummary := DashboardSummary{
 			ProjectStatus:     projectStatus,
 			Departments:       departmentEmployeeCounts,
@@ -221,7 +196,6 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			PayrollSummary:    payrollSummary,
 		}
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":      http.StatusOK,
 			"error":     false,

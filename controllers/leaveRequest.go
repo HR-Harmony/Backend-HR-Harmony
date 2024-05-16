@@ -15,7 +15,6 @@ import (
 
 func CreateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -48,26 +47,22 @@ func CreateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the leave request type data from the request body
 		var leaveRequestType models.LeaveRequestType
 		if err := c.Bind(&leaveRequestType); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate leave request type data
 		if leaveRequestType.LeaveType == "" || leaveRequestType.DaysPerYears <= 0 {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Incomplete leave request type data"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Create the leave request type in the database
 		if err := db.Create(&leaveRequestType).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to create leave request type"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -78,10 +73,8 @@ func CreateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 	}
 }
 
-// GetAllLeaveRequestTypesByAdmin handles the retrieval of all leave request types by admin with pagination and searching
 func GetAllLeaveRequestTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -102,7 +95,6 @@ func GetAllLeaveRequestTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -115,7 +107,6 @@ func GetAllLeaveRequestTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -123,17 +114,14 @@ func GetAllLeaveRequestTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Fetch all leave request types from the database
 		var leaveRequestTypes []models.LeaveRequestType
 		db.Model(&models.LeaveRequestType{}).Offset(offset).Limit(perPage).Find(&leaveRequestTypes)
 
-		// Check if searching query param is provided
 		searching := c.QueryParam("searching")
 		if searching != "" {
 			var filteredLeaveRequestTypes []models.LeaveRequestType
@@ -150,7 +138,6 @@ func GetAllLeaveRequestTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 		var totalCount int64
 		db.Model(&models.LeaveRequestType{}).Count(&totalCount)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":                http.StatusOK,
 			"error":               false,
@@ -168,7 +155,6 @@ func GetAllLeaveRequestTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 
 func GetLeaveRequestTypeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -201,14 +187,12 @@ func GetLeaveRequestTypeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve leave request type ID from the request URL parameter
 		leaveRequestTypeID := c.Param("id")
 		if leaveRequestTypeID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request type ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the leave request type from the database based on the ID
 		var leaveRequestType models.LeaveRequestType
 		result = db.First(&leaveRequestType, "id = ?", leaveRequestTypeID)
 		if result.Error != nil {
@@ -227,7 +211,6 @@ func GetLeaveRequestTypeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 
 func UpdateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -260,14 +243,12 @@ func UpdateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve leave request type ID from the request URL parameter
 		leaveRequestTypeID := c.Param("id")
 		if leaveRequestTypeID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request type ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the leave request type from the database based on the ID
 		var leaveRequestType models.LeaveRequestType
 		result = db.First(&leaveRequestType, "id = ?", leaveRequestTypeID)
 		if result.Error != nil {
@@ -275,14 +256,12 @@ func UpdateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind the updated leave request type data from the request body
 		var updatedLeaveRequestType models.LeaveRequestType
 		if err := c.Bind(&updatedLeaveRequestType); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update the leave request type data
 		if updatedLeaveRequestType.LeaveType != "" {
 			leaveRequestType.LeaveType = updatedLeaveRequestType.LeaveType
 		}
@@ -293,10 +272,8 @@ func UpdateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			leaveRequestType.IsRequiresApproval = updatedLeaveRequestType.IsRequiresApproval
 		}
 
-		// Update the leave request type in the database
 		db.Save(&leaveRequestType)
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -309,7 +286,6 @@ func UpdateLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 func DeleteLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -342,14 +318,12 @@ func DeleteLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve leave request type ID from the request URL parameter
 		leaveRequestTypeID := c.Param("id")
 		if leaveRequestTypeID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request type ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the leave request type from the database based on the ID
 		var leaveRequestType models.LeaveRequestType
 		result = db.First(&leaveRequestType, "id = ?", leaveRequestTypeID)
 		if result.Error != nil {
@@ -357,10 +331,8 @@ func DeleteLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the leave request type from the database
 		db.Delete(&leaveRequestType)
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -372,7 +344,6 @@ func DeleteLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -400,20 +371,17 @@ func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Verify if the user is an admin
 		if !adminUser.IsAdminHR {
 			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the leave request data from the request body
 		var leaveRequest models.LeaveRequest
 		if err := c.Bind(&leaveRequest); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Add employee username based on employee ID
 		var employee models.Employee
 		result = db.First(&employee, "id = ?", leaveRequest.EmployeeID)
 		if result.Error != nil {
@@ -423,7 +391,6 @@ func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		leaveRequest.Username = employee.Username
 		leaveRequest.FullNameEmployee = employee.FirstName + " " + employee.LastName
 
-		// Add leave type based on leave type ID
 		var leaveType models.LeaveRequestType
 		result = db.First(&leaveType, "id = ?", leaveRequest.LeaveTypeID)
 		if result.Error != nil {
@@ -432,51 +399,41 @@ func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		leaveRequest.LeaveType = leaveType.LeaveType
 
-		// Parse start date from string to time.Time
 		startDate, err := time.Parse("2006-01-02", leaveRequest.StartDate)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Parse end date from string to time.Time
 		endDate, err := time.Parse("2006-01-02", leaveRequest.EndDate)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid EndDate format"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// If is_half_day is true, set end_date to be the same as start_date
 		if leaveRequest.IsHalfDay {
 			endDate = startDate
 		}
 
-		// Calculate the difference in days
 		days := endDate.Sub(startDate).Hours() / 24
 
-		// If it's a half-day, set days to 0.5
 		if leaveRequest.IsHalfDay {
 			days = 0.5
 		}
 
-		// Assign the calculated days to leaveRequest
 		leaveRequest.Days = days
 
-		// Format start date in "yyyy-mm-dd" format
 		leaveRequest.StartDate = startDate.Format("2006-01-02")
 
-		// Format end date in "yyyy-mm-dd" format
 		leaveRequest.EndDate = endDate.Format("2006-01-02")
 
 		leaveRequest.Status = "Pending"
 
-		// Save the leave request to the database
 		if err := db.Create(&leaveRequest).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to create leave request"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -487,10 +444,8 @@ func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllLeaveRequestsByAdmin handles the retrieval of all leave requests by admin with pagination and searching
 func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -511,7 +466,6 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -524,7 +478,6 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -532,16 +485,13 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Fetch searching query parameters
 		searching := c.QueryParam("searching")
 
-		// Fetch leave request data from database with optional search filters
 		var leaveRequests []models.LeaveRequest
 		query := db.Model(&leaveRequests)
 		if searching != "" {
@@ -558,7 +508,6 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		var totalCount int64
 		db.Model(&models.LeaveRequest{}).Count(&totalCount)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -576,7 +525,6 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 func GetLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -604,20 +552,17 @@ func GetLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Verify if the user is an admin
 		if !adminUser.IsAdminHR {
 			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve leave request ID from the request URL parameter
 		leaveRequestID := c.Param("id")
 		if leaveRequestID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the leave request from the database based on the ID
 		var leaveRequest models.LeaveRequest
 		result = db.First(&leaveRequest, "id = ?", leaveRequestID)
 		if result.Error != nil {
@@ -625,7 +570,6 @@ func GetLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -638,7 +582,6 @@ func GetLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -666,20 +609,17 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Verify if the user is an admin
 		if !adminUser.IsAdminHR {
 			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve leave request ID from the request URL parameter
 		leaveRequestID := c.Param("id")
 		if leaveRequestID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the leave request from the database based on the ID
 		var leaveRequest models.LeaveRequest
 		result = db.First(&leaveRequest, "id = ?", leaveRequestID)
 		if result.Error != nil {
@@ -687,16 +627,13 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind the updated leave request data from the request body
 		var updatedLeaveRequest models.LeaveRequest
 		if err := c.Bind(&updatedLeaveRequest); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update the leave request data
 		if updatedLeaveRequest.EmployeeID != 0 {
-			// Update employee username based on the new employee ID
 			var employee models.Employee
 			result = db.First(&employee, "id = ?", updatedLeaveRequest.EmployeeID)
 			if result.Error != nil {
@@ -708,7 +645,6 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			leaveRequest.FullNameEmployee = employee.FirstName + " " + employee.LastName
 		}
 		if updatedLeaveRequest.LeaveTypeID != 0 {
-			// Update leave type based on the new leave type ID
 			var leaveType models.LeaveRequestType
 			result = db.First(&leaveType, "id = ?", updatedLeaveRequest.LeaveTypeID)
 			if result.Error != nil {
@@ -719,7 +655,6 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			leaveRequest.LeaveTypeID = updatedLeaveRequest.LeaveTypeID
 		}
 		if updatedLeaveRequest.StartDate != "" {
-			// Parse start date from string to time.Time
 			startDate, err := time.Parse("2006-01-02", updatedLeaveRequest.StartDate)
 			if err != nil {
 				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"}
@@ -728,7 +663,6 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			leaveRequest.StartDate = startDate.Format("2006-01-02")
 		}
 		if updatedLeaveRequest.EndDate != "" {
-			// Parse end date from string to time.Time
 			endDate, err := time.Parse("2006-01-02", updatedLeaveRequest.EndDate)
 			if err != nil {
 				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid EndDate format"}
@@ -737,16 +671,13 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			leaveRequest.EndDate = endDate.Format("2006-01-02")
 		}
 
-		// Handle is_half_day logic
 		if updatedLeaveRequest.IsHalfDay != leaveRequest.IsHalfDay {
 			leaveRequest.IsHalfDay = updatedLeaveRequest.IsHalfDay
 
-			// Update end_date and days if is_half_day is true
 			if updatedLeaveRequest.IsHalfDay {
 				leaveRequest.EndDate = leaveRequest.StartDate
 				leaveRequest.Days = 0.5
 			} else {
-				// Recalculate the days if it was previously a half day
 				if leaveRequest.StartDate != "" && leaveRequest.EndDate != "" {
 					startDate, _ := time.Parse("2006-01-02", leaveRequest.StartDate)
 					endDate, _ := time.Parse("2006-01-02", leaveRequest.EndDate)
@@ -755,7 +686,6 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 				}
 			}
 		} else {
-			// Recalculate the days based on start and end dates if is_half_day is false
 			if leaveRequest.StartDate != "" && leaveRequest.EndDate != "" {
 				startDate, _ := time.Parse("2006-01-02", leaveRequest.StartDate)
 				endDate, _ := time.Parse("2006-01-02", leaveRequest.EndDate)
@@ -774,13 +704,11 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			leaveRequest.Status = updatedLeaveRequest.Status
 		}
 
-		// Save the updated leave request to the database
 		if err := db.Save(&leaveRequest).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to update leave request"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -793,7 +721,6 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 func DeleteLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -821,20 +748,17 @@ func DeleteLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Verify if the user is an admin
 		if !adminUser.IsAdminHR {
 			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve leave request ID from the request URL parameter
 		leaveRequestID := c.Param("id")
 		if leaveRequestID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the leave request from the database based on the ID
 		var leaveRequest models.LeaveRequest
 		result = db.First(&leaveRequest, "id = ?", leaveRequestID)
 		if result.Error != nil {
@@ -842,13 +766,11 @@ func DeleteLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the leave request from the database
 		if err := db.Delete(&leaveRequest).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to delete leave request"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,

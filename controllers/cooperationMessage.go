@@ -20,13 +20,11 @@ func CreateCooperationMessage(db *gorm.DB) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validasi name
 		if len(cooperationMessage.FirstName) < 3 {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "first name harus minimal 3 huruf"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validasi email format
 		if !helper.IsValidEmail(cooperationMessage.Email) {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Format email tidak valid"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -42,19 +40,15 @@ func CreateCooperationMessage(db *gorm.DB) echo.HandlerFunc {
 			}
 		}
 
-		// Validasi message
 		if len(cooperationMessage.Message) < 10 {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Message harus minimal 10 huruf"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Set waktu saat ini sebagai waktu pembuatan
 		cooperationMessage.CreatedAt = time.Now()
 
-		// Simpan pesan ke database
 		db.Create(&cooperationMessage)
 
-		// Kirim email ke admin
 		adminEmailSubject := "New Cooperation Message"
 		adminEmailBody := helper.GetCooperationEmailBody(cooperationMessage)
 		if err := helper.SendEmailToUser(adminEmail, adminEmailSubject, adminEmailBody); err != nil {
@@ -62,7 +56,6 @@ func CreateCooperationMessage(db *gorm.DB) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Kirim email balasan ke pengirim pesan
 		userEmailSubject := "Your Cooperation Message"
 		userEmailBody := helper.GetUserCooperationEmailBody(cooperationMessage)
 		if err := helper.SendEmailToUser(cooperationMessage.Email, userEmailSubject, userEmailBody); err != nil {

@@ -15,10 +15,8 @@ import (
 	"time"
 )
 
-// CreateEmployeeAccountByAdmin handles the creation of an employee account by admin
 func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -39,7 +37,6 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -52,14 +49,12 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the employee data from the request body
 		var employee models.Employee
 		if err := c.Bind(&employee); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate all employee data
 		if employee.FirstName == "" || employee.LastName == "" || employee.ContactNumber == "" ||
 			employee.Gender == "" || employee.Email == "" || employee.Username == "" ||
 			employee.Password == "" {
@@ -69,7 +64,6 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		passwordWithNoHash := employee.Password
 
-		// Check if username is unique
 		var existingUsername models.Employee
 		result = db.Where("username = ?", employee.Username).First(&existingUsername)
 		if result.Error == nil {
@@ -80,7 +74,6 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Check if contact number is unique
 		var existingContactNumber models.Employee
 		result = db.Where("contact_number = ?", employee.ContactNumber).First(&existingContactNumber)
 		if result.Error == nil {
@@ -91,7 +84,6 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Check if email is unique
 		var existingEmail models.Employee
 		result = db.Where("email = ?", employee.Email).First(&existingEmail)
 		if result.Error == nil {
@@ -102,10 +94,8 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		employee.CreatedAt = &currentTime
-		// Hash the password before saving to the database
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(employee.Password), bcrypt.DefaultCost)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to hash password"}
@@ -119,10 +109,8 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		employee.IsActive = true
 
-		// Create the employee account in the database
 		db.Create(&employee)
 
-		// Send email notification to the employee with the plain text password
 		err = helper.SendClientAccountNotificationWithPlainTextPassword(employee.Email, employee.FirstName+" "+employee.LastName, employee.Username, passwordWithNoHash)
 		if err != nil {
 			log.Println("Failed to send welcome email:", err)
@@ -130,7 +118,6 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -152,10 +139,8 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 	}
 }
 
-// GetAllClientsByAdmin handles the retrieval of client data by admin with pagination
 func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -176,7 +161,6 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -189,7 +173,6 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -197,13 +180,11 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Fetch client employees from the database with pagination
 		var clientEmployees []struct {
 			ID            uint   `json:"id"`
 			FirstName     string `json:"first_name"`
@@ -222,7 +203,6 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			Count(&totalCount).
 			Offset(offset).Limit(perPage).Find(&clientEmployees)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -385,7 +365,6 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			existingEmployee.Username = updatedEmployee.Username
 		}
 		if updatedEmployee.Password != "" {
-			// Hash the updated password
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedEmployee.Password), bcrypt.DefaultCost)
 			if err != nil {
 				return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to hash password"})
@@ -401,7 +380,6 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to update employee data"})
 		}
 
-		// Send email notification to the employee with the plain text password
 		err = helper.SendEmployeeAccountNotificationWithPlainTextPassword(existingEmployee.Email, existingEmployee.FirstName+" "+existingEmployee.LastName, existingEmployee.Username, passwordWithNoHash)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send welcome email"}
@@ -470,7 +448,6 @@ func DeleteClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Client not found"})
 		}
 
-		// Hapus terlebih dahulu entri terkait di tabel payroll_infos
 		if err := db.Where("employee_id = ?", existingEmployee.ID).Delete(&models.PayrollInfo{}).Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to delete related payroll information"})
 		}

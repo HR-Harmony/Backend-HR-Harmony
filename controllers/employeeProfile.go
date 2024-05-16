@@ -12,10 +12,8 @@ import (
 	"strings"
 )
 
-// EmployeeProfile handles the retrieval of an employee's own profile
 func EmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the token from the request header
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -30,14 +28,12 @@ func EmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		tokenString = authParts[1]
 
-		// Verify the token and extract the username
 		username, err := middleware.VerifyToken(tokenString, secretKey)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Retrieve the employee based on the username
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -45,7 +41,6 @@ func EmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Return the employee's profile
 		employeeProfile := map[string]interface{}{
 			"id":             employee.ID,
 			"first_name":     employee.FirstName,

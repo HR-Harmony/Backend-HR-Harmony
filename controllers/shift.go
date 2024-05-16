@@ -14,7 +14,6 @@ import (
 
 func CreateShiftByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -35,7 +34,6 @@ func CreateShiftByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -48,20 +46,17 @@ func CreateShiftByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the shift data from the request body
 		var shift models.Shift
 		if err := c.Bind(&shift); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate shift data
 		if shift.ShiftName == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Shift name is required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Check if the shift name already exists
 		var existingShift models.Shift
 		result = db.Where("shift_name = ?", shift.ShiftName).First(&existingShift)
 		if result.Error == nil {
@@ -69,14 +64,11 @@ func CreateShiftByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusConflict, errorResponse)
 		}
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		shift.CreatedAt = &currentTime
 
-		// Create the shift in the database
 		db.Create(&shift)
 
-		// Respond with success
 		successResponse := helper.ResponseShift{
 			Code:    http.StatusCreated,
 			Error:   false,
@@ -87,10 +79,8 @@ func CreateShiftByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllShiftsByAdmin handles the retrieval of all shifts by admin with pagination
 func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -111,7 +101,6 @@ func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -124,7 +113,6 @@ func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -132,21 +120,17 @@ func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Retrieve shifts from the database with pagination
 		var shifts []models.Shift
 		db.Offset(offset).Limit(perPage).Find(&shifts)
 
-		// Get total count of shifts
 		var totalCount int64
 		db.Model(&models.Shift{}).Count(&totalCount)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -162,10 +146,8 @@ func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetShiftByIDByAdmin handles the retrieval of a shift by its ID for admin
 func GetShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -186,7 +168,6 @@ func GetShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -199,7 +180,6 @@ func GetShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve shift ID from the URL parameter
 		shiftIDStr := c.Param("id")
 		shiftID, err := strconv.ParseUint(shiftIDStr, 10, 32)
 		if err != nil {
@@ -207,7 +187,6 @@ func GetShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve the shift from the database
 		var shift models.Shift
 		result = db.First(&shift, uint(shiftID))
 		if result.Error != nil {
@@ -215,7 +194,6 @@ func GetShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with the shift details
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
@@ -226,10 +204,8 @@ func GetShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// EditShiftNameByIDByAdmin handles the editing of a shift's shift_name by its ID for admin
 func EditShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -250,7 +226,6 @@ func EditShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -263,14 +238,12 @@ func EditShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract shift ID from the URL parameter
 		shiftID := c.Param("id")
 		if shiftID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Shift ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Find the shift by ID
 		var shift models.Shift
 		result = db.First(&shift, "id = ?", shiftID)
 		if result.Error != nil {
@@ -278,14 +251,12 @@ func EditShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind the updated shift data from the request body
 		var updatedShift models.Shift
 		if err := c.Bind(&updatedShift); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update fields that are allowed to be changed
 		if updatedShift.ShiftName != "" {
 			shift.ShiftName = updatedShift.ShiftName
 		}
@@ -332,10 +303,8 @@ func EditShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			shift.SundayOutTime = updatedShift.SundayOutTime
 		}
 
-		// Save the changes to the database
 		db.Save(&shift)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -346,10 +315,8 @@ func EditShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// DeleteShiftByIDByAdmin handles the deletion of a shift by its ID for admin
 func DeleteShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -370,7 +337,6 @@ func DeleteShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -383,7 +349,6 @@ func DeleteShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve shift ID from the URL parameter
 		shiftIDStr := c.Param("id")
 		shiftID, err := strconv.ParseUint(shiftIDStr, 10, 32)
 		if err != nil {
@@ -391,7 +356,6 @@ func DeleteShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve the shift from the database
 		var shift models.Shift
 		result = db.First(&shift, uint(shiftID))
 		if result.Error != nil {
@@ -399,10 +363,8 @@ func DeleteShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the shift from the database
 		db.Delete(&shift)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,

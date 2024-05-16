@@ -52,7 +52,6 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validasi data new job
 		if newJob.Title == "" || newJob.JobType == "" || newJob.DesignationID == 0 || newJob.NumberOfPosition == 0 ||
 			newJob.DateClosing == "" || newJob.Gender == "" || newJob.MinimumExperience == "" ||
 			newJob.ShortDescription == "" || newJob.LongDescription == "" {
@@ -60,7 +59,6 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Cek apakah designation dengan ID tersebut ada di database
 		var designation models.Designation
 		result = db.First(&designation, "id = ?", newJob.DesignationID)
 		if result.Error != nil {
@@ -68,10 +66,8 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Set designation_name berdasarkan designation_id yang diberikan
 		newJob.DesignationName = designation.DesignationName
 
-		// Parse inputan date_closing ke dalam format yang diinginkan (yyyy-mm-dd)
 		dateClosing, err := time.Parse("2006-01-02", newJob.DateClosing)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid DateClosing format. Use yyyy-mm-dd format"}
@@ -79,16 +75,13 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		newJob.DateClosing = dateClosing.Format("2006-01-02")
 
-		// Set tanggal pembuatan pekerjaan
 		newJob.CreatedAt = time.Now()
 
-		// Simpan data new job ke database
 		if err := db.Create(&newJob).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to create new job"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Berikan respons sukses
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -99,10 +92,8 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllNewJobsByAdmin handles the retrieval of all new jobs by admin with pagination
 func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -135,7 +126,6 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -143,21 +133,17 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Retrieve new jobs from the database with pagination
 		var newJobs []models.NewJob
 		db.Offset(offset).Limit(perPage).Find(&newJobs)
 
-		// Get total count of new jobs
 		var totalCount int64
 		db.Model(&models.NewJob{}).Count(&totalCount)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":     http.StatusOK,
 			"error":    false,
@@ -175,7 +161,6 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func GetNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -208,14 +193,12 @@ func GetNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve new job ID from the request URL parameter
 		newJobID := c.Param("id")
 		if newJobID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "New job ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the new job from the database based on the ID
 		var newJob models.NewJob
 		result = db.First(&newJob, "id = ?", newJobID)
 		if result.Error != nil {
@@ -234,7 +217,6 @@ func GetNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -267,14 +249,12 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve new job ID from the request URL parameter
 		newJobID := c.Param("id")
 		if newJobID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "New job ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the new job from the database based on the ID
 		var newJob models.NewJob
 		result = db.First(&newJob, "id = ?", newJobID)
 		if result.Error != nil {
@@ -282,14 +262,12 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind the updated new job data from the request body
 		var updatedJob models.NewJob
 		if err := c.Bind(&updatedJob); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update the new job data
 		if updatedJob.Title != "" {
 			newJob.Title = updatedJob.Title
 		}
@@ -297,7 +275,6 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			newJob.JobType = updatedJob.JobType
 		}
 		if updatedJob.DesignationID != 0 {
-			// Fetch the designation data based on the new designation ID
 			var designation models.Designation
 			result = db.First(&designation, "id = ?", updatedJob.DesignationID)
 			if result.Error != nil {
@@ -305,7 +282,7 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				return c.JSON(http.StatusNotFound, errorResponse)
 			}
 			newJob.DesignationID = updatedJob.DesignationID
-			newJob.DesignationName = designation.DesignationName // Update designation name accordingly
+			newJob.DesignationName = designation.DesignationName
 		}
 		if updatedJob.NumberOfPosition != 0 {
 			newJob.NumberOfPosition = updatedJob.NumberOfPosition
@@ -329,10 +306,8 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			newJob.LongDescription = updatedJob.LongDescription
 		}
 
-		// Update the new job in the database
 		db.Save(&newJob)
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -345,7 +320,6 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func DeleteNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -378,14 +352,12 @@ func DeleteNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve new job ID from the request URL parameter
 		newJobID := c.Param("id")
 		if newJobID == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "New job ID is missing"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Fetch the new job from the database based on the ID
 		var newJob models.NewJob
 		result = db.First(&newJob, "id = ?", newJobID)
 		if result.Error != nil {
@@ -393,10 +365,8 @@ func DeleteNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the new job from the database
 		db.Delete(&newJob)
 
-		// Provide success response
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,

@@ -14,7 +14,6 @@ import (
 
 func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -35,7 +34,6 @@ func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -48,20 +46,17 @@ func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the helpdesk data from the request body
 		var helpdesk models.Helpdesk
 		if err := c.Bind(&helpdesk); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate helpdesk data
 		if helpdesk.Subject == "" || helpdesk.Priority == "" || helpdesk.Description == "" || helpdesk.DepartmentID == 0 || helpdesk.EmployeeID == 0 {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "All fields are required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Check if the department with the given ID exists
 		var existingDepartment models.Department
 		result = db.First(&existingDepartment, helpdesk.DepartmentID)
 		if result.Error != nil {
@@ -69,7 +64,6 @@ func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Check if the employee with the given ID exists
 		var existingEmployee models.Employee
 		result = db.First(&existingEmployee, helpdesk.EmployeeID)
 		if result.Error != nil {
@@ -77,21 +71,17 @@ func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Set the DepartmentName and EmployeeUsername
 		helpdesk.DepartmentName = existingDepartment.DepartmentName
 		helpdesk.EmployeeUsername = existingEmployee.Username
 		helpdesk.EmployeeFullName = existingEmployee.FirstName + " " + existingEmployee.LastName
 
 		helpdesk.Status = "Open"
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		helpdesk.CreatedAt = &currentTime
 
-		// Create the helpdesk in the database
 		db.Create(&helpdesk)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:     http.StatusCreated,
 			Error:    false,
@@ -105,7 +95,6 @@ func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 // GetAllHelpdeskByAdmin handles the retrieval of all helpdesk data by admin with pagination
 func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -126,7 +115,6 @@ func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -139,7 +127,6 @@ func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -147,19 +134,16 @@ func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Retrieve all helpdesk data from the database with pagination
 		var helpdesks []models.Helpdesk
 		var totalCount int64
 		db.Model(&models.Helpdesk{}).Count(&totalCount)
 		db.Offset(offset).Limit(perPage).Find(&helpdesks)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":      http.StatusOK,
 			"error":     false,
@@ -177,7 +161,6 @@ func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func GetHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -198,7 +181,6 @@ func GetHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -211,7 +193,6 @@ func GetHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract helpdesk ID from the request params
 		helpdeskIDStr := c.Param("id")
 		helpdeskID, err := strconv.ParseUint(helpdeskIDStr, 10, 32)
 		if err != nil {
@@ -219,7 +200,6 @@ func GetHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve helpdesk data from the database based on ID
 		var helpdesk models.Helpdesk
 		result = db.First(&helpdesk, uint(helpdeskID))
 		if result.Error != nil {
@@ -227,7 +207,6 @@ func GetHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:     http.StatusOK,
 			Error:    false,
@@ -240,7 +219,6 @@ func GetHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -261,7 +239,6 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -274,7 +251,6 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract helpdesk ID from the request params
 		helpdeskIDStr := c.Param("id")
 		helpdeskID, err := strconv.ParseUint(helpdeskIDStr, 10, 32)
 		if err != nil {
@@ -282,7 +258,6 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve helpdesk data from the database based on ID
 		var helpdesk models.Helpdesk
 		result = db.First(&helpdesk, uint(helpdeskID))
 		if result.Error != nil {
@@ -290,14 +265,12 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind updated helpdesk data from the request body
 		var updatedHelpdesk models.Helpdesk
 		if err := c.Bind(&updatedHelpdesk); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update helpdesk data selectively
 		if updatedHelpdesk.Subject != "" {
 			helpdesk.Subject = updatedHelpdesk.Subject
 		}
@@ -311,27 +284,23 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		if updatedHelpdesk.DepartmentID != 0 {
-			// Check if the department with the given ID exists
 			var existingDepartment models.Department
 			result = db.First(&existingDepartment, updatedHelpdesk.DepartmentID)
 			if result.Error != nil {
 				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Department not found"}
 				return c.JSON(http.StatusNotFound, errorResponse)
 			}
-			// Set the DepartmentName
 			helpdesk.DepartmentID = updatedHelpdesk.DepartmentID
 			helpdesk.DepartmentName = existingDepartment.DepartmentName
 		}
 
 		if updatedHelpdesk.EmployeeID != 0 {
-			// Check if the employee with the given ID exists
 			var existingEmployee models.Employee
 			result = db.First(&existingEmployee, updatedHelpdesk.EmployeeID)
 			if result.Error != nil {
 				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
 				return c.JSON(http.StatusNotFound, errorResponse)
 			}
-			// Set the EmployeeUsername
 			helpdesk.EmployeeID = updatedHelpdesk.EmployeeID
 			helpdesk.EmployeeUsername = existingEmployee.Username
 			helpdesk.EmployeeFullName = existingEmployee.FirstName + " " + existingEmployee.LastName
@@ -345,13 +314,11 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			helpdesk.TicketStatus = updatedHelpdesk.TicketStatus
 		}
 
-		// Set the updated timestamp
 		currentTime := time.Now()
 		helpdesk.UpdatedAt = currentTime
 
 		db.Save(&helpdesk)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:     http.StatusOK,
 			Error:    false,
@@ -364,7 +331,6 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func DeleteHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -385,7 +351,6 @@ func DeleteHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -398,7 +363,6 @@ func DeleteHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract helpdesk ID from the request params
 		helpdeskIDStr := c.Param("id")
 		helpdeskID, err := strconv.ParseUint(helpdeskIDStr, 10, 32)
 		if err != nil {
@@ -406,7 +370,6 @@ func DeleteHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve helpdesk data from the database based on ID
 		var helpdesk models.Helpdesk
 		result = db.First(&helpdesk, uint(helpdeskID))
 		if result.Error != nil {
@@ -414,10 +377,7 @@ func DeleteHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete helpdesk data from the database
 		db.Delete(&helpdesk)
-
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
