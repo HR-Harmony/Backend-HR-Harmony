@@ -19,16 +19,14 @@ func VerifyEmail(db *gorm.DB) echo.HandlerFunc {
 		}
 
 		admin.IsVerified = true
-		admin.VerificationToken = "" // Setelah verifikasi, hapus token verifikasi
+		admin.VerificationToken = ""
 		db.Save(&admin)
 
-		// Baca template HTML dari file (ganti path sesuai dengan struktur folder Anda)
 		tmpl, err := template.ParseFiles("helper/verification.html")
 		if err != nil {
 			return c.String(http.StatusInternalServerError, "Internal Server Error")
 		}
 
-		// Eksekusi template dan kirimkan sebagai respons
 		err = tmpl.Execute(c.Response().Writer, nil)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, "Internal Server Error")

@@ -14,10 +14,8 @@ import (
 	"time"
 )
 
-// CreateDepartementByAdmin handles the creation of a new department by admin
 func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -38,7 +36,6 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -51,20 +48,17 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the department data from the request body
 		var department models.Department
 		if err := c.Bind(&department); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate department data
 		if department.DepartmentName == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Department name is required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Check if the department name already exists
 		var existingDepartment models.Department
 		result = db.Where("department_name = ?", department.DepartmentName).First(&existingDepartment)
 		if result.Error == nil {
@@ -72,7 +66,6 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusConflict, errorResponse)
 		}
 
-		// Fetch employee data based on EmployeeID
 		var employee models.Employee
 		result = db.First(&employee, "id = ?", department.EmployeeID)
 		if result.Error != nil {
@@ -81,14 +74,11 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		department.FullName = employee.FullName
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		department.CreatedAt = &currentTime
 
-		// Create the department in the database
 		db.Create(&department)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:       http.StatusCreated,
 			Error:      false,
@@ -99,10 +89,8 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllDepartmentsByAdmin handles the retrieval of all departments by admin with pagination
 func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -123,7 +111,6 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -136,7 +123,6 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -144,19 +130,16 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Retrieve all departments from the database with pagination
 		var departments []models.Department
 		var totalCount int64
 		db.Model(&models.Department{}).Count(&totalCount)
 		db.Offset(offset).Limit(perPage).Find(&departments)
 
-		// Respond with the list of departments
 		successResponse := map[string]interface{}{
 			"code":        http.StatusOK,
 			"error":       false,
@@ -172,10 +155,8 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetDepartmentByIDByAdmin handles the retrieval of a department by its ID for admin
 func GetDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -196,7 +177,6 @@ func GetDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -209,7 +189,6 @@ func GetDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve department ID from the URL parameter
 		departmentIDStr := c.Param("id")
 		departmentID, err := strconv.ParseUint(departmentIDStr, 10, 32)
 		if err != nil {
@@ -217,7 +196,6 @@ func GetDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve the department from the database
 		var department models.Department
 		result = db.First(&department, uint(departmentID))
 		if result.Error != nil {
@@ -225,7 +203,6 @@ func GetDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with the department information
 		successResponse := helper.Response{
 			Code:       http.StatusOK,
 			Error:      false,
@@ -238,7 +215,6 @@ func GetDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -259,7 +235,6 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -272,7 +247,6 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve department ID from the URL parameter
 		departmentIDStr := c.Param("id")
 		departmentID, err := strconv.ParseUint(departmentIDStr, 10, 32)
 		if err != nil {
@@ -280,7 +254,6 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve the department from the database
 		var department models.Department
 		result = db.First(&department, uint(departmentID))
 		if result.Error != nil {
@@ -288,7 +261,6 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind the updated department data from the request body
 		var updateData struct {
 			DepartmentName string `json:"department_name"`
 			EmployeeID     uint   `json:"employee_id"`
@@ -298,14 +270,11 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate and update department name
 		if updateData.DepartmentName != "" {
 			department.DepartmentName = updateData.DepartmentName
 		}
 
-		// Validate and update employee ID and full name
 		if updateData.EmployeeID != 0 {
-			// Fetch employee data based on EmployeeID
 			var employee models.Employee
 			result := db.First(&employee, "id = ?", updateData.EmployeeID)
 			if result.Error != nil {
@@ -316,11 +285,9 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			department.FullName = employee.FullName
 		}
 
-		// Update the department
 		department.UpdatedAt = time.Now()
 		db.Save(&department)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:       http.StatusOK,
 			Error:      false,
@@ -331,10 +298,8 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// DeleteDepartmentByIDByAdmin handles the deletion of a department by its ID for admin
 func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -355,7 +320,6 @@ func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -368,7 +332,6 @@ func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Retrieve department ID from the URL parameter
 		departmentIDStr := c.Param("id")
 		departmentID, err := strconv.ParseUint(departmentIDStr, 10, 32)
 		if err != nil {
@@ -376,7 +339,6 @@ func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve the department from the database
 		var department models.Department
 		result = db.First(&department, uint(departmentID))
 		if result.Error != nil {
@@ -384,10 +346,8 @@ func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the department from the database
 		db.Delete(&department)
-
-		// Respond with success
+		
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,

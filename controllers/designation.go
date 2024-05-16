@@ -12,10 +12,8 @@ import (
 	"time"
 )
 
-// CreateDesignationByAdmin handles the creation of a new designation by admin
 func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -36,7 +34,6 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -49,14 +46,12 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the designation data from the request body
 		var designation models.Designation
 		if err := c.Bind(&designation); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate designation data
 		if designation.DesignationName == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation name is required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -67,7 +62,6 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Check if the department with the given ID exists
 		var existingDepartment models.Department
 		result = db.Where("id = ?", designation.DepartmentID).First(&existingDepartment)
 		if result.Error != nil {
@@ -75,14 +69,11 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		designation.CreatedAt = currentTime
 
-		// Create the designation in the database
 		db.Create(&designation)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:        http.StatusCreated,
 			Error:       false,
@@ -93,10 +84,8 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllDesignationsByAdmin handles the retrieval of all designations by admin with pagination
 func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -117,7 +106,6 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -130,7 +118,6 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -138,19 +125,16 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Retrieve all designations from the database with pagination
 		var designations []models.Designation
 		var totalCount int64
 		db.Model(&models.Designation{}).Count(&totalCount)
 		db.Offset(offset).Limit(perPage).Find(&designations)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":         http.StatusOK,
 			"error":        false,
@@ -166,10 +150,8 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetDesignationByID handles the retrieval of a designation by admin based on its ID
 func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -190,7 +172,6 @@ func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -203,14 +184,12 @@ func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get the designation ID from the request parameters
 		designationID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid designation ID"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve the designation from the database based on its ID
 		var designation models.Designation
 		result = db.Where("id = ?", designationID).First(&designation)
 		if result.Error != nil {
@@ -218,7 +197,6 @@ func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:        http.StatusOK,
 			Error:       false,
@@ -229,10 +207,8 @@ func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// UpdateDesignationByID handles the update of a designation by ID
 func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -253,7 +229,6 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -266,14 +241,12 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get the designation ID from the request parameters
 		designationID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid designation ID"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve the existing designation from the database based on its ID
 		var existingDesignation models.Designation
 		result = db.Where("id = ?", designationID).First(&existingDesignation)
 		if result.Error != nil {
@@ -281,20 +254,17 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind the updated designation data from the request body
 		var updatedDesignation models.Designation
 		if err := c.Bind(&updatedDesignation); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate the updated designation data
 		if updatedDesignation.DesignationName == "" && updatedDesignation.Description == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "At least one field (designation_name or description) is required for update"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update only the fields that are provided in the request
 		if updatedDesignation.DesignationName != "" {
 			existingDesignation.DesignationName = updatedDesignation.DesignationName
 		}
@@ -303,10 +273,8 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			existingDesignation.Description = updatedDesignation.Description
 		}
 
-		// Save the changes to the database
 		db.Save(&existingDesignation)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:        http.StatusOK,
 			Error:       false,
@@ -317,10 +285,8 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// DeleteDesignationByID handles the deletion of a designation by admin based on its ID
 func DeleteDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -341,7 +307,6 @@ func DeleteDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -354,14 +319,12 @@ func DeleteDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Get the designation ID from the request parameters
 		designationID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid designation ID"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve the existing designation from the database based on its ID
 		var existingDesignation models.Designation
 		result = db.Where("id = ?", designationID).First(&existingDesignation)
 		if result.Error != nil {
@@ -369,10 +332,8 @@ func DeleteDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete the designation from the database
 		db.Delete(&existingDesignation)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,

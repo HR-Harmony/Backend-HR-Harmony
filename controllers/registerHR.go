@@ -20,25 +20,21 @@ func RegisterAdminHR(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validasi data nama
 		if len(admin.FirstName) < 3 || len(admin.LastName) < 3 {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "First name and last name must be at least 3 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validasi data username
 		if len(admin.Username) < 5 {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Username must be at least 5 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validasi data password
 		if len(admin.Password) < 8 || !helper.IsValidPassword(admin.Password) {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Password must be at least 8 characters and contain a combination of letters and numbers"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validasi format email
 		emailPattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 		match, _ := regexp.MatchString(emailPattern, admin.Email)
 		if !match {
@@ -46,7 +42,6 @@ func RegisterAdminHR(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Cek apakah username sudah ada di database
 		var existingAdmin models.Admin
 		result := db.Where("username = ?", admin.Username).First(&existingAdmin)
 		if result.Error == nil {
@@ -57,7 +52,6 @@ func RegisterAdminHR(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Cek apakah email sudah ada di database
 		result = db.Where("email = ?", admin.Email).First(&existingAdmin)
 		if result.Error == nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusConflict, Message: "Email already exists"}
@@ -67,19 +61,17 @@ func RegisterAdminHR(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Hash password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(admin.Password), bcrypt.DefaultCost)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to hash password"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Generate unique verification token
 		uniqueToken := helper.GenerateUniqueToken()
 		admin.VerificationToken = uniqueToken
 
 		admin.Password = string(hashedPassword)
-		admin.IsAdminHR = true // Set status is_admin_hr ke true
+		admin.IsAdminHR = true
 		admin.Fullname = admin.FirstName + " " + admin.LastName
 		db.Create(&admin)
 
@@ -91,7 +83,6 @@ func RegisterAdminHR(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Send welcome email with verification link
 		if err := helper.SendWelcomeEmail(admin.Email, admin.FirstName+" "+admin.LastName, uniqueToken); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send welcome email"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)

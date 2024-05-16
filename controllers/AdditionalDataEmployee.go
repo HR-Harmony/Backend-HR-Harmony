@@ -10,10 +10,8 @@ import (
 	"strings"
 )
 
-// GetAllDepartmentsByAdmin handles the retrieval of all departments by admin
 func GetAllDepartmentsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -33,20 +31,14 @@ func GetAllDepartmentsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
-
-		// Retrieve the employee based on the username
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
-
-		// Retrieve all departments from the database
 		var departments []models.Department
 		db.Find(&departments)
-
-		// Respond with the list of departments
 		successResponse := helper.Response{
 			Code:        http.StatusOK,
 			Error:       false,
@@ -59,7 +51,6 @@ func GetAllDepartmentsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 func GetAllClientsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -80,7 +71,6 @@ func GetAllClientsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Retrieve the employee based on the username
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -88,7 +78,6 @@ func GetAllClientsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Fetch client employees from the database
 		var clientEmployees []struct {
 			ID            uint   `json:"id"`
 			FirstName     string `json:"first_name"`
@@ -105,7 +94,6 @@ func GetAllClientsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			Select("id", "first_name", "last_name", "full_name", "contact_number", "gender", "email", "username", "country", "is_active").
 			Find(&clientEmployees)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,

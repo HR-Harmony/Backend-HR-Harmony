@@ -109,7 +109,7 @@ func SendLoginNotification(userEmail string, name string) error {
             <p><strong>Support Team:</strong> <a href="mailto:hriscloud@gmail.com">hriscloud@gmail.com</a></p>
         </div>
         <div class="footer">
-            <p>&copy; 2023 HR Harmony. All rights reserved. | <a href="hrharmony.com" target="_blank">HR Harmony</a></p>
+            <p>&copy; 2023 HR Harmony. All rights reserved. | <a href="https://hr-harmony.seculab.space" target="_blank">HR Harmony</a></p>
         </div>
     </div>
 </body>

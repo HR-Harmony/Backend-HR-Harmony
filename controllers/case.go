@@ -14,7 +14,6 @@ import (
 
 func CreateCaseByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -35,7 +34,6 @@ func CreateCaseByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -48,27 +46,22 @@ func CreateCaseByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Bind the case data from the request body
 		var newCase models.Case
 		if err := c.Bind(&newCase); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate case data
 		if newCase.CaseName == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "CaseName is required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Set the created timestamp
 		currentTime := time.Now()
 		newCase.CreatedAt = &currentTime
 
-		// Create the case in the database
 		db.Create(&newCase)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusCreated,
 			Error:   false,
@@ -79,10 +72,8 @@ func CreateCaseByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAllCasesByAdmin handles the retrieval of cases data by admin with pagination
 func GetAllCasesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -103,7 +94,6 @@ func GetAllCasesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -116,7 +106,6 @@ func GetAllCasesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -124,19 +113,16 @@ func GetAllCasesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Retrieve cases data from the database with pagination
 		var cases []models.Case
 		var totalCount int64
 		db.Model(&models.Case{}).Count(&totalCount)
 		db.Offset(offset).Limit(perPage).Find(&cases)
 
-		// Respond with success
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
@@ -154,7 +140,6 @@ func GetAllCasesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func GetCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -175,7 +160,6 @@ func GetCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -188,7 +172,6 @@ func GetCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract case ID from the request params
 		caseIDStr := c.Param("id")
 		caseID, err := strconv.ParseUint(caseIDStr, 10, 32)
 		if err != nil {
@@ -196,7 +179,6 @@ func GetCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve case from the database based on ID
 		var existingCase models.Case
 		result = db.First(&existingCase, uint(caseID))
 		if result.Error != nil {
@@ -204,7 +186,6 @@ func GetCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
@@ -217,7 +198,6 @@ func GetCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func UpdateCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -238,7 +218,6 @@ func UpdateCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -251,7 +230,6 @@ func UpdateCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract case ID from the request params
 		caseIDStr := c.Param("id")
 		caseID, err := strconv.ParseUint(caseIDStr, 10, 32)
 		if err != nil {
@@ -259,7 +237,6 @@ func UpdateCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve case from the database based on ID
 		var existingCase models.Case
 		result = db.First(&existingCase, uint(caseID))
 		if result.Error != nil {
@@ -267,29 +244,24 @@ func UpdateCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Bind updated case data from the request body
 		var updatedCase models.Case
 		if err := c.Bind(&updatedCase); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate that at least one field is updated
 		if updatedCase.CaseName == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "At least one field must be updated"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Update case data selectively
 		existingCase.CaseName = updatedCase.CaseName
 
-		// Set the updated timestamp
 		currentTime := time.Now()
 		existingCase.UpdatedAt = currentTime
 
 		db.Save(&existingCase)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
@@ -302,7 +274,6 @@ func UpdateCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func DeleteCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -323,7 +294,6 @@ func DeleteCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Check if the user is an admin
 		var adminUser models.Admin
 		result := db.Where("username = ?", username).First(&adminUser)
 		if result.Error != nil {
@@ -336,7 +306,6 @@ func DeleteCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Extract case ID from the request params
 		caseIDStr := c.Param("id")
 		caseID, err := strconv.ParseUint(caseIDStr, 10, 32)
 		if err != nil {
@@ -344,7 +313,6 @@ func DeleteCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Retrieve case from the database based on ID
 		var existingCase models.Case
 		result = db.First(&existingCase, uint(caseID))
 		if result.Error != nil {
@@ -352,10 +320,8 @@ func DeleteCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Delete case from the database
 		db.Delete(&existingCase)
 
-		// Respond with success
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,

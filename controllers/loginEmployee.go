@@ -13,7 +13,6 @@ import (
 	"net/http"
 )
 
-// EmployeeLogin handles the login process for employees
 func EmployeeLogin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var employee models.Employee
@@ -22,7 +21,6 @@ func EmployeeLogin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validasi apakah username dan password telah diisi
 		if employee.Username == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Username is required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -32,7 +30,6 @@ func EmployeeLogin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Mengecek apakah username ada dalam database
 		var existingEmployee models.Employee
 		result := db.Where("username = ?", employee.Username).First(&existingEmployee)
 		if result.Error != nil {
@@ -45,20 +42,17 @@ func EmployeeLogin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 		}
 
-		// Validasi untuk memastikan bahwa akun karyawan masih aktif
 		if !existingEmployee.IsActive {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Account is not active"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Membandingkan password yang dimasukkan dengan password yang di-hash
 		err := bcrypt.CompareHashAndPassword([]byte(existingEmployee.Password), []byte(employee.Password))
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid password"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Generate JWT token
 		tokenString, err := middleware.GenerateToken(existingEmployee.Username, secretKey)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to generate token"}
@@ -71,7 +65,6 @@ func EmployeeLogin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 		}(existingEmployee.Email, existingEmployee.FirstName+" "+existingEmployee.LastName)
 
-		// Menyertakan ID karyawan dalam respons
 		return c.JSON(http.StatusOK, map[string]interface{}{"code": http.StatusOK, "error": false, "message": "Employee login successful", "token": tokenString, "id": existingEmployee.ID})
 	}
 }
