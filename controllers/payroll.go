@@ -145,12 +145,13 @@ func UpdatePaidStatusByPayrollID(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		db.Save(&employee)
 
 		payrollInfo := models.PayrollInfo{
-			EmployeeID:  employee.ID,
-			BasicSalary: employee.BasicSalary,
-			PayslipType: employee.PaySlipType,
-			PaidStatus:  employee.PaidStatus,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
+			EmployeeID:       employee.ID,
+			BasicSalary:      employee.BasicSalary,
+			PayslipType:      employee.PaySlipType,
+			PaidStatus:       employee.PaidStatus,
+			FullNameEmployee: employee.FirstName + " " + employee.LastName,
+			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
 		}
 		db.Create(&payrollInfo)
 
@@ -237,13 +238,22 @@ func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
-		var payrollInfoList []models.PayrollInfo
-		if err := db.Offset(offset).Limit(perPage).Find(&payrollInfoList).Error; err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching payroll information"})
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.PayrollInfo{})
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("full_name_employee ILIKE ?", searchPattern)
 		}
 
 		var totalCount int64
-		db.Model(&models.PayrollInfo{}).Count(&totalCount)
+		query.Count(&totalCount)
+
+		var payrollInfoList []models.PayrollInfo
+		if err := query.Offset(offset).Limit(perPage).Find(&payrollInfoList).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching payroll information"})
+		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"code":              http.StatusOK,
@@ -390,15 +400,20 @@ func GetAllAdvanceSalariesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		searching := c.QueryParam("searching")
 
-		var advanceSalaries []models.AdvanceSalary
-		query := db.Model(&advanceSalaries)
+		query := db.Model(&models.AdvanceSalary{})
+
 		if searching != "" {
-			query = query.Where("LOWER(fullname_employee) LIKE ? OR amount = ?", "%"+strings.ToLower(searching)+"%", helper.ParseStringToInt(searching))
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where("LOWER(fullname_employee) LIKE ? OR amount = ? OR LOWER(status) LIKE ?", searchPattern, helper.ParseStringToInt(searching), searchPattern)
 		}
-		query.Offset(offset).Limit(perPage).Find(&advanceSalaries)
 
 		var totalCount int64
-		db.Model(&models.AdvanceSalary{}).Count(&totalCount)
+		query.Count(&totalCount)
+
+		var advanceSalaries []models.AdvanceSalary
+		if err := query.Offset(offset).Limit(perPage).Find(&advanceSalaries).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching advance salaries"})
+		}
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
@@ -764,21 +779,26 @@ func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		searching := c.QueryParam("searching")
 
-		var requestLoan []models.RequestLoan
-		query := db.Model(&requestLoan)
+		query := db.Model(&models.RequestLoan{})
+
 		if searching != "" {
-			query = query.Where("LOWER(fullname_employee) LIKE ? OR amount = ?", "%"+strings.ToLower(searching)+"%", helper.ParseStringToInt(searching))
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where("LOWER(fullname_employee) LIKE ? OR amount = ? OR LOWER(status) LIKE ?", searchPattern, helper.ParseStringToInt(searching), searchPattern)
 		}
-		query.Offset(offset).Limit(perPage).Find(&requestLoan)
 
 		var totalCount int64
-		db.Model(&models.RequestLoan{}).Count(&totalCount)
+		query.Count(&totalCount)
+
+		var requestLoans []models.RequestLoan
+		if err := query.Offset(offset).Limit(perPage).Find(&requestLoans).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching request loans"})
+		}
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,
 			"message":    "Request Loan history retrieved successfully",
-			"data":       requestLoan,
+			"data":       requestLoans,
 			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
 		}
 		return c.JSON(http.StatusOK, successResponse)

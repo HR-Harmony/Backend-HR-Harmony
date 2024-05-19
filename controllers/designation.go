@@ -69,6 +69,8 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		designation.DepartmentName = existingDepartment.DepartmentName
+
 		currentTime := time.Now()
 		designation.CreatedAt = currentTime
 
@@ -130,10 +132,29 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		// Handle search parameters
+		searching := c.QueryParam("searching")
+
 		var designations []models.Designation
+		query := db.Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("department_name ILIKE ? OR designation_name ILIKE ?", searchPattern, searchPattern)
+		}
+
+		if err := query.Find(&designations).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch Designation records"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
 		var totalCount int64
-		db.Model(&models.Designation{}).Count(&totalCount)
-		db.Offset(offset).Limit(perPage).Find(&designations)
+		countQuery := db.Model(&models.Designation{})
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			countQuery = countQuery.Where("department_name ILIKE ? OR designation_name ILIKE ?", searchPattern, searchPattern)
+		}
+		countQuery.Count(&totalCount)
 
 		successResponse := map[string]interface{}{
 			"code":         http.StatusOK,
@@ -260,9 +281,14 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		if updatedDesignation.DesignationName == "" && updatedDesignation.Description == "" {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "At least one field (designation_name or description) is required for update"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
+		if updatedDesignation.DepartmentID != 0 {
+			var department models.Department
+			result = db.First(&department, "id = ?", updatedDesignation.DepartmentID)
+			if result.Error != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Department not found"})
+			}
+			existingDesignation.DepartmentID = updatedDesignation.DepartmentID
+			existingDesignation.DepartmentName = department.DepartmentName
 		}
 
 		if updatedDesignation.DesignationName != "" {

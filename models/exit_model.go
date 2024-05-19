@@ -10,12 +10,14 @@ type Exit struct {
 }
 
 type ExitEmployee struct {
-	ID             uint      `gorm:"primaryKey" json:"id"`
-	EmployeeID     uint      `json:"employee_id"`
-	ExitID         uint      `json:"exit_id"`
-	DisableAccount bool      `json:"disable_account"`
-	ExitInterview  string    `json:"exit_interview"`
-	Description    string    `json:"description"`
-	ExitDate       string    `json:"exit_date"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID               uint      `gorm:"primaryKey" json:"id"`
+	EmployeeID       uint      `json:"employee_id"`
+	FullNameEmployee string    `json:"full_name_employee"`
+	ExitID           uint      `json:"exit_id"`
+	ExitName         string    `json:"exit_name"`
+	DisableAccount   bool      `json:"disable_account"`
+	ExitInterview    string    `json:"exit_interview"`
+	Description      string    `json:"description"`
+	ExitDate         string    `json:"exit_date"`
+	CreatedAt        time.Time `json:"created_at"`
 }

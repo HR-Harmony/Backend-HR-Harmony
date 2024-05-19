@@ -5,13 +5,14 @@ package models
 import "time"
 
 type PayrollInfo struct {
-	ID          uint      `gorm:"primaryKey" json:"id"`
-	EmployeeID  uint      `json:"employee_id"`
-	BasicSalary float64   `json:"basic_salary"`
-	PayslipType string    `json:"payslip_type"`
-	PaidStatus  bool      `json:"paid_status"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID               uint      `gorm:"primaryKey" json:"id"`
+	EmployeeID       uint      `json:"employee_id"`
+	FullNameEmployee string    `json:"full_name_employee"`
+	BasicSalary      float64   `json:"basic_salary"`
+	PayslipType      string    `json:"payslip_type"`
+	PaidStatus       bool      `json:"paid_status"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 type AdvanceSalary struct {

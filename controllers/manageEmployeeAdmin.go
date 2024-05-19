@@ -169,6 +169,11 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 		employee.Password = string(hashedPassword)
 
+		if len(employee.Username) < 6 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Username must be more than 5 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		// Create the employee account in the database
 		db.Create(&employee)
 
@@ -191,7 +196,6 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 	}
 }
 
-// GetAllEmployeesByAdmin handles the retrieval of all employees by admin with pagination
 func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -226,7 +230,6 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		// Pagination parameters
 		page, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil || page <= 0 {
 			page = 1
@@ -234,14 +237,31 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
 		if err != nil || perPage <= 0 {
-			perPage = 10 // Default per page
+			perPage = 10
 		}
 
-		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
+		searching := c.QueryParam("searching")
+
 		var employees []models.Employee
-		db.Where("is_client = ?", false).Offset(offset).Limit(perPage).Find(&employees)
+		query := db.Where("is_client = ? AND is_exit = ?", false, false).Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where(
+				db.Where("full_name ILIKE ?", searchPattern).
+					Or("designation ILIKE ?", searchPattern).
+					Or("contact_number ILIKE ?", searchPattern).
+					Or("gender ILIKE ?", searchPattern).
+					Or("country ILIKE ?", searchPattern).
+					Or("role ILIKE ?", searchPattern))
+		}
+
+		if err := query.Find(&employees).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching employees"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
 
 		var employeesResponse []helper.EmployeeResponse
 		for _, emp := range employees {
@@ -837,6 +857,7 @@ func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
+		exitData.FullNameEmployee = employee.FirstName + " " + employee.LastName
 
 		// Validasi apakah exit dengan ID yang diberikan ada
 		var exit models.Exit
@@ -845,6 +866,7 @@ func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Exit not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
+		exitData.ExitName = exit.ExitName
 
 		// Update status IsActive berdasarkan disable account
 		if !exitData.DisableAccount {
@@ -852,6 +874,8 @@ func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		} else {
 			employee.IsActive = false
 		}
+
+		employee.IsExit = true
 
 		// Membuat record ExitEmployee di database
 		exitData.CreatedAt = time.Now()
@@ -922,16 +946,29 @@ func GetAllExitEmployees(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Calculate offset and limit for pagination
 		offset := (page - 1) * perPage
 
-		// Fetch all ExitEmployee records with pagination
+		// Handle search parameter
+		searching := c.QueryParam("searching")
+
 		var exitEmployees []models.ExitEmployee
-		if err := db.Offset(offset).Limit(perPage).Find(&exitEmployees).Error; err != nil {
+		query := db.Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("full_name_employee ILIKE ? OR exit_name ILIKE ? OR exit_interview ILIKE ? OR exit_date ILIKE ?", searchPattern, searchPattern, searchPattern, searchPattern)
+		}
+
+		if err := query.Find(&exitEmployees).Error; err != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch ExitEmployee records"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Get total count of ExitEmployee records
 		var totalCount int64
-		db.Model(&models.ExitEmployee{}).Count(&totalCount)
+		countQuery := db.Model(&models.ExitEmployee{})
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			countQuery = countQuery.Where("full_name_employee ILIKE ? OR exit_name ILIKE ? OR exit_interview ILIKE ? OR exit_date ILIKE ?", searchPattern, searchPattern, searchPattern, searchPattern)
+		}
+		countQuery.Count(&totalCount)
 
 		// Respond with success
 		successResponse := map[string]interface{}{
