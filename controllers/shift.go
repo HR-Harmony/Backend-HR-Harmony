@@ -125,8 +125,21 @@ func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		// Handle search parameter
+		searching := c.QueryParam("searching")
+
 		var shifts []models.Shift
-		db.Offset(offset).Limit(perPage).Find(&shifts)
+		query := db.Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("shift_name ILIKE ?", searchPattern)
+		}
+
+		if err := query.Find(&shifts).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching shifts"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
 
 		var totalCount int64
 		db.Model(&models.Shift{}).Count(&totalCount)

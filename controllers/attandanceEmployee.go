@@ -51,6 +51,8 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		employee.FullName = employee.FirstName + " " + employee.LastName
+
 		currentTime := time.Now()
 		attendance := models.Attendance{
 			EmployeeID:       employee.ID,
@@ -58,6 +60,7 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			FullNameEmployee: employee.FirstName + " " + employee.LastName,
 			AttendanceDate:   today,
 			InTime:           currentTime.Format("15:04:05"),
+			Status:           "Present",
 			CreatedAt:        &currentTime,
 		}
 		db.Create(&attendance)

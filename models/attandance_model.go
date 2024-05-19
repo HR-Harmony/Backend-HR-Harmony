@@ -11,6 +11,7 @@ type Attendance struct {
 	InTime           string     `json:"in_time"`
 	OutTime          string     `json:"out_time"`
 	TotalWork        string     `json:"total_work"`
+	Status           string     `json:"status"`
 	CreatedAt        *time.Time `json:"created_at"`
 }
 
