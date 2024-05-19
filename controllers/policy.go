@@ -121,11 +121,29 @@ func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		// Handle search parameters
+		searching := c.QueryParam("searching")
+
 		var policies []models.Policy
-		db.Offset(offset).Limit(perPage).Find(&policies)
+		query := db.Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("title ILIKE ?", searchPattern)
+		}
+
+		if err := query.Find(&policies).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch Policy records"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
 
 		var totalCount int64
-		db.Model(&models.Policy{}).Count(&totalCount)
+		countQuery := db.Model(&models.Policy{})
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			countQuery = countQuery.Where("title ILIKE ?", searchPattern)
+		}
+		countQuery.Count(&totalCount)
 
 		successResponse := map[string]interface{}{
 			"Code":       http.StatusOK,

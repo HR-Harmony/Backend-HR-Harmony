@@ -91,6 +91,8 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		attendance.TotalWork = totalWork
 
+		attendance.Status = "Present"
+
 		db.Create(&attendance)
 
 		successResponse := map[string]interface{}{
@@ -151,6 +153,7 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		date := c.QueryParam("date")
 		employeeID := c.QueryParam("employee_id")
+		searching := c.QueryParam("searching")
 
 		query := db.Model(&models.Attendance{})
 
@@ -160,6 +163,11 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if employeeID != "" {
 			query = query.Where("employee_id = ?", employeeID)
+		}
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("full_name_employee ILIKE ? OR attendance_date ILIKE ?", searchPattern, searchPattern)
 		}
 
 		var totalCount int64
@@ -550,6 +558,7 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 		date := c.QueryParam("date")
 		employeeID := c.QueryParam("employee_id")
+		searching := c.QueryParam("searching")
 
 		query := db.Model(&models.OvertimeRequest{})
 
@@ -559,6 +568,11 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 		if employeeID != "" {
 			query = query.Where("employee_id = ?", employeeID)
+		}
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("full_name_employee ILIKE ? OR date ILIKE ? OR status ILIKE ?", searchPattern, searchPattern, searchPattern)
 		}
 
 		var totalCount int64

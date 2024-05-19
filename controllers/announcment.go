@@ -142,14 +142,26 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		searching := c.QueryParam("searching")
+
 		var announcements []models.Announcement
-		query := db.Offset(offset).Limit(perPage).Find(&announcements)
-		if query.Error != nil {
+		query := db.Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where(
+				db.Where("title ILIKE ?", searchPattern).
+					Or("department_name ILIKE ?", searchPattern).
+					Or("description ILIKE ?", searchPattern).
+					Or("start_date::text ILIKE ?", searchPattern).
+					Or("end_date::text ILIKE ?", searchPattern))
+		}
+
+		if err := query.Find(&announcements).Error; err != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching announcements"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Count total records for pagination
 		var totalCount int64
 		db.Model(&models.Announcement{}).Count(&totalCount)
 
@@ -165,7 +177,6 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
-// GetAnnouncementByIDForAdmin retrieves announcement data by ID for admin
 func GetAnnouncementByIDForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")

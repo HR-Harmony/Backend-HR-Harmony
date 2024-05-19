@@ -127,8 +127,21 @@ func GetAllRolesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		// Handle search parameter
+		searching := c.QueryParam("searching")
+
 		var roles []models.Role
-		db.Offset(offset).Limit(perPage).Find(&roles)
+		query := db.Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("role_name ILIKE ?", searchPattern)
+		}
+
+		if err := query.Find(&roles).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching roles"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
 
 		var totalCount int64
 		db.Model(&models.Role{}).Count(&totalCount)

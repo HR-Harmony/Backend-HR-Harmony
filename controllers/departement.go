@@ -135,10 +135,29 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		// Handle search parameters
+		searching := c.QueryParam("searching")
+
 		var departments []models.Department
+		query := db.Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("department_name ILIKE ? OR full_name ILIKE ?", searchPattern, searchPattern)
+		}
+
+		if err := query.Find(&departments).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch Department records"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
 		var totalCount int64
-		db.Model(&models.Department{}).Count(&totalCount)
-		db.Offset(offset).Limit(perPage).Find(&departments)
+		countQuery := db.Model(&models.Department{})
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			countQuery = countQuery.Where("department_name ILIKE ? OR full_name ILIKE ?", searchPattern, searchPattern)
+		}
+		countQuery.Count(&totalCount)
 
 		successResponse := map[string]interface{}{
 			"code":        http.StatusOK,
@@ -347,7 +366,7 @@ func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		}
 
 		db.Delete(&department)
-		
+
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
