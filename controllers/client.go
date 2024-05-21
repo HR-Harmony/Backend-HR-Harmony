@@ -185,6 +185,20 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.Employee{}).Where("is_client = ?", true)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(full_name) LIKE ? OR LOWER(username) LIKE ? OR LOWER(contact_number) LIKE ? OR LOWER(gender) LIKE ? OR LOWER(country) LIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern,
+			)
+		}
+
+		var totalCount int64
+		query.Count(&totalCount)
+
 		var clientEmployees []struct {
 			ID            uint   `json:"id"`
 			FirstName     string `json:"first_name"`
@@ -197,11 +211,10 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			Country       string `json:"country"`
 			IsActive      bool   `json:"is_active"`
 		}
-		var totalCount int64
-		db.Model(&models.Employee{}).Where("is_client = ?", true).
-			Select("id", "first_name", "last_name", "full_name", "contact_number", "gender", "email", "username", "country", "is_active").
-			Count(&totalCount).
-			Offset(offset).Limit(perPage).Find(&clientEmployees)
+		if err := query.Select("id", "first_name", "last_name", "full_name", "contact_number", "gender", "email", "username", "country", "is_active").
+			Offset(offset).Limit(perPage).Find(&clientEmployees).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching client data"})
+		}
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,

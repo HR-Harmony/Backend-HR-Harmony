@@ -59,8 +59,16 @@ func GetAllEmployeesPayrollInfo(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		offset := (page - 1) * perPage
 
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.Employee{}).Where("is_client = ? AND is_exit = ?", false, false)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where("LOWER(full_name) LIKE ?", searchPattern)
+		}
+
 		var employees []models.Employee
-		result = db.Where("is_client = ?", false).Offset(offset).Limit(perPage).Find(&employees)
+		result = query.Offset(offset).Limit(perPage).Find(&employees)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve employees"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -82,7 +90,7 @@ func GetAllEmployeesPayrollInfo(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 
 		var totalCount int64
-		db.Model(&models.Employee{}).Where("is_client = ?", false).Count(&totalCount)
+		query.Count(&totalCount)
 
 		successResponse := map[string]interface{}{
 			"Code":        http.StatusOK,
