@@ -6,6 +6,7 @@ import (
 	"hrsale/helper"
 	"hrsale/middleware"
 	"hrsale/models"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -828,5 +829,30 @@ func DeleteOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 			"message": "Overtime Request data deleted successfully",
 		}
 		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func MarkAbsentEmployees(db *gorm.DB) {
+	var employees []models.Employee
+	db.Where("is_client = ? AND is_exit = ?", false, false).Find(&employees)
+
+	today := time.Now().Format("2006-01-02")
+
+	for _, employee := range employees {
+		var existingAttendance models.Attendance
+		result := db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
+		if result.Error != nil {
+			currentTime := time.Now()
+			attendance := models.Attendance{
+				EmployeeID:       employee.ID,
+				Username:         employee.Username,
+				FullNameEmployee: employee.FirstName + " " + employee.LastName,
+				AttendanceDate:   today,
+				Status:           "Absent",
+				CreatedAt:        &currentTime,
+			}
+			db.Create(&attendance)
+			log.Printf("Marked employee %s as absent on %s\n", employee.Username, today) // Add log here
+		}
 	}
 }

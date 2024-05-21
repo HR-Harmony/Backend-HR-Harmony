@@ -117,11 +117,21 @@ func GetAllGoalTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
-		var goalTypes []models.GoalType
-		db.Offset(offset).Limit(perPage).Find(&goalTypes)
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.GoalType{})
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where("LOWER(goal_type) LIKE ?", searchPattern)
+		}
 
 		var totalCount int64
-		db.Model(&models.GoalType{}).Count(&totalCount)
+		query.Count(&totalCount)
+
+		var goalTypes []models.GoalType
+		if err := query.Offset(offset).Limit(perPage).Find(&goalTypes).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching goal types"})
+		}
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
@@ -459,11 +469,24 @@ func GetAllGoalsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
-		var goals []models.Goal
-		db.Offset(offset).Limit(perPage).Find(&goals)
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.Goal{})
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(goal_type_name) LIKE ? OR LOWER(subject) LIKE ? OR LOWER(start_date) LIKE ? OR LOWER(end_date) LIKE ? OR LOWER(status) LIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern,
+			)
+		}
 
 		var totalCount int64
-		db.Model(&models.Goal{}).Count(&totalCount)
+		query.Count(&totalCount)
+
+		var goals []models.Goal
+		if err := query.Offset(offset).Limit(perPage).Find(&goals).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching goals"})
+		}
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
@@ -879,11 +902,24 @@ func GetAllKPIIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		offset := (page - 1) * perPage
 
-		var kpiIndicators []models.KPIIndicator
-		db.Offset(offset).Limit(perPage).Find(&kpiIndicators)
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.KPIIndicator{})
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(title) LIKE ? OR LOWER(designation_name) LIKE ? OR LOWER(admin_name) LIKE ?",
+				searchPattern, searchPattern, searchPattern,
+			)
+		}
 
 		var totalCount int64
-		db.Model(&models.KPIIndicator{}).Count(&totalCount)
+		query.Count(&totalCount)
+
+		var kpiIndicators []models.KPIIndicator
+		if err := query.Offset(offset).Limit(perPage).Find(&kpiIndicators).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching KPI indicators"})
+		}
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
@@ -1236,13 +1272,25 @@ func GetAllKPAIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		offset := (page - 1) * perPage
 
-		var kpaIndicators []models.KPAIndicator
-		db.Offset(offset).Limit(perPage).Find(&kpaIndicators)
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.KPAIndicator{})
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(title) LIKE ? OR LOWER(employee_name) LIKE ? OR LOWER(admin_name) LIKE ? OR appraisal_date LIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern,
+			)
+		}
 
 		var totalCount int64
-		db.Model(&models.KPAIndicator{}).Count(&totalCount)
+		query.Count(&totalCount)
 
-		// Respond with success
+		var kpaIndicators []models.KPAIndicator
+		if err := query.Offset(offset).Limit(perPage).Find(&kpaIndicators).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching KPA indicators"})
+		}
+
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,
