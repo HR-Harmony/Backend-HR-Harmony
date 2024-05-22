@@ -144,6 +144,7 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
@@ -164,6 +165,7 @@ func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
+		// Retrieve employee details
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -171,19 +173,58 @@ func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Query parameters for searching
+		searching := c.QueryParam("searching")
+
+		// Build the query
+		query := db.Model(&models.Attendance{}).Where("employee_id = ?", employee.ID)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(full_name_employee) LIKE ? OR LOWER(attendance_date) LIKE ? OR LOWER(in_time) LIKE ? OR LOWER(out_time) LIKE ? OR LOWER(status) LIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern,
+			)
+		}
+
+		// Retrieve attendances for the employee with pagination
 		var attendances []models.Attendance
-		result = db.Where("employee_id = ?", employee.ID).Find(&attendances)
+		result = query.Offset(offset).Limit(perPage).Find(&attendances)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch attendance data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		return c.JSON(http.StatusOK, map[string]interface{}{
+		// Get total count of attendances for the employee
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Provide success response
+		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,
 			"message":    "Employee attendance data retrieved successfully",
 			"attendance": attendances,
-		})
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
 	}
 }
 
