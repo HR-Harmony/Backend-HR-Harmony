@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-// GetPayrollInfoByEmployeeID mengambil data riwayat slip gaji milik karyawan berdasarkan ID karyawan
 func GetPayrollInfoByEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Extract and verify the JWT token
@@ -45,17 +44,58 @@ func GetPayrollInfoByEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Retrieve payroll info data for the employee
-		var payrollInfos []models.PayrollInfo
-		db.Where("employee_id = ?", employee.ID).Find(&payrollInfos)
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
 
-		// Return the payroll info data
-		return c.JSON(http.StatusOK, map[string]interface{}{
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Searching parameter
+		searching := c.QueryParam("searching")
+
+		// Build the query
+		query := db.Model(&models.PayrollInfo{}).Where("employee_id = ?", employee.ID)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(full_name_employee) LIKE ? OR LOWER(pay_slip_type) LIKE ?",
+				searchPattern, searchPattern,
+			)
+		}
+
+		// Retrieve payroll info data for the employee with pagination
+		var payrollInfos []models.PayrollInfo
+		result = query.Offset(offset).Limit(perPage).Find(&payrollInfos)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch payroll info data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Get total count of payroll info records for the employee
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Return the payroll info data with pagination info
+		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Payroll info data retrieved successfully",
 			"data":    payrollInfos,
-		})
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
 	}
 }
 
@@ -187,6 +227,7 @@ func CreateAdvanceSalaryByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 func GetAdvanceSalariesForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -214,18 +255,56 @@ func GetAdvanceSalariesForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Searching parameter
+		searching := c.QueryParam("searching")
+
+		// Build the query
+		query := db.Model(&models.AdvanceSalary{}).Where("employee_id = ?", employee.ID)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(fullname_employee) LIKE ? OR amount = ? OR emi = ? OR LOWER(status) LIKE ?",
+				searchPattern, searching, searching, searchPattern,
+			)
+		}
+
+		// Retrieve advance salaries for the employee with pagination
 		var advanceSalaries []models.AdvanceSalary
-		result = db.Where("employee_id = ?", employee.ID).Find(&advanceSalaries)
+		result = query.Offset(offset).Limit(perPage).Find(&advanceSalaries)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch advance salaries"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Get total count of advance salaries records for the employee
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Return the advance salaries data with pagination info
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
 			"message": "Advance salaries retrieved successfully",
 			"data":    advanceSalaries,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
@@ -523,6 +602,7 @@ func CreateRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 func GetAllRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// Extract and verify the JWT token
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
 			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
@@ -550,14 +630,56 @@ func GetAllRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		var requestLoans []models.RequestLoan
-		db.Where("employee_id = ?", employee.ID).Find(&requestLoans)
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
 
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Searching parameter
+		searching := c.QueryParam("searching")
+
+		// Build the query
+		query := db.Model(&models.RequestLoan{}).Where("employee_id = ?", employee.ID)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(fullname_employee) LIKE ? OR amount = ? OR emi = ? OR LOWER(status) LIKE ?",
+				searchPattern, searching, searching, searchPattern,
+			)
+		}
+
+		// Retrieve request loans for the employee with pagination
+		var requestLoans []models.RequestLoan
+		result = query.Offset(offset).Limit(perPage).Find(&requestLoans)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch request loans"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Get total count of request loans records for the employee
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Return the request loans data with pagination info
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
-			"message": "Request Loans retrieved successfully",
+			"message": "Request loans retrieved successfully",
 			"data":    requestLoans,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
 		}
 		return c.JSON(http.StatusOK, successResponse)
 	}
