@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -87,6 +88,12 @@ func CreateDisciplinaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		disciplinary.CreatedAt = &currentTime
 
 		db.Create(&disciplinary)
+
+		// Mengirim notifikasi email kepada karyawan
+		err = helper.SendDisciplinaryNotification(existingEmployee.Email, disciplinary.FullNameEmployee, disciplinary.CaseName, disciplinary.Subject, disciplinary.CaseDate, disciplinary.Description)
+		if err != nil {
+			fmt.Println("Failed to send disciplinary notification email:", err)
+		}
 
 		successResponse := helper.Response{
 			Code:         http.StatusCreated,

@@ -13,7 +13,6 @@ type Helpdesk struct {
 	EmployeeFullName string     `json:"employee_full_name"`
 	Description      string     `json:"description"`
 	Status           string     `json:"status"`
-	TicketStatus     string     `json:"ticket_status"`
 	CreatedAt        *time.Time `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 }

@@ -117,6 +117,17 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if existingAttendance.Status == "Absent" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee is absent for today"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Check if already checked out
+		if existingAttendance.OutTime != "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee has already checked out for today"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		currentTime := time.Now()
 		existingAttendance.OutTime = currentTime.Format("15:04:05")
 		inTime, _ := time.Parse("15:04:05", existingAttendance.InTime)

@@ -434,6 +434,12 @@ func CreateLeaveRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Send notification email to employee
+		err = helper.SendLeaveRequestNotification(employee.Email, leaveRequest.FullNameEmployee, leaveRequest.LeaveType, leaveRequest.StartDate, leaveRequest.EndDate, leaveRequest.Days)
+		if err != nil {
+			fmt.Println("Failed to send leave request notification:", err)
+		}
+
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -700,6 +706,9 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		if updatedLeaveRequest.LeaveReason != "" {
 			leaveRequest.LeaveReason = updatedLeaveRequest.LeaveReason
 		}
+
+		oldStatus := leaveRequest.Status
+
 		if updatedLeaveRequest.Status != "" {
 			leaveRequest.Status = updatedLeaveRequest.Status
 		}
@@ -709,6 +718,21 @@ func UpdateLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Dapatkan data karyawan terkait dari basis data menggunakan EmployeeID yang ada di leaveRequest
+		var employee models.Employee
+		result = db.First(&employee, "id = ?", leaveRequest.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Panggil fungsi notifikasi email jika status berubah dan email employee tersedia
+		if updatedLeaveRequest.Status != "" && employee.Email != "" {
+			err = helper.SendLeaveRequestStatusNotification(employee.Email, leaveRequest.FullNameEmployee, oldStatus, updatedLeaveRequest.Status)
+			if err != nil {
+				fmt.Println("Failed to send leave request status notification:", err)
+			}
+		}
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,

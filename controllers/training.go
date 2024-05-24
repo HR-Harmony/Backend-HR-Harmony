@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -718,12 +719,19 @@ func CreateTrainingByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		training.FullNameEmployee = employee.FullName
 
+		training.Status = "Pending"
+
 		if err := db.Create(&training).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to create training"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		training.Status = "Pending"
+		// Mengirim notifikasi email kepada karyawan
+		err = helper.SendTrainingNotification(employee.Email, employee.FullName, trainer.FullName, trainingSkill.TrainingSkill, training.StartDate, training.EndDate)
+		if err != nil {
+			fmt.Println("Failed to send training notification email:", err)
+			// Tangani kesalahan sesuai kebutuhan Anda, misalnya dengan memberikan respons ke klien atau mencatat log
+		}
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
