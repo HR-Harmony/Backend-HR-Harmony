@@ -45,7 +45,7 @@ func EmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"id":             employee.ID,
 			"first_name":     employee.FirstName,
 			"last_name":      employee.LastName,
-			"full_name":      employee.FullName,
+			"full_name":      employee.FirstName + " " + employee.LastName,
 			"contact_number": employee.ContactNumber,
 			"gender":         employee.Gender,
 			"email":          employee.Email,
