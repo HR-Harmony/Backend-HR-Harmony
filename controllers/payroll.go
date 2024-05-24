@@ -349,6 +349,12 @@ func CreateAdvanceSalaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		db.Create(&advanceSalary)
 
+		// Mengirim notifikasi email kepada karyawan terkait
+		err = helper.SendAdvanceSalaryNotification(employee.Email, advanceSalary.FullnameEmployee, advanceSalary.MonthAndYear, advanceSalary.Amount, advanceSalary.OneTimeDeduct, advanceSalary.MonthlyInstallmentAmt, advanceSalary.Reason)
+		if err != nil {
+			fmt.Println("Gagal mengirim email notifikasi advance salary:", err)
+		}
+
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -727,6 +733,12 @@ func CreateRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		db.Create(&requestLoan)
+
+		// Mengirim notifikasi email kepada karyawan
+		err = helper.SendRequestLoanNotification(employee.Email, employee.FullName, requestLoan.MonthAndYear, requestLoan.Amount, requestLoan.OneTimeDeduct, requestLoan.MonthlyInstallmentAmt, requestLoan.Reason)
+		if err != nil {
+			fmt.Println("Failed to send request loan notification email:", err)
+		}
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
