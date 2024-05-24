@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -69,7 +70,16 @@ func CreateHelpdeskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		currentTime := time.Now()
 		helpdesk.CreatedAt = &currentTime
 
-		db.Create(&helpdesk)
+		if err := db.Create(&helpdesk).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to create helpdesk"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Send notification email to employee
+		err = helper.SendHelpdeskNotification(employee.Email, helpdesk.EmployeeFullName, helpdesk.Subject, helpdesk.Description)
+		if err != nil {
+			fmt.Println("Failed to send helpdesk notification:", err)
+		}
 
 		successResponse := helper.Response{
 			Code:     http.StatusCreated,
@@ -259,9 +269,7 @@ func UpdateHelpdeskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			helpdesk.Description = updatedHelpdesk.Description
 		}
 
-		if updatedHelpdesk.Status != "" {
-			helpdesk.Status = updatedHelpdesk.Status
-		}
+		updatedHelpdesk.Status = helpdesk.Status
 
 		currentTime := time.Now()
 		helpdesk.UpdatedAt = currentTime

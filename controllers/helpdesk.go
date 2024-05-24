@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -80,7 +81,16 @@ func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		currentTime := time.Now()
 		helpdesk.CreatedAt = &currentTime
 
-		db.Create(&helpdesk)
+		if err := db.Create(&helpdesk).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to create helpdesk"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Send notification email to employee
+		err = helper.SendHelpdeskNotification(existingEmployee.Email, helpdesk.EmployeeFullName, helpdesk.Subject, helpdesk.Description)
+		if err != nil {
+			fmt.Println("Failed to send helpdesk notification:", err)
+		}
 
 		successResponse := helper.Response{
 			Code:     http.StatusCreated,
@@ -279,10 +289,6 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			helpdesk.Priority = updatedHelpdesk.Priority
 		}
 
-		if updatedHelpdesk.Status != "" {
-			helpdesk.Status = updatedHelpdesk.Status
-		}
-
 		if updatedHelpdesk.DepartmentID != 0 {
 			var existingDepartment models.Department
 			result = db.First(&existingDepartment, updatedHelpdesk.DepartmentID)
@@ -310,14 +316,33 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			helpdesk.Description = updatedHelpdesk.Description
 		}
 
-		if updatedHelpdesk.TicketStatus != "" {
-			helpdesk.TicketStatus = updatedHelpdesk.TicketStatus
+		if updatedHelpdesk.Status != "" {
+			helpdesk.Status = updatedHelpdesk.Status
 		}
 
 		currentTime := time.Now()
 		helpdesk.UpdatedAt = currentTime
 
-		db.Save(&helpdesk)
+		if err := db.Save(&helpdesk).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to update helpdesk"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Dapatkan data karyawan terkait dari basis data menggunakan EmployeeID yang ada di helpdesk
+		var employee models.Employee
+		result = db.First(&employee, "id = ?", helpdesk.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Panggil fungsi notifikasi email jika status berubah dan email employee tersedia
+		if updatedHelpdesk.Status != "" && employee.Email != "" {
+			err = helper.SendHelpdeskNotificationStatus(employee.Email, helpdesk.EmployeeFullName, helpdesk.Subject, helpdesk.Description, helpdesk.Status)
+			if err != nil {
+				fmt.Println("Failed to send helpdesk status notification:", err)
+			}
+		}
 
 		successResponse := helper.Response{
 			Code:     http.StatusOK,

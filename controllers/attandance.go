@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -501,6 +502,11 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		db.Create(&overtime)
 
+		err = helper.SendOvertimeRequestNotification(employee.Email, overtime.FullNameEmployee, overtime.Date, overtime.InTime, overtime.OutTime, overtime.Reason)
+		if err != nil {
+			fmt.Println("Failed to send overtime request notification email:", err)
+		}
+
 		successResponse := map[string]interface{}{
 			"code":    http.StatusCreated,
 			"error":   false,
@@ -848,6 +854,9 @@ func MarkAbsentEmployees(db *gorm.DB) {
 				Username:         employee.Username,
 				FullNameEmployee: employee.FirstName + " " + employee.LastName,
 				AttendanceDate:   today,
+				InTime:           "-",
+				OutTime:          "-",
+				TotalWork:        "-",
 				Status:           "Absent",
 				CreatedAt:        &currentTime,
 			}
