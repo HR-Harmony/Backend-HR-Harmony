@@ -71,6 +71,8 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.RequestLoan{})
 	db.AutoMigrate(&models.Note{})
 	db.AutoMigrate(&models.KPAIndicator{})
+	db.AutoMigrate(&models.ResetPasswordOTP{})
+	db.AutoMigrate(&models.AdminResetPasswordOTP{})
 
 	return db, nil
 }
