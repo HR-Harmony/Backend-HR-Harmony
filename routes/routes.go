@@ -357,6 +357,16 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.PUT("/employee/leave_requests/:id", controllers.UpdateLeaveRequestByIDByEmployee(db, secretKey))
 	e.DELETE("/employee/leave_requests/:id", controllers.DeleteLeaveRequestByIDByEmployee(db, secretKey))
 
+	//Forgot Password Employee
+	e.POST("/employee/request-otp", controllers.SendOTPForPasswordReset(db))
+	e.POST("/employee/verify-otp", controllers.VerifyOTPForPasswordReset(db))
+	e.POST("/employee/reset-password", controllers.ResetPasswordWithOTP(db))
+
+	//Forgot Password Admin
+	e.POST("/admin/request-otp", controllers.SendOTPForPasswordResetAdmin(db))
+	e.POST("/admin/verify-otp", controllers.VerifyOTPForPasswordResetAdmin(db))
+	e.POST("/admin/reset-password", controllers.ResetPasswordWithOTPAdmin(db))
+
 	//Dashboard Admin
 	e.GET("/admin/dashboard", controllers.GetDashboardSummaryForAdmin(db, secretKey))
 
