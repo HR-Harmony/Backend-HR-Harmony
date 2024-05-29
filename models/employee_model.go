@@ -10,6 +10,7 @@ type Employee struct {
 	FullName      string      `json:"full_name"`
 	ContactNumber string      `json:"contact_number"`
 	Gender        string      `json:"gender"`
+	BirthdayDate  string      `json:"birthday_date"`
 	Email         string      `json:"email"`
 	Username      string      `json:"username"`
 	Password      string      `json:"password"`
