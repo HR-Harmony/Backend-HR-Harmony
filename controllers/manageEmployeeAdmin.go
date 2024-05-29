@@ -273,6 +273,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				ContactNumber:            emp.ContactNumber,
 				Gender:                   emp.Gender,
 				Email:                    emp.Email,
+				BirthdayDate:             emp.BirthdayDate,
 				Username:                 emp.Username,
 				Password:                 emp.Password,
 				ShiftID:                  emp.ShiftID,
@@ -505,6 +506,20 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		if updatedEmployee.Gender != "" {
 			existingEmployee.Gender = updatedEmployee.Gender
 		}
+
+		if updatedEmployee.BirthdayDate != "" {
+			startDate, err := time.Parse("2006-01-02", updatedEmployee.BirthdayDate)
+			if err != nil {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid StartDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			existingEmployee.BirthdayDate = startDate.Format("2006-01-02")
+		}
+
+		if updatedEmployee.IsActive != existingEmployee.IsActive {
+			existingEmployee.IsActive = updatedEmployee.IsActive
+		}
+
 		if updatedEmployee.Email != "" {
 			existingEmployee.Email = updatedEmployee.Email
 		}
@@ -588,6 +603,10 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		if updatedEmployee.BpjsKesehatan != "" {
 			existingEmployee.BpjsKesehatan = updatedEmployee.BpjsKesehatan
+		}
+
+		if updatedEmployee.Address1 != "" {
+			existingEmployee.Address1 = updatedEmployee.Address1
 		}
 
 		if updatedEmployee.Address2 != "" {
