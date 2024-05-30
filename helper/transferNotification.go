@@ -42,9 +42,9 @@ func addThousandSeparator(number string) string {
 }
 
 // SendSalaryTransferNotification mengirimkan email notifikasi kepada karyawan tentang transfer gaji yang berhasil
-func SendSalaryTransferNotification(employeeEmail, fullName string, basicSalary float64) error {
+func SendSalaryTransferNotification(employeeEmail, fullName string, finalSalary float64) error {
 	// Format jumlah gaji ke mata uang Rupiah
-	formattedBasicSalary := FormatToIDR(basicSalary)
+	formattedBasicSalary := FormatToIDR(finalSalary)
 
 	// Konstruksi isi email
 	emailBody := fmt.Sprintf(`
