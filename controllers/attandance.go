@@ -14,6 +14,121 @@ import (
 	"time"
 )
 
+func calculateEarlyLeavingMinutes(earlyLeavingDuration string) int {
+	earlyLeavingDur, _ := time.ParseDuration(earlyLeavingDuration)
+	earlyLeavingMinutes := int(earlyLeavingDur.Minutes())
+	return earlyLeavingMinutes
+}
+
+func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"})
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"})
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"})
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"})
+		}
+
+		if !adminUser.IsAdminHR {
+			return c.JSON(http.StatusForbidden, helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"})
+		}
+
+		var attendance models.Attendance
+		if err := c.Bind(&attendance); err != nil {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
+		}
+
+		if attendance.EmployeeID == 0 || attendance.AttendanceDate == "" || attendance.InTime == "" || attendance.OutTime == "" {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance data. All fields are required."})
+		}
+
+		var employee models.Employee
+		result = db.First(&employee, attendance.EmployeeID)
+		if result.Error != nil {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee ID not found"})
+		}
+
+		attendance.Username = employee.Username
+		attendance.FullNameEmployee = employee.FirstName + " " + employee.LastName
+
+		attendanceDate, err := time.Parse("2006-01-02", attendance.AttendanceDate)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"})
+		}
+
+		inTime, err := time.Parse("15:04:05", attendance.InTime)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"})
+		}
+
+		outTime, err := time.Parse("15:04:05", attendance.OutTime)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"})
+		}
+
+		shiftInTime, shiftOutTime, err := getShiftForDay(db, employee.ShiftID, attendanceDate.Weekday().String())
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch shift data"})
+		}
+
+		lateDuration := calculateLate(shiftInTime, inTime.Format("15:04:05"))
+		earlyLeavingDuration := calculateEarlyLeaving(shiftOutTime, outTime.Format("15:04:05"))
+
+		workDuration := outTime.Sub(inTime)
+		totalWorkHours := workDuration.Hours()
+		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
+
+		var hourlyRate float64
+		if totalWorkHours < 0 {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid total work hours"})
+		} else {
+			hourlyRate = employee.HourlyRate
+		}
+
+		lateMinutes := calculateLateMinutes(lateDuration)
+		earlyLeavingMinutes := calculateEarlyLeavingMinutes(earlyLeavingDuration)
+
+		lateDeduction := (float64(lateMinutes) / 60) * hourlyRate
+		earlyLeavingDeduction := (float64(earlyLeavingMinutes) / 60) * hourlyRate
+
+		attendance.Status = "Present"
+		attendance.Late = lateDuration
+		attendance.LateMinutes = lateMinutes
+		attendance.EarlyLeaving = earlyLeavingDuration
+		attendance.EarlyLeavingMinutes = earlyLeavingMinutes
+		attendance.TotalWork = totalWork
+
+		db.Create(&attendance)
+
+		successResponse := map[string]interface{}{
+			"code":                    http.StatusCreated,
+			"error":                   false,
+			"message":                 "Attendance data added successfully",
+			"data":                    attendance,
+			"late_deduction":          lateDeduction,
+			"early_leaving_deduction": earlyLeavingDeduction,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+/*
 func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -75,12 +190,12 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		inTime, err := time.Parse("15:04", attendance.InTime)
+		inTime, err := time.Parse("15:04:00", attendance.InTime)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
-		outTime, err := time.Parse("15:04", attendance.OutTime)
+		outTime, err := time.Parse("15:04:00", attendance.OutTime)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -106,6 +221,7 @@ func AddManualAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		return c.JSON(http.StatusCreated, successResponse)
 	}
 }
+*/
 
 func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -250,6 +366,148 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"})
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"})
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"})
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"})
+		}
+
+		if !adminUser.IsAdminHR {
+			return c.JSON(http.StatusForbidden, helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"})
+		}
+
+		attendanceID := c.Param("id")
+		if attendanceID == "" {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Attendance ID is missing"})
+		}
+
+		var attendance models.Attendance
+		result = db.First(&attendance, "id = ?", attendanceID)
+		if result.Error != nil {
+			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Attendance not found"})
+		}
+
+		var updatedAttendance models.Attendance
+		if err := c.Bind(&updatedAttendance); err != nil {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
+		}
+
+		var employee models.Employee
+		if updatedAttendance.EmployeeID != 0 {
+			result = db.First(&employee, "id = ?", updatedAttendance.EmployeeID)
+			if result.Error != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid employee ID. Employee not found."})
+			}
+			attendance.EmployeeID = updatedAttendance.EmployeeID
+			attendance.Username = employee.Username
+			attendance.FullNameEmployee = employee.FirstName + " " + employee.LastName
+		} else {
+			result = db.First(&employee, "id = ?", attendance.EmployeeID)
+			if result.Error != nil {
+				return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch employee data"})
+			}
+		}
+
+		var shouldRecalculate bool
+		if updatedAttendance.AttendanceDate != "" {
+			_, err := time.Parse("2006-01-02", updatedAttendance.AttendanceDate)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"})
+			}
+			attendance.AttendanceDate = updatedAttendance.AttendanceDate
+			shouldRecalculate = true
+		}
+
+		if updatedAttendance.InTime != "" {
+			_, err := time.Parse("15:04:05", updatedAttendance.InTime)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm:ss"})
+			}
+			attendance.InTime = updatedAttendance.InTime
+			shouldRecalculate = true
+		}
+
+		if updatedAttendance.OutTime != "" {
+			_, err := time.Parse("15:04:05", updatedAttendance.OutTime)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm:ss"})
+			}
+			attendance.OutTime = updatedAttendance.OutTime
+			shouldRecalculate = true
+		}
+
+		if shouldRecalculate {
+			attendanceDate, err := time.Parse("2006-01-02", attendance.AttendanceDate)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"})
+			}
+			inTime, err := time.Parse("15:04:05", attendance.InTime)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm:ss"})
+			}
+			outTime, err := time.Parse("15:04:05", attendance.OutTime)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm:ss"})
+			}
+
+			log.Printf("Fetching shift data for ShiftID: %d and Day: %s\n", employee.ShiftID, attendanceDate.Weekday().String())
+
+			shiftInTime, shiftOutTime, err := getShiftForDay(db, employee.ShiftID, attendanceDate.Weekday().String())
+			if err != nil {
+				log.Printf("Failed to fetch shift data: %v\n", err)
+				return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch shift data"})
+			}
+
+			lateDuration := calculateLate(shiftInTime, inTime.Format("15:04:05"))
+			earlyLeavingDuration := calculateEarlyLeaving(shiftOutTime, outTime.Format("15:04:05"))
+
+			workDuration := outTime.Sub(inTime)
+			totalWorkHours := workDuration.Hours()
+			totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
+
+			lateMinutes := calculateLateMinutes(lateDuration)
+			earlyLeavingMinutes := calculateEarlyLeavingMinutes(earlyLeavingDuration)
+
+			attendance.Status = "Present"
+			attendance.Late = lateDuration
+			attendance.LateMinutes = lateMinutes
+			attendance.EarlyLeaving = earlyLeavingDuration
+			attendance.EarlyLeavingMinutes = earlyLeavingMinutes
+			attendance.TotalWork = totalWork
+		}
+
+		db.Save(&attendance)
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Attendance data updated successfully",
+			"data":    attendance,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
@@ -325,12 +583,12 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			attendance.OutTime = updatedAttendance.OutTime
 		}
 
-		inTime, err := time.Parse("15:04", attendance.InTime)
+		inTime, err := time.Parse("15:04:05", attendance.InTime)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
-		outTime, err := time.Parse("15:04", attendance.OutTime)
+		outTime, err := time.Parse("15:04:05", attendance.OutTime)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -354,6 +612,7 @@ func UpdateAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func DeleteAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -848,6 +1107,58 @@ func MarkAbsentEmployees(db *gorm.DB) {
 		var existingAttendance models.Attendance
 		result := db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
 		if result.Error != nil {
+			shiftInTime, shiftOutTime, err := getShiftForDay(db, employee.ShiftID, time.Now().Weekday().String())
+			if err != nil {
+				log.Printf("Failed to fetch shift data for employee %s: %v\n", employee.Username, err)
+				continue
+			}
+
+			// Parse shift times
+			shiftIn, err := time.Parse("15:04:05", shiftInTime)
+			if err != nil {
+				log.Printf("Failed to parse shift in time for employee %s: %v\n", employee.Username, err)
+				continue
+			}
+			shiftOut, err := time.Parse("15:04:05", shiftOutTime)
+			if err != nil {
+				log.Printf("Failed to parse shift out time for employee %s: %v\n", employee.Username, err)
+				continue
+			}
+
+			// Calculate late minutes
+			workDuration := shiftOut.Sub(shiftIn)
+			lateMinutes := int(workDuration.Minutes())
+
+			currentTime := time.Now()
+			attendance := models.Attendance{
+				EmployeeID:       employee.ID,
+				Username:         employee.Username,
+				FullNameEmployee: employee.FirstName + " " + employee.LastName,
+				AttendanceDate:   today,
+				InTime:           "-",
+				OutTime:          "-",
+				TotalWork:        "-",
+				Status:           "Absent",
+				LateMinutes:      lateMinutes,
+				CreatedAt:        &currentTime,
+			}
+			db.Create(&attendance)
+			log.Printf("Marked employee %s as absent on %s with late minutes %d\n", employee.Username, today, lateMinutes)
+		}
+	}
+}
+
+/*
+func MarkAbsentEmployees(db *gorm.DB) {
+	var employees []models.Employee
+	db.Where("is_client = ? AND is_exit = ?", false, false).Find(&employees)
+
+	today := time.Now().Format("2006-01-02")
+
+	for _, employee := range employees {
+		var existingAttendance models.Attendance
+		result := db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
+		if result.Error != nil {
 			currentTime := time.Now()
 			attendance := models.Attendance{
 				EmployeeID:       employee.ID,
@@ -865,3 +1176,4 @@ func MarkAbsentEmployees(db *gorm.DB) {
 		}
 	}
 }
+*/
