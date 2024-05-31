@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/xuri/excelize/v2"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -18,6 +19,272 @@ import (
 	"strings"
 	"time"
 )
+
+// CreateMultipleEmployeeAccountsByAdmin handles the creation of multiple employee accounts by admin from an Excel file
+func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Parse the uploaded Excel file
+		file, err := c.FormFile("file")
+		if err != nil {
+			log.Println("Invalid file:", err)
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid file"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		src, err := file.Open()
+		if err != nil {
+			log.Println("Failed to open file:", err)
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to open file"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+		defer src.Close()
+
+		excelFile, err := excelize.OpenReader(src)
+		if err != nil {
+			log.Println("Failed to read Excel file:", err)
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to read Excel file"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		sheetName := excelFile.GetSheetName(0)
+		rows, err := excelFile.GetRows(sheetName)
+		if err != nil {
+			log.Println("Failed to read Excel rows:", err)
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to read Excel rows"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		var createdEmployees []models.Employee
+		tx := db.Begin()
+		defer func() {
+			if r := recover(); r != nil {
+				tx.Rollback()
+				log.Println("Transaction rollback due to panic:", r)
+			}
+		}()
+
+		for _, row := range rows[1:] { // Skipping header row
+			if len(row) < 14 {
+				log.Println("Skipping incomplete row:", row)
+				continue // Skip incomplete rows
+			}
+
+			shiftID, err := strconv.ParseUint(row[7], 10, 32)
+			if err != nil {
+				log.Println("Invalid shift ID:", row[7])
+				continue // Skip invalid shift ID
+			}
+
+			roleID, err := strconv.ParseUint(row[8], 10, 32)
+			if err != nil {
+				log.Println("Invalid role ID:", row[8])
+				continue // Skip invalid role ID
+			}
+
+			designationID, err := strconv.ParseUint(row[9], 10, 32)
+			if err != nil {
+				log.Println("Invalid designation ID:", row[9])
+				continue // Skip invalid designation ID
+			}
+
+			departmentID, err := strconv.ParseUint(row[10], 10, 32)
+			if err != nil {
+				log.Println("Invalid department ID:", row[10])
+				continue // Skip invalid department ID
+			}
+
+			basicSalary, err := strconv.ParseFloat(row[11], 64)
+			if err != nil {
+				log.Println("Invalid basic salary:", row[11])
+				continue // Skip invalid basic salary
+			}
+
+			hourlyRate, err := strconv.ParseFloat(row[12], 64)
+			if err != nil {
+				log.Println("Invalid hourly rate:", row[12])
+				continue // Skip invalid hourly rate
+			}
+
+			employee := models.Employee{
+				FirstName:     row[0],
+				LastName:      row[1],
+				ContactNumber: row[2],
+				Gender:        row[3],
+				Email:         row[4],
+				Username:      row[5],
+				Password:      row[6],
+				ShiftID:       uint(shiftID),
+				RoleID:        uint(roleID),
+				DesignationID: uint(designationID),
+				DepartmentID:  uint(departmentID),
+				BasicSalary:   basicSalary,
+				HourlyRate:    hourlyRate,
+				PaySlipType:   row[13],
+			}
+
+			passwordWithNoHash := employee.Password
+
+			// Validate all employee data
+			if employee.FirstName == "" || employee.LastName == "" || employee.ContactNumber == "" ||
+				employee.Gender == "" || employee.Email == "" || employee.Username == "" ||
+				employee.Password == "" || employee.ShiftID == 0 || employee.RoleID == 0 ||
+				employee.DepartmentID == 0 || employee.BasicSalary == 0 || employee.HourlyRate == 0 ||
+				employee.PaySlipType == "" || employee.DesignationID == 0 {
+				log.Println("Skipping invalid data:", employee)
+				continue // Skip invalid data
+			}
+
+			// Check if the shift exists
+			var officeShift models.Shift
+			result := tx.First(&officeShift, "id = ?", employee.ShiftID)
+			if result.Error != nil {
+				log.Println("Skipping invalid shift ID:", employee.ShiftID)
+				continue // Skip invalid shift
+			}
+
+			employee.Shift = officeShift.ShiftName
+
+			// Check if the role exists
+			var role models.Role
+			result = tx.First(&role, "id = ?", employee.RoleID)
+			if result.Error != nil {
+				log.Println("Skipping invalid role ID:", employee.RoleID)
+				continue // Skip invalid role
+			}
+
+			employee.Role = role.RoleName
+
+			// Check if the department exists
+			var department models.Department
+			result = tx.First(&department, "id = ?", employee.DepartmentID)
+			if result.Error != nil {
+				log.Println("Skipping invalid department ID:", employee.DepartmentID)
+				continue // Skip invalid department
+			}
+
+			employee.Department = department.DepartmentName
+
+			// Check if the designation exists
+			var designation models.Designation
+			result = tx.First(&designation, "id = ?", employee.DesignationID)
+			if result.Error != nil {
+				log.Println("Skipping invalid designation ID:", employee.DesignationID)
+				continue // Skip invalid designation
+			}
+
+			employee.Designation = designation.DesignationName
+			employee.DesignationID = designation.ID
+
+			// Check if username is unique
+			var existingUsername models.Employee
+			result = tx.Where("username = ?", employee.Username).First(&existingUsername)
+			if result.Error == nil {
+				log.Println("Skipping duplicate username:", employee.Username)
+				continue // Skip duplicate username
+			} else if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				log.Println("Error checking username uniqueness:", result.Error)
+				continue // Skip on error
+			}
+
+			// Check if contact number is unique
+			var existingContactNumber models.Employee
+			result = tx.Where("contact_number = ?", employee.ContactNumber).First(&existingContactNumber)
+			if result.Error == nil {
+				log.Println("Skipping duplicate contact number:", employee.ContactNumber)
+				continue // Skip duplicate contact number
+			} else if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				log.Println("Error checking contact number uniqueness:", result.Error)
+				continue // Skip on error
+			}
+
+			// Check if email is unique
+			var existingEmail models.Employee
+			result = tx.Where("email = ?", employee.Email).First(&existingEmail)
+			if result.Error == nil {
+				log.Println("Skipping duplicate email:", employee.Email)
+				continue // Skip duplicate email
+			} else if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				log.Println("Error checking email uniqueness:", result.Error)
+				continue // Skip on error
+			}
+
+			payrollID := generateUniquePayrollID()
+			employee.PayrollID = payrollID
+
+			employee.FullName = employee.FirstName + " " + employee.LastName
+
+			// Hash the password
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(employee.Password), bcrypt.DefaultCost)
+			if err != nil {
+				log.Println("Failed to hash password:", err)
+				errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to hash password"}
+				return c.JSON(http.StatusInternalServerError, errorResponse)
+			}
+			employee.Password = string(hashedPassword)
+
+			if err := tx.Create(&employee).Error; err != nil {
+				log.Println("Failed to create employee:", err)
+				tx.Rollback()
+				errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to create employee"}
+				return c.JSON(http.StatusInternalServerError, errorResponse)
+			}
+
+			createdEmployees = append(createdEmployees, employee)
+
+			go func() {
+				err = helper.SendEmployeeAccountNotificationWithPlainTextPassword(employee.Email, employee.FullName, employee.Username, passwordWithNoHash)
+				if err != nil {
+					log.Println("Failed to send email:", err)
+				}
+			}()
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			log.Println("Failed to commit transaction:", err)
+			tx.Rollback()
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to commit transaction"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		log.Println("Successfully created employees:", createdEmployees)
+		successResponse := map[string]interface{}{"Code": http.StatusOK, "Error": false, "Message": "Employee accounts created successfully", "Data": createdEmployees}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
 
 // CreateEmployeeAccountByAdmin handles the creation of an employee account by admin
 func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {

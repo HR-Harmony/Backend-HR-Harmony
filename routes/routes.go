@@ -374,6 +374,8 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Dashboard Employee
 	e.GET("/employee/dashboard", controllers.GetDashboardSummaryForEmployee(db, secretKey))
 
+	e.POST("/admin/employees/multiple", controllers.CreateMultipleEmployeeAccountsByAdmin(db, secretKey))
+
 	// Chatbot untuk user dapat bertanya dengan Debot rekomendasi tempat wisata
 	harmonyUsecase := controllers.NewHarmonyUsecase()
 	e.POST("/chatbot", func(c echo.Context) error {
