@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/jung-kurt/gofpdf"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"hrsale/helper"
@@ -1177,3 +1179,158 @@ func MarkAbsentEmployees(db *gorm.DB) {
 	}
 }
 */
+
+func GetEmployeeAttendanceReport(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Token verification
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Get query parameters
+		employeeID, err := strconv.Atoi(c.QueryParam("employee_id"))
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid employee ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		monthYear := c.QueryParam("month_year")
+		if monthYear == "" || len(monthYear) != 7 || monthYear[4] != '-' {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid month_year format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		startDate, err := time.Parse("2006-01-02", monthYear+"-01")
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid month_year"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		endDate := startDate.AddDate(0, 1, -1)
+
+		// Fetch employee data
+		var employee models.Employee
+		result = db.Where("id = ?", employeeID).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Fetch attendance data
+		var attendances []models.Attendance
+		query := db.Where("employee_id = ? AND attendance_date BETWEEN ? AND ?", employeeID, startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
+		result = query.Find(&attendances)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch attendance data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Generate PDF
+		pdf := gofpdf.New("P", "mm", "A4", "")
+		pdf.AddPage()
+
+		// Add logo
+		logoPath := "helper/logo.png"
+		pdf.ImageOptions(
+			logoPath, 10, 10, 30, 0, false,
+			gofpdf.ImageOptions{ReadDpi: true, ImageType: "PNG"},
+			0, "",
+		)
+
+		// Header
+		pdf.SetFont("Arial", "B", 16)
+		pdf.SetXY(50, 15)
+		pdf.SetTextColor(0, 102, 204)
+		pdf.Cell(100, 10, "HR Harmony")
+		pdf.Ln(20)
+
+		// Employee Information
+		pdf.SetX(50)
+		pdf.SetFont("Arial", "B", 12)
+		pdf.SetTextColor(0, 0, 0)
+		pdf.SetX(50)
+		pdf.Cell(40, 10, "Employee Name:")
+		pdf.SetFont("Arial", "", 12)
+		pdf.Cell(100, 10, employee.FullName)
+		pdf.Ln(10)
+		pdf.SetFont("Arial", "B", 12)
+		pdf.SetX(50)
+		pdf.Cell(40, 10, "Email:")
+		pdf.SetFont("Arial", "", 12)
+		pdf.Cell(100, 10, employee.Email)
+		pdf.Ln(10)
+		pdf.SetFont("Arial", "B", 12)
+		pdf.SetX(50)
+		pdf.Cell(40, 10, "Month:")
+		pdf.SetFont("Arial", "", 12)
+		pdf.Cell(100, 10, monthYear)
+		pdf.Ln(10)
+
+		// Table Header
+		pdf.SetFont("Arial", "B", 12)
+		pdf.SetFillColor(200, 200, 200)
+		pdf.SetTextColor(0, 0, 0)
+		pdf.CellFormat(30, 10, "Date", "1", 0, "C", true, 0, "")
+		pdf.CellFormat(30, 10, "Status", "1", 0, "C", true, 0, "")
+		pdf.CellFormat(30, 10, "In Time", "1", 0, "C", true, 0, "")
+		pdf.CellFormat(30, 10, "Out Time", "1", 0, "C", true, 0, "")
+		pdf.CellFormat(40, 10, "Total Work", "1", 1, "C", true, 0, "")
+
+		// Table Content
+		pdf.SetFont("Arial", "", 12)
+		pdf.SetFillColor(255, 255, 255)
+		for _, att := range attendances {
+			pdf.CellFormat(30, 10, att.AttendanceDate, "1", 0, "C", false, 0, "")
+			pdf.CellFormat(30, 10, att.Status, "1", 0, "C", false, 0, "")
+			pdf.CellFormat(30, 10, att.InTime, "1", 0, "C", false, 0, "")
+			pdf.CellFormat(30, 10, att.OutTime, "1", 0, "C", false, 0, "")
+			pdf.CellFormat(40, 10, att.TotalWork, "1", 1, "C", false, 0, "")
+		}
+
+		var buf bytes.Buffer
+		err = pdf.Output(&buf)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to generate PDF"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		c.Response().Header().Set("Content-Type", "application/pdf")
+		c.Response().Header().Set("Content-Disposition", "attachment; filename=attendance_report.pdf")
+		c.Response().WriteHeader(http.StatusOK)
+		_, err = c.Response().Write(buf.Bytes())
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send PDF"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		return nil
+	}
+}
