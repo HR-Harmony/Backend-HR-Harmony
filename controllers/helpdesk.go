@@ -411,3 +411,96 @@ func DeleteHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+
+func GetTicketStatsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Check if the user is an admin
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Initialize the ticket status and priority counts
+		ticketStatus := map[string]int{
+			"Open":   0,
+			"Closed": 0,
+		}
+
+		ticketPriority := map[string]int{
+			"Low":      0,
+			"Medium":   0,
+			"High":     0,
+			"Critical": 0,
+		}
+
+		// Query the ticket counts by status
+		var ticketStatusCounts []struct {
+			Status string
+			Count  int
+		}
+		if err := db.Model(&models.Helpdesk{}).Select("status, count(*) as count").Group("status").Scan(&ticketStatusCounts).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve ticket counts by status"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Update the ticket status counts based on the query results
+		for _, count := range ticketStatusCounts {
+			statusKey := strings.ReplaceAll(count.Status, " ", "_")
+			ticketStatus[statusKey] = count.Count
+		}
+
+		// Query the ticket counts by priority
+		var ticketPriorityCounts []struct {
+			Priority string
+			Count    int
+		}
+		if err := db.Model(&models.Helpdesk{}).Select("priority, count(*) as count").Group("priority").Scan(&ticketPriorityCounts).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve ticket counts by priority"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Update the ticket priority counts based on the query results
+		for _, count := range ticketPriorityCounts {
+			priorityKey := strings.ReplaceAll(count.Priority, " ", "_")
+			ticketPriority[priorityKey] = count.Count
+		}
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":            http.StatusOK,
+			"error":           false,
+			"message":         "Ticket counts by status and priority retrieved successfully",
+			"ticket_status":   ticketStatus,
+			"ticket_priority": ticketPriority,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
