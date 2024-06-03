@@ -35,6 +35,69 @@ func SendOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		// Cek kapan terakhir kali OTP diminta
+		var lastOTPRequest models.ResetPasswordOTP
+		result = db.Where("employee_id = ? AND requested_at >= ?", employee.ID, time.Now().Add(-60*time.Second)).Order("requested_at desc").First(&lastOTPRequest)
+		if result.Error == nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusTooManyRequests, Message: "You can only request an OTP every 60 seconds"}
+			return c.JSON(http.StatusTooManyRequests, errorResponse)
+		}
+
+		Fullname := employee.FirstName + " " + employee.LastName
+
+		// Generate OTP
+		otp := helper.GenerateOTP()
+
+		// Menyimpan OTP ke dalam database
+		expiredAt := time.Now().Add(15 * time.Minute)
+		resetPasswordOTP := models.ResetPasswordOTP{
+			EmployeeID:  employee.ID,
+			OTP:         otp,
+			ExpiredAt:   expiredAt,
+			RequestedAt: time.Now(),
+		}
+		db.Create(&resetPasswordOTP)
+
+		// Kirim OTP ke email
+		err := helper.SendPasswordResetOTP(email, Fullname, otp, expiredAt)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send OTP"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "OTP sent to your email",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+// SendOTPForPasswordReset mengirimkan OTP ke email yang terdaftar untuk reset password
+func SendOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Bind JSON request ke struct VerifyOTPRequest
+		type SendOTPRequest struct {
+			Email string `json:"email"`
+		}
+		var req SendOTPRequest
+		if err := c.Bind(&req); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		email := req.Email
+
+		// Cek apakah email sudah terdaftar
+		var employee models.Employee
+		result := db.Where("email = ?", email).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Email not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
 		Fullname := employee.FirstName + " " + employee.LastName
 
 		// Generate OTP
@@ -64,6 +127,7 @@ func SendOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 // VerifyOTPForPasswordReset memverifikasi OTP yang dimasukkan oleh pengguna untuk reset password
 func VerifyOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
