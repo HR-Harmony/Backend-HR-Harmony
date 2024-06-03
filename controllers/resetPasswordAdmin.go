@@ -10,10 +10,8 @@ import (
 	"time"
 )
 
-// SendOTPForAdminPasswordReset mengirimkan OTP ke email yang terdaftar untuk reset password
 func SendOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Bind JSON request ke struct SendOTPRequest
 		type SendOTPRequest struct {
 			Email string `json:"email"`
 		}
@@ -25,7 +23,6 @@ func SendOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 
 		email := req.Email
 
-		// Cek apakah email sudah terdaftar
 		var admin models.Admin
 		result := db.Where("email = ?", email).First(&admin)
 		if result.Error != nil {
@@ -33,21 +30,26 @@ func SendOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		var lastOTPRequest models.AdminResetPasswordOTP
+		result = db.Where("admin_id = ? AND requested_at >= ?", admin.ID, time.Now().Add(-60*time.Second)).Order("requested_at desc").First(&lastOTPRequest)
+		if result.Error == nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusTooManyRequests, Message: "You can only request an OTP every 60 seconds"}
+			return c.JSON(http.StatusTooManyRequests, errorResponse)
+		}
+
 		fullname := admin.FirstName + " " + admin.LastName
 
-		// Generate OTP
 		otp := helper.GenerateOTP()
 
-		// Menyimpan OTP ke dalam database
 		expiredAt := time.Now().Add(15 * time.Minute)
 		resetPasswordOTP := models.AdminResetPasswordOTP{
-			AdminID:   admin.ID,
-			OTP:       otp,
-			ExpiredAt: expiredAt,
+			AdminID:     admin.ID,
+			OTP:         otp,
+			ExpiredAt:   expiredAt,
+			RequestedAt: time.Now(),
 		}
 		db.Create(&resetPasswordOTP)
 
-		// Kirim OTP ke email
 		err := helper.SendAdminPasswordResetOTP(email, fullname, otp, expiredAt)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send OTP"}
@@ -63,7 +65,55 @@ func SendOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 	}
 }
 
-// VerifyOTPForAdminPasswordReset memverifikasi OTP yang dimasukkan oleh pengguna untuk reset password
+/*
+func SendOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		type SendOTPRequest struct {
+			Email string `json:"email"`
+		}
+		var req SendOTPRequest
+		if err := c.Bind(&req); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		email := req.Email
+
+		var admin models.Admin
+		result := db.Where("email = ?", email).First(&admin)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Email not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		fullname := admin.FirstName + " " + admin.LastName
+
+		otp := helper.GenerateOTP()
+
+		expiredAt := time.Now().Add(15 * time.Minute)
+		resetPasswordOTP := models.AdminResetPasswordOTP{
+			AdminID:   admin.ID,
+			OTP:       otp,
+			ExpiredAt: expiredAt,
+		}
+		db.Create(&resetPasswordOTP)
+
+		err := helper.SendAdminPasswordResetOTP(email, fullname, otp, expiredAt)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send OTP"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "OTP sent to your email",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+*/
+
 func VerifyOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 	type VerifyOTPRequest struct {
 		Email string `json:"email"`
@@ -71,7 +121,6 @@ func VerifyOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 	}
 
 	return func(c echo.Context) error {
-		// Bind JSON request ke struct VerifyOTPRequest
 		var req VerifyOTPRequest
 		if err := c.Bind(&req); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
@@ -81,7 +130,6 @@ func VerifyOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 		email := req.Email
 		otp := req.OTP
 
-		// Cek apakah email sudah terdaftar
 		var admin models.Admin
 		result := db.Where("email = ?", email).First(&admin)
 		if result.Error != nil {
@@ -89,7 +137,6 @@ func VerifyOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Cek apakah OTP sesuai dan masih berlaku
 		var resetPasswordOTP models.AdminResetPasswordOTP
 		result = db.Where("admin_id = ? AND otp = ? AND is_used = ? AND expired_at > ?", admin.ID, otp, false, time.Now()).First(&resetPasswordOTP)
 		if result.Error != nil {
@@ -106,7 +153,6 @@ func VerifyOTPForPasswordResetAdmin(db *gorm.DB) echo.HandlerFunc {
 	}
 }
 
-// ResetAdminPasswordWithOTP melakukan reset password dengan memeriksa OTP yang dimasukkan oleh pengguna
 func ResetPasswordWithOTPAdmin(db *gorm.DB) echo.HandlerFunc {
 	type ResetPasswordRequest struct {
 		Email              string `json:"email"`
@@ -116,7 +162,6 @@ func ResetPasswordWithOTPAdmin(db *gorm.DB) echo.HandlerFunc {
 	}
 
 	return func(c echo.Context) error {
-		// Bind JSON request ke struct ResetPasswordRequest
 		var req ResetPasswordRequest
 		if err := c.Bind(&req); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
@@ -128,7 +173,6 @@ func ResetPasswordWithOTPAdmin(db *gorm.DB) echo.HandlerFunc {
 		newPassword := req.NewPassword
 		confirmNewPassword := req.ConfirmNewPassword
 
-		// Cek apakah email sudah terdaftar
 		var admin models.Admin
 		result := db.Where("email = ?", email).First(&admin)
 		if result.Error != nil {
@@ -136,7 +180,6 @@ func ResetPasswordWithOTPAdmin(db *gorm.DB) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		// Cek apakah OTP sesuai
 		var resetPasswordOTP models.AdminResetPasswordOTP
 		result = db.Where("admin_id = ? AND otp = ? AND expired_at > ?", admin.ID, otp, time.Now()).First(&resetPasswordOTP)
 		if result.Error != nil {
@@ -144,7 +187,6 @@ func ResetPasswordWithOTPAdmin(db *gorm.DB) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Cek apakah password baru cocok dengan konfirmasi
 		if newPassword != confirmNewPassword {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Passwords do not match"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -155,22 +197,18 @@ func ResetPasswordWithOTPAdmin(db *gorm.DB) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
-		// Hash password baru
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to hash password"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Update password di database
 		admin.Password = string(hashedPassword)
 		db.Save(&admin)
 
-		// Menandai OTP sebagai digunakan
 		resetPasswordOTP.IsUsed = true
 		db.Save(&resetPasswordOTP)
 
-		// Kirim notifikasi email bahwa password telah diubah
 		if err := helper.SendAdminPasswordChangedNotification(admin.Email, admin.Fullname); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send password change notification"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
