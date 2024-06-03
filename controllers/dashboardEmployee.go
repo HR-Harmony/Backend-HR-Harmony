@@ -85,10 +85,22 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 		}
 
 		var totalOvertime int64
-		db.Model(&models.OvertimeRequest{}).Where("employee_id = ?", employee.ID).Count(&totalOvertime)
+		db.Model(&models.OvertimeRequest{}).
+			Where("employee_id = ? AND status = ?", employee.ID, "Accepted").
+			Count(&totalOvertime)
 
 		var totalLeave int64
-		db.Model(&models.LeaveRequest{}).Where("employee_id = ?", employee.ID).Count(&totalLeave)
+		db.Model(&models.LeaveRequest{}).
+			Where("employee_id = ? AND status = ?", employee.ID, "Approved").
+			Count(&totalLeave)
+
+		/*
+			var totalOvertime int64
+			db.Model(&models.OvertimeRequest{}).Where("employee_id = ?", employee.ID).Count(&totalOvertime)
+
+			var totalLeave int64
+			db.Model(&models.LeaveRequest{}).Where("employee_id = ?", employee.ID).Count(&totalLeave)
+		*/
 
 		var projects []models.Project
 		if err := db.Find(&projects).Error; err != nil {
