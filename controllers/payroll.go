@@ -1320,3 +1320,18 @@ func DeleteRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+
+func ResetPaidStatus(db *gorm.DB) {
+	// Get the current date
+	currentDate := time.Now().Format("2006-01-02")
+	fmt.Printf("Running ResetPaidStatus on %s\n", currentDate)
+
+	// Update the paid_status of all employees to false
+	result := db.Model(&models.Employee{}).Where("paid_status = ?", true).Update("paid_status", false)
+	if result.Error != nil {
+		fmt.Printf("Failed to reset paid status: %v\n", result.Error)
+		return
+	}
+
+	fmt.Println("Successfully reset paid status for all employees.")
+}
