@@ -363,3 +363,68 @@ func DeleteProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+
+func GetProjectStatusByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Initialize the project status counts
+		projectStatus := map[string]int{
+			"Cancelled":   0,
+			"Completed":   0,
+			"Not_Started": 0,
+			"On_Hold":     0,
+			"In_Progress": 0,
+		}
+
+		// Query the project counts by status
+		var projectStatusCounts []struct {
+			Status string
+			Count  int
+		}
+		if err := db.Model(&models.Project{}).Select("status, count(*) as count").Group("status").Scan(&projectStatusCounts).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve project counts by status"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Update the project status counts based on the query results
+		for _, count := range projectStatusCounts {
+			statusKey := strings.ReplaceAll(count.Status, " ", "_")
+			projectStatus[statusKey] = count.Count
+		}
+
+		// Respond with success
+		successResponse := map[string]interface{}{
+			"code":           http.StatusOK,
+			"error":          false,
+			"message":        "Project counts by status retrieved successfully",
+			"project_status": projectStatus,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}

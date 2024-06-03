@@ -74,6 +74,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/projects/:id", controllers.GetProjectByIDByAdmin(db, secretKey))
 	e.PUT("/projects/:id", controllers.UpdateProjectByIDByAdmin(db, secretKey))
 	e.DELETE("/projects/:id", controllers.DeleteProjectByIDByAdmin(db, secretKey))
+	e.GET("/projects/progress-bar", controllers.GetProjectStatusByAdmin(db, secretKey))
 
 	//Task Admin
 	e.POST("/tasks", controllers.CreateTaskByAdmin(db, secretKey))
@@ -81,6 +82,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/tasks/:id", controllers.GetTaskByIDByAdmin(db, secretKey))
 	e.PUT("/tasks/:id", controllers.UpdateTaskByIDByAdmin(db, secretKey))
 	e.DELETE("/tasks/:id", controllers.DeleteTaskByIDByAdmin(db, secretKey))
+	e.GET("/tasks/progress-bar", controllers.GetTaskStatusByAdmin(db, secretKey))
 
 	//note
 	e.POST("/tasks/notes", controllers.CreateNoteByAdmin(db, secretKey))
@@ -106,6 +108,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/helpdesks/:id", controllers.GetHelpdeskByIDByAdmin(db, secretKey))
 	e.PUT("/helpdesks/:id", controllers.UpdateHelpdeskByIDByAdmin(db, secretKey))
 	e.DELETE("/helpdesks/:id", controllers.DeleteHelpdeskByIDByAdmin(db, secretKey))
+	e.GET("/helpdesks/progress-bar", controllers.GetTicketStatsByAdmin(db, secretKey))
 
 	//Payroll
 	e.GET("/payrolls", controllers.GetAllEmployeesPayrollInfo(db, secretKey))
@@ -299,6 +302,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/employee/projects/:id", controllers.GetProjectByIDByEmployee(db, secretKey))
 	e.PUT("/employee/projects/:id", controllers.UpdateProjectByIDByEmployee(db, secretKey))
 	e.DELETE("/employee/projects/:id", controllers.DeleteProjectByIDByEmployee(db, secretKey))
+	e.GET("/employee/projects/progress-bar", controllers.GetProjectStatusByEmployee(db, secretKey))
 
 	e.GET("/employee/departments", controllers.GetAllDepartmentsByEmployee(db, secretKey))
 	e.GET("/employee/clients", controllers.GetAllClientsByEmployee(db, secretKey))
@@ -309,6 +313,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/employee/tasks/:id", controllers.GetTaskByIDByEmployee(db, secretKey))
 	e.PUT("/employee/tasks/:id", controllers.UpdateTaskByIDByEmployee(db, secretKey))
 	e.DELETE("/employee/tasks/:id", controllers.DeleteTaskByIDByEmployee(db, secretKey))
+	e.GET("/employee/tasks/progress-bar", controllers.GetTaskStatusByEmployee(db, secretKey))
 
 	//Notes Employee for Tasks
 	e.POST("/employee/tasks/notes", controllers.CreateNoteByEmployee(db, secretKey))
@@ -349,6 +354,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	e.GET("/employee/helpdesks/:id", controllers.GetHelpdeskByIDByEmployee(db, secretKey))
 	e.PUT("/employee/helpdesks/:id", controllers.UpdateHelpdeskByIDByEmployee(db, secretKey))
 	e.DELETE("/employee/helpdesks/:id", controllers.DeleteHelpdeskByIDByEmployee(db, secretKey))
+	e.GET("/employee/helpdesks/progress-bar", controllers.GetHelpdeskStatsByEmployee(db, secretKey))
 
 	//Leave Request Employee
 	e.GET("/employee/leave_request_types", controllers.GetAllLeaveRequestTypesByEmployee(db, secretKey))
