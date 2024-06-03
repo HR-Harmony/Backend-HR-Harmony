@@ -29,6 +29,7 @@ type OvertimeRequest struct {
 	OutTime          string     `json:"out_time"`
 	Reason           string     `json:"reason"`
 	TotalWork        string     `json:"total_work"`
+	TotalMinutes     int        `json:"total_minutes"` // New field for total minutes
 	Status           string     `json:"status"`
 	CreatedAt        *time.Time `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
