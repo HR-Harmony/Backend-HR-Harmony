@@ -55,6 +55,7 @@ func CreateOvertimeRequestByEmployee(db *gorm.DB, secretKey []byte) echo.Handler
 
 		overtime.EmployeeID = employee.ID
 		overtime.Username = employee.Username
+		overtime.FullNameEmployee = employee.FirstName + " " + employee.LastName
 		overtime.Status = "Pending"
 
 		_, err = time.Parse("2006-01-02", overtime.Date)
@@ -75,8 +76,10 @@ func CreateOvertimeRequestByEmployee(db *gorm.DB, secretKey []byte) echo.Handler
 		}
 		workDuration := outTime.Sub(inTime)
 		totalWorkHours := workDuration.Hours()
+		totalWorkMinutes := int(workDuration.Minutes())
 		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
 		overtime.TotalWork = totalWork
+		overtime.TotalMinutes = totalWorkMinutes
 
 		db.Create(&overtime)
 
@@ -311,7 +314,12 @@ func UpdateOvertimeRequestByIDByEmployee(db *gorm.DB, secretKey []byte) echo.Han
 			workDuration := outTime.Sub(inTime)
 			totalWorkHours := workDuration.Hours()
 			overtimeRequest.TotalWork = strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
+
+			totalWorkMinutes := int(workDuration.Minutes())
+			overtimeRequest.TotalMinutes = totalWorkMinutes
 		}
+
+		overtimeRequest.Status = overtimeRequest.Status
 
 		db.Save(&overtimeRequest)
 

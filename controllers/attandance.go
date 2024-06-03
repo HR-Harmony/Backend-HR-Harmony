@@ -735,6 +735,104 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		inTime, err := time.Parse("15:04", overtime.InTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		outTime, err := time.Parse("15:04", overtime.OutTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		workDuration := outTime.Sub(inTime)
+		totalWorkMinutes := int(workDuration.Minutes())
+
+		overtime.TotalWork = strconv.FormatFloat(workDuration.Hours(), 'f', 2, 64) + " hours"
+		overtime.TotalMinutes = totalWorkMinutes
+
+		overtime.Status = "Pending"
+
+		db.Create(&overtime)
+
+		err = helper.SendOvertimeRequestNotification(employee.Email, overtime.FullNameEmployee, overtime.Date, overtime.InTime, overtime.OutTime, overtime.Reason)
+		if err != nil {
+			fmt.Println("Failed to send overtime request notification email:", err)
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Overtime Request data added successfully",
+			"data":    overtime,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+/*
+func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		var overtime models.OvertimeRequest
+		if err := c.Bind(&overtime); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if overtime.EmployeeID == 0 || overtime.Date == "" || overtime.InTime == "" || overtime.OutTime == "" || overtime.Reason == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid Overtime Request. All fields are required."}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var employee models.Employee
+		result = db.First(&employee, overtime.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee ID not found"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		overtime.Username = employee.Username
+		overtime.FullNameEmployee = employee.FirstName + " " + employee.LastName
+
+		_, err = time.Parse("2006-01-02", overtime.Date)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid Overtime Request date format. Required format: yyyy-mm-dd"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		_, err = time.Parse("2006-01-02", overtime.Date)
 		if err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid attendance date format. Required format: yyyy-mm-dd"}
@@ -777,6 +875,7 @@ func CreateOvertimeRequestByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		return c.JSON(http.StatusCreated, successResponse)
 	}
 }
+*/
 
 func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -996,6 +1095,124 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 		if updatedOvertime.OutTime != "" {
 			overtime.OutTime = updatedOvertime.OutTime
 		}
+		if updatedOvertime.Reason != "" {
+			overtime.Reason = updatedOvertime.Reason
+		}
+		if updatedOvertime.Status != "" {
+			overtime.Status = updatedOvertime.Status
+		}
+
+		// Recalculate work duration, total work hours, and total minutes if in_time or out_time has changed
+		inTime, err := time.Parse("15:04", overtime.InTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid in_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		outTime, err := time.Parse("15:04", overtime.OutTime)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid out_time format. Required format: HH:mm"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		workDuration := outTime.Sub(inTime)
+
+		totalWorkHours := workDuration.Hours()
+		totalWork := strconv.FormatFloat(totalWorkHours, 'f', 2, 64) + " hours"
+		totalWorkMinutes := int(workDuration.Minutes())
+
+		overtime.TotalWork = totalWork
+		overtime.TotalMinutes = totalWorkMinutes
+
+		db.Save(&overtime)
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Overtime request data updated successfully",
+			"data":    overtime,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		overtimeID := c.Param("id")
+		if overtimeID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Overtime ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var overtime models.OvertimeRequest
+		result = db.First(&overtime, "id = ?", overtimeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Overtime Request not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var updatedOvertime models.OvertimeRequest
+		if err := c.Bind(&updatedOvertime); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if updatedOvertime.EmployeeID != 0 {
+			var employee models.Employee
+			result = db.First(&employee, "id = ?", updatedOvertime.EmployeeID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid employee ID. Employee not found."}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			overtime.EmployeeID = updatedOvertime.EmployeeID
+			overtime.Username = employee.Username
+			overtime.FullNameEmployee = employee.FirstName + " " + employee.LastName
+		}
+		if updatedOvertime.Date != "" {
+			_, err := time.Parse("2006-01-02", updatedOvertime.Date)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid Overtime Request date format. Required format: yyyy-mm-dd"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			overtime.Date = updatedOvertime.Date
+		}
+		if updatedOvertime.InTime != "" {
+			overtime.InTime = updatedOvertime.InTime
+		}
+		if updatedOvertime.OutTime != "" {
+			overtime.OutTime = updatedOvertime.OutTime
+		}
 
 		if updatedOvertime.Reason != "" {
 			overtime.Reason = updatedOvertime.Reason
@@ -1040,6 +1257,7 @@ func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.Handle
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func DeleteOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
