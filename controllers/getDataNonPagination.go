@@ -765,3 +765,222 @@ func GetAllLeaveRequestTypesByAdminNonPagination(db *gorm.DB, secretKey []byte) 
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+
+// Employee
+func GetAllProjectsByEmployeeNonPagination(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var projects []models.Project
+		db.Find(&projects)
+
+		successResponse := map[string]interface{}{
+			"Code":     http.StatusOK,
+			"Error":    false,
+			"Message":  "Projects retrieved successfully",
+			"Projects": projects,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetAllDepartmentsByEmployeeNonPagination(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Handle search parameters
+		searching := c.QueryParam("searching")
+
+		var departments []models.Department
+		query := db
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("department_name ILIKE ? OR full_name ILIKE ?", searchPattern, searchPattern)
+		}
+
+		if err := query.Find(&departments).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch Department records"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		successResponse := map[string]interface{}{
+			"code":        http.StatusOK,
+			"error":       false,
+			"message":     "Departments retrieved successfully",
+			"departments": departments,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetAllClientsByEmployeeNonPagination(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.Employee{}).Where("is_client = ?", true)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(full_name) LIKE ? OR LOWER(username) LIKE ? OR LOWER(contact_number) LIKE ? OR LOWER(gender) LIKE ? OR LOWER(country) LIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern,
+			)
+		}
+
+		var clientEmployees []struct {
+			ID            uint   `json:"id"`
+			FirstName     string `json:"first_name"`
+			LastName      string `json:"last_name"`
+			FullName      string `json:"full_name"`
+			ContactNumber string `json:"contact_number"`
+			Gender        string `json:"gender"`
+			Email         string `json:"email"`
+			Username      string `json:"username"`
+			Country       string `json:"country"`
+			IsActive      bool   `json:"is_active"`
+		}
+		if err := query.Select("id", "first_name", "last_name", "full_name", "contact_number", "gender", "email", "username", "country", "is_active").Find(&clientEmployees).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching client data"})
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Client data retrieved successfully",
+			"data":    clientEmployees,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+func GetAllLeaveRequestTypesByEmployeeNonPagination(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var leaveRequestTypes []models.LeaveRequestType
+		db.Find(&leaveRequestTypes)
+
+		searching := c.QueryParam("searching")
+		if searching != "" {
+			var filteredLeaveRequestTypes []models.LeaveRequestType
+			for _, lrt := range leaveRequestTypes {
+				if strings.Contains(strings.ToLower(lrt.LeaveType), strings.ToLower(searching)) ||
+					strings.Contains(strings.ToLower(fmt.Sprintf("%d", lrt.DaysPerYears)), strings.ToLower(searching)) ||
+					strings.Contains(strings.ToLower(fmt.Sprintf("%t", lrt.IsRequiresApproval)), strings.ToLower(searching)) {
+					filteredLeaveRequestTypes = append(filteredLeaveRequestTypes, lrt)
+				}
+			}
+			leaveRequestTypes = filteredLeaveRequestTypes
+		}
+
+		successResponse := map[string]interface{}{
+			"code":                http.StatusOK,
+			"error":               false,
+			"message":             "Leave request types retrieved successfully",
+			"leave_request_types": leaveRequestTypes,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
