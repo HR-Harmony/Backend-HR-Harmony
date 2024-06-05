@@ -311,13 +311,16 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Project Employee
 	e.POST("/employee/projects", controllers.AddProjectByEmployee(db, secretKey))
 	e.GET("/employee/projects", controllers.GetAllProjectsByEmployee(db, secretKey))
+	e.GET("/employee/projects/non-pagination", controllers.GetAllProjectsByEmployeeNonPagination(db, secretKey))
 	e.GET("/employee/projects/:id", controllers.GetProjectByIDByEmployee(db, secretKey))
 	e.PUT("/employee/projects/:id", controllers.UpdateProjectByIDByEmployee(db, secretKey))
 	e.DELETE("/employee/projects/:id", controllers.DeleteProjectByIDByEmployee(db, secretKey))
 	e.GET("/employee/projects/progress-bar", controllers.GetProjectStatusByEmployee(db, secretKey))
 
 	e.GET("/employee/departments", controllers.GetAllDepartmentsByEmployee(db, secretKey))
+	e.GET("/employee/departments/non-pagination", controllers.GetAllDepartmentsByEmployeeNonPagination(db, secretKey))
 	e.GET("/employee/clients", controllers.GetAllClientsByEmployee(db, secretKey))
+	e.GET("/employee/clients/non-pagination", controllers.GetAllClientsByEmployeeNonPagination(db, secretKey))
 
 	//Task Employee
 	e.POST("/employee/tasks", controllers.CreateTaskByEmployee(db, secretKey))
@@ -370,6 +373,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 
 	//Leave Request Employee
 	e.GET("/employee/leave_request_types", controllers.GetAllLeaveRequestTypesByEmployee(db, secretKey))
+	e.GET("/employee/leave_request_types/non-pagination", controllers.GetAllLeaveRequestTypesByEmployeeNonPagination(db, secretKey))
 	e.POST("/employee/leave_requests", controllers.CreateLeaveRequestByEmployee(db, secretKey))
 	e.GET("/employee/leave_requests", controllers.GetAllLeaveRequestsByEmployee(db, secretKey))
 	e.GET("/employee/leave_requests/:id", controllers.GetLeaveRequestByIDByEmployee(db, secretKey))
