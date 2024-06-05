@@ -29,6 +29,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Shift Admin
 	e.POST("/shifts", controllers.CreateShiftByAdmin(db, secretKey))
 	e.GET("/shifts", controllers.GetAllShiftsByAdmin(db, secretKey))
+	e.GET("/shifts/non-pagination", controllers.GetAllShiftsByAdminNonPagination(db, secretKey))
 	e.GET("/shifts/:id", controllers.GetShiftByIDByAdmin(db, secretKey))
 	e.PUT("/shifts/:id", controllers.EditShiftByIDByAdmin(db, secretKey))
 	e.DELETE("/shifts/:id", controllers.DeleteShiftByIDByAdmin(db, secretKey))
@@ -36,6 +37,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Role Admin
 	e.POST("/roles", controllers.CreateRoleByAdmin(db, secretKey))
 	e.GET("/roles", controllers.GetAllRolesByAdmin(db, secretKey))
+	e.GET("/roles/non-pagination", controllers.GetAllRolesByAdminNonPagination(db, secretKey))
 	e.GET("/roles/:id", controllers.GetRoleByIDByAdmin(db, secretKey))
 	e.PUT("/roles/:id", controllers.EditRoleByIDByAdmin(db, secretKey))
 	e.DELETE("/roles/:id", controllers.DeleteRoleByIDByAdmin(db, secretKey))
@@ -43,6 +45,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Department Admin
 	e.POST("/departments", controllers.CreateDepartemntsByAdmin(db, secretKey))
 	e.GET("/departments", controllers.GetAllDepartmentsByAdmin(db, secretKey))
+	e.GET("/departments/non-pagination", controllers.GetAllDepartmentsByAdminNonPagination(db, secretKey))
 	e.GET("/departments/:id", controllers.GetDepartmentByIDByAdmin(db, secretKey))
 	e.PUT("/departments/:id", controllers.EditDepartmentByIDByAdmin(db, secretKey))
 	e.DELETE("/departments/:id", controllers.DeleteDepartmentByIDByAdmin(db, secretKey))
@@ -50,6 +53,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Designation Admin
 	e.POST("/designations", controllers.CreateDesignationByAdmin(db, secretKey))
 	e.GET("/designations", controllers.GetAllDesignationsByAdmin(db, secretKey))
+	e.GET("/designations/non-pagination", controllers.GetAllDesignationsByAdminNonPagination(db, secretKey))
 	e.GET("/designations/:id", controllers.GetDesignationByID(db, secretKey))
 	e.PUT("/designations/:id", controllers.UpdateDesignationByID(db, secretKey))
 	e.DELETE("/designations/:id", controllers.DeleteDesignationByID(db, secretKey))
@@ -71,6 +75,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Project Admin
 	e.POST("/projects", controllers.CreateProjectByAdmin(db, secretKey))
 	e.GET("/projects", controllers.GetAllProjectsByAdmin(db, secretKey))
+	e.GET("/projects/non-pagination", controllers.GetAllProjectsByAdminNonPagination(db, secretKey))
 	e.GET("/projects/:id", controllers.GetProjectByIDByAdmin(db, secretKey))
 	e.PUT("/projects/:id", controllers.UpdateProjectByIDByAdmin(db, secretKey))
 	e.DELETE("/projects/:id", controllers.DeleteProjectByIDByAdmin(db, secretKey))
@@ -184,6 +189,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Trainer
 	e.POST("/trainers", controllers.CreateTrainerByAdmin(db, secretKey))
 	e.GET("/trainers", controllers.GetAllTrainersByAdmin(db, secretKey))
+	e.GET("/trainers/non-pagination", controllers.GetAllTrainersByAdminNonPagination(db, secretKey))
 	e.GET("/trainers/:id", controllers.GetTrainerByIDByAdmin(db, secretKey))
 	e.PUT("/trainers/:id", controllers.UpdateTrainerByIDByAdmin(db, secretKey))
 	e.DELETE("/trainers/:id", controllers.DeleteTrainerByIDByAdmin(db, secretKey))
@@ -191,6 +197,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Training Skill
 	e.POST("/training_skills", controllers.CreateTrainingSkillByAdmin(db, secretKey))
 	e.GET("/training_skills", controllers.GetAllTrainingSkillsByAdmin(db, secretKey))
+	e.GET("/training_skills/non-pagination", controllers.GetAllTrainingSkillsByAdminNonPagination(db, secretKey))
 	e.GET("/training_skills/:id", controllers.GetTrainingSkillByIDByAdmin(db, secretKey))
 	e.PUT("/training_skills/:id", controllers.UpdateTrainingSkillByIDByAdmin(db, secretKey))
 	e.DELETE("/training_skills/:id", controllers.DeleteTrainingSkillByIDByAdmin(db, secretKey))
@@ -219,6 +226,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Exit Admin
 	e.POST("/exits", controllers.CreateExitStatusByAdmin(db, secretKey))
 	e.GET("/exits", controllers.GetAllExitStatusByAdmin(db, secretKey))
+	e.GET("/exits/non-pagination", controllers.GetAllExitStatusByAdminNonPagination(db, secretKey))
 	e.GET("/exits/:id", controllers.GetExitStatusByIDByAdmin(db, secretKey))
 	e.PUT("/exits/:id", controllers.UpdateExitStatusByAdmin(db, secretKey))
 	e.DELETE("/exits/:id", controllers.DeleteExitStatusByIDByAdmin(db, secretKey))
@@ -226,6 +234,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Performance Goals
 	e.POST("/goals_types", controllers.CreateGoalTypeByAdmin(db, secretKey))
 	e.GET("/goals_types", controllers.GetAllGoalTypesByAdmin(db, secretKey))
+	e.GET("/goals_types/non-pagination", controllers.GetAllGoalTypesByAdminNonPagination(db, secretKey))
 	e.GET("/goals_types/:id", controllers.GetGoalTypeByIDByAdmin(db, secretKey))
 	e.PUT("/goals_types/:id", controllers.UpdateGoalTypeByIDByAdmin(db, secretKey))
 	e.DELETE("/goals_types/:id", controllers.DeleteGoalTypeByIDByAdmin(db, secretKey))
@@ -247,6 +256,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Leave Request Type
 	e.POST("/leave_request_types", controllers.CreateLeaveRequestTypeByAdmin(db, secretKey))
 	e.GET("/leave_request_types", controllers.GetAllLeaveRequestTypesByAdmin(db, secretKey))
+	e.GET("/leave_request_types/non-pagination", controllers.GetAllLeaveRequestTypesByAdminNonPagination(db, secretKey))
 	e.GET("/leave_request_types/:id", controllers.GetLeaveRequestTypeByIDByAdmin(db, secretKey))
 	e.PUT("/leave_request_types/:id", controllers.UpdateLeaveRequestTypeByAdmin(db, secretKey))
 	e.DELETE("/leave_request_types/:id", controllers.DeleteLeaveRequestTypeByAdmin(db, secretKey))
@@ -261,6 +271,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Employee Admin
 	e.POST("/admin/employees", controllers.CreateEmployeeAccountByAdmin(db, secretKey))
 	e.GET("/admin/employees", controllers.GetAllEmployeesByAdmin(db, secretKey))
+	e.GET("/admin/employees/non-pagination", controllers.GetAllEmployeesByAdminNonPagination(db, secretKey))
 	e.GET("/admin/employees/:id", controllers.GetEmployeeByIDByAdmin(db, secretKey))
 	e.PUT("/admin/employees/:id", controllers.UpdateEmployeeAccountByAdmin(db, secretKey))
 	e.DELETE("/admin/employees/:id", controllers.DeleteEmployeeAccountByAdmin(db, secretKey))
@@ -268,6 +279,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Client Admin
 	e.POST("/admin/clients", controllers.CreateClientAccountByAdmin(db, secretKey))
 	e.GET("/admin/clients", controllers.GetAllClientsByAdmin(db, secretKey))
+	e.GET("/admin/clients/non-pagination", controllers.GetAllClientsByAdminNonPagination(db, secretKey))
 	e.GET("/admin/clients/:id", controllers.GetClientByIDByAdmin(db, secretKey))
 	e.PUT("/admin/clients/:id", controllers.UpdateClientAccountByAdmin(db, secretKey))
 	e.DELETE("/admin/clients/:id", controllers.DeleteClientAccountByAdmin(db, secretKey))
