@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/robfig/cron/v3"
 	"hrsale/config"
 	"hrsale/controllers"
@@ -32,8 +31,7 @@ func main() {
 	}
 
 	c.Start()
-	port := 8080
-	err = router.Start(fmt.Sprintf(":%d", port))
+	err = router.Start(":8080")
 	if err != nil {
 		log.Fatal(err)
 	}
