@@ -71,8 +71,15 @@ jobs:
             SMTP_USERNAME=${{ env.SMTP_USERNAME }}
             SMTP_PASSWORD=${{ env.SMTP_PASSWORD }}
             SECRET_KEY=${{ env.SECRET_KEY }}
-      
-      
+          startup_probe:
+            initial_delay_seconds: 15
+            timeout_seconds: 5
+            period_seconds: 5
+            failure_threshold: 30
+          liveness_probe:
+            timeout_seconds: 5
+            period_seconds: 10
+            failure_threshold: 3
 
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
