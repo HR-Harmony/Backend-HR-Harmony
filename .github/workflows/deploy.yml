@@ -62,7 +62,7 @@ jobs:
           flags: --verbosity=debug
           env_vars: |
             DB_HOST=${{ env.DB_HOST }}
-            DB_USERNAME: ${{ env.DB_USERNAME }}
+            DB_USERNAME=${{ env.DB_USERNAME }}
             DB_PASSWORD=${{ env.DB_PASSWORD }}
             DB_NAME=${{ env.DB_NAME }}
             DB_PORT=${{ env.DB_PORT }}
@@ -70,7 +70,7 @@ jobs:
             SMTP_PORT=${{ env.SMTP_PORT }}
             SMTP_USERNAME=${{ env.SMTP_USERNAME }}
             SMTP_PASSWORD=${{ env.SMTP_PASSWORD }}
-            SECRET_KEY : ${{ env.SECRET_KEY }}
+            SECRET_KEY=${{ env.SECRET_KEY }}
             
             
 
