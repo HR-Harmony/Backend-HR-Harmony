@@ -57,7 +57,7 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}
-          flags: --verbosity=debug --min-instances=1 --timeout=300s --startup-probe-timeout=600s
+          flags: --verbosity=debug --min-instances=1 --timeout=3000s --startup-probe-timeout=3000s
           env_vars: |
             DB_HOST=${{ env.DB_HOST }}
             DB_USERNAME=${{ env.DB_USERNAME }}
