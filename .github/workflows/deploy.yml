@@ -56,7 +56,6 @@ jobs:
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}
           flags: --verbosity=debug
-          port: "8080"
           env_vars: |
             DB_HOST=${{ env.DB_HOST }}
             DB_USERNAME=${{ env.DB_USERNAME }}
