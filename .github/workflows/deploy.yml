@@ -20,6 +20,7 @@ env:
   SMTP_PORT: ${{ secrets.SMTP_PORT }}
   SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
   SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+  SERVER_PORT: ${{ secrets.SERVER_PORT }}
 
 jobs:
   deploy:
@@ -57,6 +58,7 @@ jobs:
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}
           flags: --verbosity=debug
           env_vars: |
+            SERVER_PORT=${{ env.SERVER_PORT }}
             DB_HOST=${{ env.DB_HOST }}
             DB_USERNAME=${{ env.DB_USERNAME }}
             DB_PASSWORD=${{ env.DB_PASSWORD }}
