@@ -20,6 +20,7 @@ env:
   SMTP_PORT: ${{ secrets.SMTP_PORT }}
   SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
   SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+  PORT: 8080
 
 jobs:
   deploy:
@@ -69,6 +70,7 @@ jobs:
             SMTP_USERNAME=${{ env.SMTP_USERNAME }}
             SMTP_PASSWORD=${{ env.SMTP_PASSWORD }}
             SECRET_KEY=${{ env.SECRET_KEY }}
+            PORT=${{ env.PORT }}
 
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
