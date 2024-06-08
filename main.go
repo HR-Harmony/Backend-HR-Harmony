@@ -5,48 +5,8 @@ import (
 	"hrsale/config"
 	"hrsale/controllers"
 	"log"
-	"os"
-	"strconv"
 )
 
-func main() {
-	router := config.SetupRouter()
-	db, err := config.InitializeDatabase()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	c := cron.New()
-	_, err = c.AddFunc("59 23 * * 1-5", func() {
-		controllers.MarkAbsentEmployees(db)
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Add function to reset paid status every 25th of the month at 00:00
-	_, err = c.AddFunc("0 0 25 * *", func() {
-		controllers.ResetPaidStatus(db)
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	c.Start()
-
-	portStr := os.Getenv("PORT")
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		log.Fatalf("failed to parse PORT environment variable: %v", err)
-	}
-
-	err = router.Start(":" + strconv.Itoa(port))
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-/*
 func main() {
 	router := config.SetupRouter()
 	db, err := config.InitializeDatabase()
@@ -76,7 +36,6 @@ func main() {
 		log.Fatal(err)
 	}
 }
-*/
 
 /*
 func main() {
