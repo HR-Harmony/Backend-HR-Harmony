@@ -23,7 +23,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Add function to reset paid status every 25th of the month at 00:00
 	_, err = c.AddFunc("0 0 25 * *", func() {
 		controllers.ResetPaidStatus(db)
 	})
@@ -34,6 +33,10 @@ func main() {
 	c.Start()
 
 	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("Starting server on port: %s", port)
 	err = router.Start(":" + port)
 	if err != nil {
 		log.Fatal(err)
