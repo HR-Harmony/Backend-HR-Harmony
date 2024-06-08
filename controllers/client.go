@@ -114,6 +114,7 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		err = helper.SendClientAccountNotificationWithPlainTextPassword(employee.Email, employee.FirstName+" "+employee.LastName, employee.Username, passwordWithNoHash)
 		if err != nil {
 			log.Println("Failed to send welcome email:", err)
+			log.Println("coba cicd")
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send welcome email"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
