@@ -11,5 +11,6 @@ COPY . .
 RUN go build -o main.app .
 
 EXPOSE 8080
+ENV SERVER_PORT=8080
 
 CMD ["./main.app"]
