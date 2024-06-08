@@ -1,18 +1,18 @@
 package controllers
 
 import (
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"hrsale/helper"
 	"hrsale/models"
 )
 
-// SendOTPForPasswordReset mengirimkan OTP ke email yang terdaftar untuk reset password
+// SendOTPForPasswordReset mengirimkan OTP ke email yang terdaftar untuk reset password versi Utama
 func SendOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Bind JSON request ke struct VerifyOTPRequest
@@ -129,7 +129,8 @@ func SendOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
 }
 */
 
-// VerifyOTPForPasswordReset memverifikasi OTP yang dimasukkan oleh pengguna untuk reset password
+/*
+// VerifyOTPForPasswordReset memverifikasi OTP yang dimasukkan oleh pengguna untuk reset password V1
 func VerifyOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
 	type VerifyOTPRequest struct {
 		Email string `json:"email"`
@@ -171,8 +172,62 @@ func VerifyOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
-// ResetPasswordWithOTP melakukan reset password dengan memeriksa OTP yang dimasukkan oleh pengguna
+// VerifyOTPForPasswordReset memverifikasi OTP yang dimasukkan oleh pengguna untuk reset password V2
+func VerifyOTPForPasswordReset(db *gorm.DB) echo.HandlerFunc {
+	type VerifyOTPRequest struct {
+		Email string `json:"email"`
+		OTP   string `json:"otp"`
+	}
+
+	return func(c echo.Context) error {
+		// Bind JSON request ke struct VerifyOTPRequest
+		var req VerifyOTPRequest
+		if err := c.Bind(&req); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		email := req.Email
+		otp := req.OTP
+
+		// Cek apakah email sudah terdaftar
+		var employee models.Employee
+		result := db.Where("email = ?", email).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Email not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Ambil OTP terakhir yang diminta oleh pengguna berdasarkan ID
+		var lastRequestedOTP models.ResetPasswordOTP
+		result = db.Where("employee_id = ?", employee.ID).Order("id desc").First(&lastRequestedOTP)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid or expired OTP"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Debug log
+		log.Printf("Expected OTP: %s, Provided OTP: %s, IsUsed: %v, ExpiredAt: %v", lastRequestedOTP.OTP, otp, lastRequestedOTP.IsUsed, lastRequestedOTP.ExpiredAt)
+
+		// Cek apakah OTP sesuai dan masih berlaku
+		if lastRequestedOTP.OTP != otp || lastRequestedOTP.IsUsed || lastRequestedOTP.ExpiredAt.Before(time.Now()) {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid or expired OTP"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "OTP verified successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+// ResetPasswordWithOTP melakukan reset password dengan memeriksa OTP yang dimasukkan oleh pengguna versi 1
 func ResetPasswordWithOTP(db *gorm.DB) echo.HandlerFunc {
 	type ResetPasswordRequest struct {
 		Email              string `json:"email"`
@@ -235,6 +290,91 @@ func ResetPasswordWithOTP(db *gorm.DB) echo.HandlerFunc {
 		// Menandai OTP sebagai digunakan
 		resetPasswordOTP.IsUsed = true
 		db.Save(&resetPasswordOTP)
+
+		// Kirim notifikasi email bahwa password telah diubah
+		if err := helper.SendPasswordChangedNotification(employee.Email, employee.FullName); err != nil {
+			log.Println("Error sending password change notification email:", err) // Tambahkan log error di sini
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to send password change notification"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "Password reset successfully",
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+*/
+
+// ResetPasswordWithOTP melakukan reset password dengan memeriksa OTP yang dimasukkan oleh pengguna V2
+func ResetPasswordWithOTP(db *gorm.DB) echo.HandlerFunc {
+	type ResetPasswordRequest struct {
+		Email              string `json:"email"`
+		OTP                string `json:"otp"`
+		NewPassword        string `json:"new_password"`
+		ConfirmNewPassword string `json:"confirm_new_password"`
+	}
+
+	return func(c echo.Context) error {
+		// Bind JSON request ke struct ResetPasswordRequest
+		var req ResetPasswordRequest
+		if err := c.Bind(&req); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		email := req.Email
+		otp := req.OTP
+		newPassword := req.NewPassword
+		confirmNewPassword := req.ConfirmNewPassword
+
+		// Cek apakah email sudah terdaftar
+		var employee models.Employee
+		result := db.Where("email = ?", email).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Email not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Ambil OTP terakhir yang diminta oleh pengguna berdasarkan ID
+		var lastRequestedOTP models.ResetPasswordOTP
+		result = db.Where("employee_id = ?", employee.ID).Order("id desc").First(&lastRequestedOTP)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid or expired OTP"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Debug log
+		log.Printf("Expected OTP: %s, Provided OTP: %s, IsUsed: %v, ExpiredAt: %v", lastRequestedOTP.OTP, otp, lastRequestedOTP.IsUsed, lastRequestedOTP.ExpiredAt)
+
+		// Cek apakah OTP sesuai dan masih berlaku
+		if lastRequestedOTP.OTP != otp || lastRequestedOTP.IsUsed || lastRequestedOTP.ExpiredAt.Before(time.Now()) {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid or expired OTP"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Cek apakah password baru cocok dengan konfirmasi
+		if newPassword != confirmNewPassword {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Passwords do not match"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Hash password baru
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to hash password"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Update password di database
+		employee.Password = string(hashedPassword)
+		db.Save(&employee)
+
+		// Menandai OTP sebagai digunakan
+		lastRequestedOTP.IsUsed = true
+		db.Save(&lastRequestedOTP)
 
 		// Kirim notifikasi email bahwa password telah diubah
 		if err := helper.SendPasswordChangedNotification(employee.Email, employee.FullName); err != nil {

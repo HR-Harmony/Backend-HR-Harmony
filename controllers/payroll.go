@@ -256,6 +256,7 @@ func UpdatePaidStatusByPayrollID(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 				"pay_slip_type":  employee.PaySlipType,
 				"is_active":      employee.IsActive,
 				"paid_status":    employee.PaidStatus,
+				"final_salary":   finalSalary,
 				"created_at":     employee.CreatedAt,
 				"updated_at":     employee.UpdatedAt,
 			},
