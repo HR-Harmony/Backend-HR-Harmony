@@ -5,22 +5,21 @@ on:
     branches: ["main"]
 
 env:
-  PROJECT_ID: ${{ secrets.PROJECT_ID }}
-  GAR_LOCATION: ${{ secrets.GAR_LOCATION }}
-  GAR_REPOSITORY_NAME: ${{ secrets.GAR_REPOSITORY_NAME }}
-  SERVICE: ${{ secrets.SERVICE }}
-  REGION: ${{ secrets.REGION }}
-  SECRET_KEY: ${{ secrets.SECRET_KEY }}
-  DB_HOST: ${{ secrets.DB_HOST }}
-  DB_USERNAME: ${{ secrets.DB_USERNAME }}
-  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  DB_NAME: ${{ secrets.DB_NAME }}
-  DB_PORT: ${{ secrets.DB_PORT }}
-  SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-  SMTP_PORT: ${{ secrets.SMTP_PORT }}
-  SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-  SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-  PORT: 8080
+  PROJECT_ID: "${{ secrets.PROJECT_ID }}"
+  GAR_LOCATION: "${{ secrets.GAR_LOCATION }}"
+  GAR_REPOSITORY_NAME: "${{ secrets.GAR_REPOSITORY_NAME }}"
+  SERVICE: "${{ secrets.SERVICE }}"
+  REGION: "${{ secrets.REGION }}"
+  SECRET_KEY: "${{ secrets.SECRET_KEY }}"
+  DB_HOST: "${{ secrets.DB_HOST }}"
+  DB_USERNAME: "${{ secrets.DB_USERNAME }}"
+  DB_PASSWORD: "${{ secrets.DB_PASSWORD }}"
+  DB_NAME: "${{ secrets.DB_NAME }}"
+  DB_PORT: "${{ secrets.DB_PORT }}"
+  SMTP_SERVER: "${{ secrets.SMTP_SERVER }}"
+  SMTP_PORT: "${{ secrets.SMTP_PORT }}"
+  SMTP_USERNAME: "${{ secrets.SMTP_USERNAME }}"
+  SMTP_PASSWORD: "${{ secrets.SMTP_PASSWORD }}"
 
 jobs:
   deploy:
@@ -29,9 +28,10 @@ jobs:
       contents: "read"
       id-token: "write"
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Google Auth
         id: auth
@@ -39,25 +39,22 @@ jobs:
         with:
           credentials_json: "${{ secrets.SERVICE_ACCOUNT }}"
 
-      # Authenticate Docker to Google Cloud Artifact Registry
       - name: Configure Docker to use gcloud
-        run: |-
-          gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev --quiet
+        run: |
+          gcloud auth configure-docker "${{ env.GAR_LOCATION }}-docker.pkg.dev" --quiet
 
       - name: Build and Push Container
-        run: |-
+        run: |
           docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}" ./
           docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}"
-
-      # END - Docker auth and build
 
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: ${{ env.SERVICE }}
-          region: ${{ env.REGION }}
-          image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}
+          service: "${{ env.SERVICE }}"
+          region: "${{ env.REGION }}"
+          image: "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}"
           flags: --verbosity=debug
           env_vars: |
             DB_HOST=${{ env.DB_HOST }}
@@ -70,7 +67,6 @@ jobs:
             SMTP_USERNAME=${{ env.SMTP_USERNAME }}
             SMTP_PASSWORD=${{ env.SMTP_PASSWORD }}
             SECRET_KEY=${{ env.SECRET_KEY }}
-            PORT=${{ env.PORT }}
 
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
