@@ -1,6 +1,5 @@
 package config
 
-/*
 import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres" // Change the driver to PostgreSQL
@@ -74,94 +73,6 @@ func InitializeDatabase() (*gorm.DB, error) {
 	db.AutoMigrate(&models.KPAIndicator{})
 	db.AutoMigrate(&models.ResetPasswordOTP{})
 	db.AutoMigrate(&models.AdminResetPasswordOTP{})
-
-	return db, nil
-}
-*/
-
-import (
-	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres" // Change the driver to PostgreSQL
-	"gorm.io/gorm"
-	"hrsale/models"
-	"os"
-	"strconv"
-)
-
-type DatabaseConfig struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-	DBName   string
-}
-
-func InitializeDatabase() (*gorm.DB, error) {
-	godotenv.Load(".env")
-
-	dbConfig := DatabaseConfig{
-		Host:     os.Getenv("DB_HOST"),
-		Port:     func() int { port, _ := strconv.Atoi(os.Getenv("DB_PORT")); return port }(),
-		Username: os.Getenv("DB_USERNAME"),
-		Password: os.Getenv("DB_PASSWORD"),
-		DBName:   os.Getenv("DB_NAME"),
-	}
-
-	dsn := "host=" + dbConfig.Host +
-		" user=" + dbConfig.Username +
-		" password=" + dbConfig.Password +
-		" dbname=" + dbConfig.DBName +
-		" port=" + strconv.Itoa(dbConfig.Port) +
-		" sslmode=disable TimeZone=UTC"
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.AutoMigrate(
-		&models.Employee{},
-		&models.Shift{},
-		&models.Role{},
-		&models.Admin{},
-		&models.Department{},
-		&models.Exit{},
-		&models.ExitEmployee{},
-		&models.Designation{},
-		&models.Policy{},
-		&models.Announcement{},
-		&models.Project{},
-		&models.Task{},
-		&models.Case{},
-		&models.Disciplinary{},
-		&models.Helpdesk{},
-		&models.PayrollInfo{},
-		&models.GoalType{},
-		&models.Goal{},
-		&models.Attendance{},
-		&models.Finance{},
-		&models.DepositCategory{},
-		&models.AddDeposit{},
-		&models.ExpenseCategory{},
-		&models.AddExpense{},
-		&models.NewJob{},
-		&models.LeaveRequestType{},
-		&models.LeaveRequest{},
-		&models.OvertimeRequest{},
-		&models.Trainer{},
-		&models.TrainingSkill{},
-		&models.Training{},
-		&models.KPIIndicator{},
-		&models.AdvanceSalary{},
-		&models.RequestLoan{},
-		&models.Note{},
-		&models.KPAIndicator{},
-		&models.ResetPasswordOTP{},
-		&models.AdminResetPasswordOTP{},
-	)
-	if err != nil {
-		return nil, err
-	}
 
 	return db, nil
 }
