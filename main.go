@@ -5,6 +5,7 @@ import (
 	"hrsale/config"
 	"hrsale/controllers"
 	"log"
+	"os"
 )
 
 func main() {
@@ -31,7 +32,12 @@ func main() {
 	}
 
 	c.Start()
-	err = router.Start(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	err = router.Start(":" + port)
 	if err != nil {
 		log.Fatal(err)
 	}
