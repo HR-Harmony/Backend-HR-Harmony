@@ -59,7 +59,7 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}
-          flags: --verbosity=debug
+          flags: --verbosity=debug --timeout=300
           env_vars: |
             DB_HOST=${{ env.DB_HOST }}
             DB_USERNAME=${{ env.DB_USERNAME }}
@@ -71,8 +71,8 @@ jobs:
             SMTP_USERNAME=${{ env.SMTP_USERNAME }}
             SMTP_PASSWORD=${{ env.SMTP_PASSWORD }}
             SECRET_KEY=${{ env.SECRET_KEY }}
-            
-            
+      
+      
 
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}

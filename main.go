@@ -31,7 +31,7 @@ func main() {
 	}
 
 	c.Start()
-	err = router.Start("0.0.0.0:8080")
+	err = router.Start(":8080")
 	if err != nil {
 		log.Fatal(err)
 	}
