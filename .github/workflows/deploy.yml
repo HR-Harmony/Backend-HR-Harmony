@@ -55,7 +55,7 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}
-          flags: --verbosity=debug
+          flags: --verbosity=debug --startup-probe-timeout=600
 
       - name: Configure Cloud Run Environment Variables
         run: |
