@@ -392,6 +392,137 @@ func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		var updatedTask struct {
+			Title         string `json:"title"`
+			StartDate     string `json:"start_date"`
+			EndDate       string `json:"end_date"`
+			EstimatedHour int    `json:"estimated_hour"`
+			ProjectID     uint   `json:"project_id"`
+			Summary       string `json:"summary"`
+			Description   string `json:"description"`
+			Status        string `json:"status"`
+			ProgressBar   *int   `json:"progress_bar"`
+		}
+
+		if err := c.Bind(&updatedTask); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if updatedTask.Title == "" && updatedTask.StartDate == "" && updatedTask.EndDate == "" && updatedTask.EstimatedHour == 0 &&
+			updatedTask.ProjectID == 0 && updatedTask.Summary == "" && updatedTask.Description == "" && updatedTask.ProgressBar == nil && updatedTask.Status == "" {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "At least one field must be updated"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if updatedTask.Title != "" {
+			existingTask.Title = updatedTask.Title
+		}
+		if updatedTask.StartDate != "" {
+			startDate, err := time.Parse("2006-01-02", updatedTask.StartDate)
+			if err != nil {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid StartDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			existingTask.StartDate = startDate.Format("2006-01-02")
+		}
+		if updatedTask.EndDate != "" {
+			endDate, err := time.Parse("2006-01-02", updatedTask.EndDate)
+			if err != nil {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid EndDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			existingTask.EndDate = endDate.Format("2006-01-02")
+		}
+		if updatedTask.EstimatedHour != 0 {
+			existingTask.EstimatedHour = updatedTask.EstimatedHour
+		}
+		if updatedTask.ProjectID != 0 {
+			existingTask.ProjectID = updatedTask.ProjectID
+			var existingProject models.Project
+			result := db.First(&existingProject, updatedTask.ProjectID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Project not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			existingTask.ProjectName = existingProject.Title
+		}
+		if updatedTask.Summary != "" {
+			existingTask.Summary = updatedTask.Summary
+		}
+		if updatedTask.Description != "" {
+			existingTask.Description = updatedTask.Description
+		}
+
+		if updatedTask.Status != "" {
+			existingTask.Status = updatedTask.Status
+		}
+
+		if updatedTask.ProgressBar != nil {
+			existingTask.ProgressBar = *updatedTask.ProgressBar
+		}
+
+		db.Save(&existingTask)
+
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "Task updated successfully",
+			Task:    &existingTask,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		taskIDStr := c.Param("id")
+		taskID, err := strconv.ParseUint(taskIDStr, 10, 32)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid task ID format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var existingTask models.Task
+		result = db.Preload("Notes").First(&existingTask, uint(taskID))
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
 		var updatedTask models.Task
 		if err := c.Bind(&updatedTask); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
@@ -462,6 +593,7 @@ func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func DeleteTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
