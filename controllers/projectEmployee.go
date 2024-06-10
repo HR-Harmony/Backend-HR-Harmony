@@ -230,6 +230,143 @@ func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		var updatedProject struct {
+			Title         string `json:"title"`
+			EmployeeID    uint   `json:"employee_id"`
+			EstimatedHour int    `json:"estimated_hour"`
+			Priority      string `json:"priority"`
+			StartDate     string `json:"start_date"`
+			EndDate       string `json:"end_date"`
+			Summary       string `json:"summary"`
+			DepartmentID  uint   `json:"department_id"`
+			Description   string `json:"description"`
+			Status        string `json:"status"`
+			ProjectBar    *int   `json:"project_bar"`
+		}
+
+		if err := c.Bind(&updatedProject); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if updatedProject.Title != "" {
+			existingProject.Title = updatedProject.Title
+		}
+
+		if updatedProject.EmployeeID != 0 {
+			var clientEmployee models.Employee
+			result := db.Where("id = ? AND is_client = ?", updatedProject.EmployeeID, true).First(&clientEmployee)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid client employee ID or employee is not a client"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			existingProject.EmployeeID = updatedProject.EmployeeID
+			existingProject.Username = clientEmployee.Username
+			existingProject.ClientName = clientEmployee.FirstName + " " + clientEmployee.LastName
+		}
+
+		if updatedProject.EstimatedHour != 0 {
+			existingProject.EstimatedHour = updatedProject.EstimatedHour
+		}
+
+		if updatedProject.Priority != "" {
+			existingProject.Priority = updatedProject.Priority
+		}
+
+		if updatedProject.StartDate != "" {
+			existingProject.StartDate = updatedProject.StartDate
+		}
+
+		if updatedProject.EndDate != "" {
+			existingProject.EndDate = updatedProject.EndDate
+		}
+
+		if updatedProject.Summary != "" {
+			existingProject.Summary = updatedProject.Summary
+		}
+
+		if updatedProject.DepartmentID != 0 {
+			existingProject.DepartmentID = updatedProject.DepartmentID
+
+			var department models.Department
+			result := db.First(&department, updatedProject.DepartmentID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Department not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			existingProject.DepartmentName = department.DepartmentName
+		}
+
+		if updatedProject.Description != "" {
+			existingProject.Description = updatedProject.Description
+		}
+
+		if updatedProject.Status != "" {
+			existingProject.Status = updatedProject.Status
+		}
+
+		if updatedProject.ProjectBar != nil {
+			existingProject.ProjectBar = *updatedProject.ProjectBar
+		}
+
+		currentTime := time.Now()
+		existingProject.UpdatedAt = currentTime
+
+		db.Save(&existingProject)
+
+		successResponse := helper.Response{
+			Code:    http.StatusOK,
+			Error:   false,
+			Message: "Project updated successfully",
+			Project: &existingProject,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid project ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var existingProject models.Project
+		result = db.First(&existingProject, projectID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Project not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
 		var updatedProject models.Project
 		if err := c.Bind(&updatedProject); err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
@@ -310,6 +447,7 @@ func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func DeleteProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
