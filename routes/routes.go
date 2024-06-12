@@ -205,6 +205,7 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Training
 	e.POST("/trainings", controllers.CreateTrainingByAdmin(db, secretKey))
 	e.GET("/trainings", controllers.GetAllTrainingsByAdmin(db, secretKey))
+	e.GET("/trainings/non-pagination", controllers.GetAllTrainingsByAdminNonPagination(db, secretKey))
 	e.GET("/trainings/:id", controllers.GetTrainingByIDByAdmin(db, secretKey))
 	e.PUT("/trainings/:id", controllers.UpdateTrainingByIDByAdmin(db, secretKey))
 	e.DELETE("/trainings/:id", controllers.DeleteTrainingByIDByAdmin(db, secretKey))
