@@ -299,6 +299,8 @@ func SetupRoutes(e *echo.Echo, db *gorm.DB) {
 	//Employee Login
 	e.POST("/employee/signin", controllers.EmployeeLogin(db, secretKey))
 	e.GET("/profile", controllers.EmployeeProfile(db, secretKey))
+	e.PUT("/profile/edit", controllers.UpdateEmployeeProfile(db, secretKey))
+	e.PUT("/profile/change-password", controllers.UpdateEmployeePassword(db, secretKey))
 
 	//Employee Attandance
 	// Tambahkan pada main atau tempat lainnya
