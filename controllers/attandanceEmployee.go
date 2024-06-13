@@ -109,6 +109,93 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Load Jakarta timezone
+		loc, err := time.LoadLocation("Asia/Jakarta")
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to load timezone"})
+		}
+
+		today := time.Now().In(loc).Format("2006-01-02")
+		var existingAttendance models.Attendance
+		result = db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
+		if result.Error == nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee has already checked in for today"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		employee.FullName = employee.FirstName + " " + employee.LastName
+
+		currentTime := time.Now().In(loc)
+		shiftInTime, _, err := getShiftForDay(db, employee.ShiftID, currentTime.Weekday().String())
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch shift data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		lateDuration := calculateLate(shiftInTime, currentTime.Format("15:04:05"))
+		lateMinutes := calculateLateMinutes(lateDuration)
+
+		attendance := models.Attendance{
+			EmployeeID:       employee.ID,
+			Username:         employee.Username,
+			FullNameEmployee: employee.FirstName + " " + employee.LastName,
+			AttendanceDate:   today,
+			InTime:           currentTime.Format("15:04:05"),
+			Status:           "Present",
+			Late:             lateDuration,
+			LateMinutes:      lateMinutes,
+			CreatedAt:        &currentTime,
+		}
+		db.Create(&attendance)
+
+		err = helper.SendAttendanceCheckinNotification(employee.Email, employee.FirstName+" "+employee.LastName, attendance.InTime)
+		if err != nil {
+			// Handle error
+			fmt.Println("Failed to send check-in notification:", err)
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Employee check-in successful",
+			"time":    attendance.InTime,
+			"late":    attendance.Late,
+		})
+	}
+}
+
+/*
+Employee checkin yang waktunya belum memakai format waktu indonesia
+
+func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employee models.Employee
+		result := db.Where("username = ?", username).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch employee data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
 		today := time.Now().Format("2006-01-02")
 		var existingAttendance models.Attendance
 		result = db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
@@ -157,6 +244,7 @@ func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
+*/
 
 /*
 func EmployeeCheckIn(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
@@ -255,6 +343,99 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Load Jakarta timezone
+		loc, err := time.LoadLocation("Asia/Jakarta")
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to load timezone"})
+		}
+
+		today := time.Now().In(loc).Format("2006-01-02")
+		var existingAttendance models.Attendance
+		result = db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee has not checked in for today"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if existingAttendance.Status == "Absent" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee is absent for today"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if existingAttendance.OutTime != "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee has already checked out for today"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		currentTime := time.Now().In(loc)
+		existingAttendance.OutTime = currentTime.Format("15:04:05")
+		inTime, _ := time.Parse("15:04:05", existingAttendance.InTime)
+		outTime, _ := time.Parse("15:04:05", existingAttendance.OutTime)
+		totalWork := outTime.Sub(inTime).Round(time.Minute)
+		existingAttendance.TotalWork = totalWork.String()
+
+		_, shiftOutTime, err := getShiftForDay(db, employee.ShiftID, currentTime.Weekday().String())
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch shift data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		earlyLeavingDuration := calculateEarlyLeaving(shiftOutTime, currentTime.Format("15:04:05"))
+		existingAttendance.EarlyLeaving = earlyLeavingDuration
+		earlyLeavingMinutes := calculateEarlyLeavingMinutes(earlyLeavingDuration)
+		existingAttendance.EarlyLeavingMinutes = earlyLeavingMinutes
+
+		db.Save(&existingAttendance)
+
+		err = helper.SendAttendanceCheckoutNotification(employee.Email, employee.FirstName+" "+employee.LastName, existingAttendance.OutTime, existingAttendance.TotalWork)
+		if err != nil {
+			// Handle error
+			fmt.Println("Failed to send checkout notification:", err)
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":          http.StatusOK,
+			"error":         false,
+			"message":       "Employee check-out successful",
+			"time":          existingAttendance.OutTime,
+			"total_work":    existingAttendance.TotalWork,
+			"early_leaving": existingAttendance.EarlyLeaving,
+		})
+	}
+}
+
+/*
+Checkout yang belum memakai waktu jakarta
+
+func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employee models.Employee
+		result := db.Where("username = ?", username).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch employee data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
 		today := time.Now().Format("2006-01-02")
 		var existingAttendance models.Attendance
 		result = db.Where("employee_id = ? AND attendance_date = ?", employee.ID, today).First(&existingAttendance)
@@ -309,6 +490,7 @@ func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
+*/
 
 /*
 func EmployeeCheckOut(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
