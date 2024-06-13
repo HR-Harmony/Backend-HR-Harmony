@@ -11,6 +11,17 @@ import (
 	"time"
 )
 
+/*
+var (
+	cachedData *cache.Cache
+)
+
+// Initialize cache
+func init() {
+	cachedData = cache.New(5*time.Minute, 10*time.Minute)
+}
+*/
+
 type DashboardSummary struct {
 	ProjectStatus     map[string]int           `json:"project_status"`
 	Departments       map[string]int           `json:"departments"`
@@ -59,6 +70,13 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
+
+		/*
+			cached, found := cachedData.Get("dashboardSummary")
+			if found {
+				return c.JSON(http.StatusOK, cached)
+			}
+		*/
 
 		var projectStatusCounts []struct {
 			Status string
@@ -195,6 +213,11 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			TaskSummary:       taskSummaries,
 			PayrollSummary:    payrollSummary,
 		}
+
+		/*
+			// Store data in cache
+			cachedData.Set("dashboardSummary", dashboardSummary, cache.DefaultExpiration)
+		*/
 
 		successResponse := map[string]interface{}{
 			"code":      http.StatusOK,
