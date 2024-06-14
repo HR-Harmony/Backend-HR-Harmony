@@ -213,7 +213,7 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 		// Store data in cache
 		cachedData.Set("dashboardSummary", dashboardSummary, cache.DefaultExpiration)
-		
+
 		successResponse := map[string]interface{}{
 			"code":      http.StatusOK,
 			"error":     false,
