@@ -26,7 +26,7 @@ func main() {
 	c := cron.New(cron.WithLocation(loc))
 
 	// Add cron jobs
-	_, err = c.AddFunc("45 09 * * 1-5", func() {
+	_, err = c.AddFunc("59 23 * * 1-5", func() {
 		controllers.MarkAbsentEmployees(db)
 	})
 	if err != nil {

@@ -213,7 +213,7 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			TaskSummary:       taskSummaries,
 			PayrollSummary:    payrollSummary,
 		}
-		
+
 		/*
 			// Store data in cache
 			cachedData.Set("dashboardSummary", dashboardSummary, cache.DefaultExpiration)
