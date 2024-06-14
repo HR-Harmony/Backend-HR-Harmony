@@ -824,6 +824,7 @@ func UpdateRequestLoanByIDByEmployee(db *gorm.DB, secretKey []byte) echo.Handler
 			requestLoan.Amount = updatedData.Amount
 			requestLoan.Emi = updatedData.Amount
 			requestLoan.MonthlyInstallmentAmt = updatedData.Amount
+			requestLoan.Remaining = updatedData.Remaining
 		}
 		if updatedData.OneTimeDeduct != "" {
 			requestLoan.OneTimeDeduct = updatedData.OneTimeDeduct
