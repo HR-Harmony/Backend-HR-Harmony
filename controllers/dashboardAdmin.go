@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 	"hrsale/helper"
 	"hrsale/middleware"
@@ -12,6 +11,7 @@ import (
 	"time"
 )
 
+/*
 var (
 	cachedData *cache.Cache
 )
@@ -20,6 +20,7 @@ var (
 func init() {
 	cachedData = cache.New(5*time.Minute, 10*time.Minute)
 }
+*/
 
 type DashboardSummary struct {
 	ProjectStatus     map[string]int           `json:"project_status"`
@@ -70,10 +71,12 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusForbidden, errorResponse)
 		}
 
-		cached, found := cachedData.Get("dashboardSummary")
-		if found {
-			return c.JSON(http.StatusOK, cached)
-		}
+		/*
+			cached, found := cachedData.Get("dashboardSummary")
+			if found {
+				return c.JSON(http.StatusOK, cached)
+			}
+		*/
 
 		var projectStatusCounts []struct {
 			Status string
@@ -211,8 +214,10 @@ func GetDashboardSummaryForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			PayrollSummary:    payrollSummary,
 		}
 
-		// Store data in cache
-		cachedData.Set("dashboardSummary", dashboardSummary, cache.DefaultExpiration)
+		/*
+			// Store data in cache
+			cachedData.Set("dashboardSummary", dashboardSummary, cache.DefaultExpiration)
+		*/
 
 		successResponse := map[string]interface{}{
 			"code":      http.StatusOK,
