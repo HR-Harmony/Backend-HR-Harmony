@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 	"hrsale/helper"
 	"hrsale/middleware"
@@ -38,7 +39,6 @@ type TrainingSummaryItem struct {
 	TotalTrainings float64 `json:"total_training"`
 }
 
-/*
 var (
 	employeeCache *cache.Cache
 )
@@ -47,7 +47,6 @@ var (
 func init() {
 	employeeCache = cache.New(5*time.Minute, 10*time.Minute)
 }
-*/
 
 func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -78,14 +77,12 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		/*
-			// Check cache
-			cacheKey := fmt.Sprintf("employeeDashboardSummary-%d", employee.ID)
-			cached, found := employeeCache.Get(cacheKey)
-			if found {
-				return c.JSON(http.StatusOK, cached)
-			}
-		*/
+		// Check cache
+		cacheKey := fmt.Sprintf("employeeDashboardSummary-%d", employee.ID)
+		cached, found := employeeCache.Get(cacheKey)
+		if found {
+			return c.JSON(http.StatusOK, cached)
+		}
 
 		var totalOvertime int64
 		db.Model(&models.OvertimeRequest{}).
@@ -191,10 +188,8 @@ func GetDashboardSummaryForEmployee(db *gorm.DB, secretKey []byte) echo.HandlerF
 			PayrollSummary:   payrollSummary,
 			TrainingSummary:  trainingSummary,
 		}
-
-		/*
-			employeeCache.Set(cacheKey, response, cache.DefaultExpiration)
-		*/
+		
+		employeeCache.Set(cacheKey, response, cache.DefaultExpiration)
 
 		return c.JSON(http.StatusOK, response)
 	}
