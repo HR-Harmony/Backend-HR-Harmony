@@ -158,7 +158,7 @@ func GetAllOvertimeRequestsByEmployee(db *gorm.DB, secretKey []byte) echo.Handle
 
 		// Retrieve overtime requests for the employee with pagination
 		var overtimeRequests []models.OvertimeRequest
-		result = query.Offset(offset).Limit(perPage).Find(&overtimeRequests).Order("id DESC")
+		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&overtimeRequests)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch overtime requests"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)

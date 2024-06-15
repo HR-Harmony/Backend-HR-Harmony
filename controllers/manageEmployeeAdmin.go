@@ -512,7 +512,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var employees []models.Employee
-		query := db.Where("is_client = ? AND is_exit = ?", false, false).Offset(offset).Limit(perPage).Order("id DESC")
+		query := db.Where("is_client = ? AND is_exit = ?", false, false).Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
@@ -1236,7 +1236,7 @@ func GetAllExitEmployees(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var exitEmployees []models.ExitEmployee
-		query := db.Offset(offset).Limit(perPage).Order("id DESC")
+		query := db.Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"

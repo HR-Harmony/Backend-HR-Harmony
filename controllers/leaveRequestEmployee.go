@@ -168,7 +168,7 @@ func GetAllLeaveRequestsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFu
 
 		// Retrieve leave requests for the employee with pagination
 		var leaveRequests []models.LeaveRequest
-		result = query.Offset(offset).Limit(perPage).Find(&leaveRequests).Order("id DESC")
+		result = db.Order("id DESC").Offset(offset).Limit(perPage).Find(&leaveRequests)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch leave requests"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
