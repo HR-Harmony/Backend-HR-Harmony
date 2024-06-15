@@ -154,7 +154,7 @@ func GetAllProjectsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		offset := (page - 1) * perPage
 
 		var projects []models.Project
-		db.Offset(offset).Limit(perPage).Find(&projects)
+		db.Offset(offset).Limit(perPage).Find(&projects).Order("id DESC")
 
 		var totalCount int64
 		db.Model(&models.Project{}).Count(&totalCount)

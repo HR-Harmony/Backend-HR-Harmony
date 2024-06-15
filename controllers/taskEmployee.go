@@ -231,7 +231,7 @@ func GetAllTasksByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var tasks []models.Task
-		result = db.Preload("Notes").Find(&tasks)
+		result = db.Preload("Notes").Find(&tasks).Order("id DESC")
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)

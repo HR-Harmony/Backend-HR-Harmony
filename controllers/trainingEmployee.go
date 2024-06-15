@@ -72,7 +72,7 @@ func GetTrainingByEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Retrieve trainings for the employee with pagination
 		var trainings []models.Training
-		result = query.Offset(offset).Limit(perPage).Find(&trainings)
+		result = query.Offset(offset).Limit(perPage).Find(&trainings).Order("id DESC")
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch training data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
