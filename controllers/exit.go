@@ -128,7 +128,7 @@ func GetAllExitStatusByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		var exitStatuses []models.Exit
 		var totalCount int64
 		db.Model(&models.Exit{}).Count(&totalCount)
-		db.Offset(offset).Limit(perPage).Find(&exitStatuses)
+		db.Offset(offset).Limit(perPage).Find(&exitStatuses).Order("id DESC")
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,

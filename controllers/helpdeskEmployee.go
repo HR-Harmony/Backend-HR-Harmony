@@ -121,7 +121,7 @@ func GetAllHelpdeskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var helpdeskList []models.Helpdesk
-		db.Where("employee_id = ?", employee.ID).Find(&helpdeskList)
+		db.Where("employee_id = ?", employee.ID).Find(&helpdeskList).Order("id DESC")
 
 		successResponse := map[string]interface{}{
 			"code":     http.StatusOK,

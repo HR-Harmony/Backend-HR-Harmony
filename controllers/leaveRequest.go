@@ -120,7 +120,7 @@ func GetAllLeaveRequestTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 		offset := (page - 1) * perPage
 
 		var leaveRequestTypes []models.LeaveRequestType
-		db.Model(&models.LeaveRequestType{}).Offset(offset).Limit(perPage).Find(&leaveRequestTypes)
+		db.Model(&models.LeaveRequestType{}).Offset(offset).Limit(perPage).Find(&leaveRequestTypes).Order("id DESC")
 
 		searching := c.QueryParam("searching")
 		if searching != "" {
@@ -509,7 +509,7 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 				helper.ParseStringToInt(searching),
 			)
 		}
-		query.Offset(offset).Limit(perPage).Find(&leaveRequests)
+		query.Offset(offset).Limit(perPage).Find(&leaveRequests).Order("id DESC")
 
 		var totalCount int64
 		db.Model(&models.LeaveRequest{}).Count(&totalCount)
