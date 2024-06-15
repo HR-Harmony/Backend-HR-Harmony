@@ -262,7 +262,7 @@ func GetAllTasksByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		offset := (page - 1) * perPage
 
 		var tasks []models.Task
-		result = db.Preload("Notes").Offset(offset).Limit(perPage).Find(&tasks).Order("id DESC")
+		result = db.Preload("Notes").Order("id DESC").Offset(offset).Limit(perPage).Find(&tasks)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)

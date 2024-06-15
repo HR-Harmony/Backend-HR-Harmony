@@ -131,7 +131,7 @@ func GetAllRolesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var roles []models.Role
-		query := db.Offset(offset).Limit(perPage).Order("id DESC")
+		query := db.Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"

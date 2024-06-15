@@ -139,7 +139,7 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		offset := (page - 1) * perPage
 
 		var newJobs []models.NewJob
-		db.Offset(offset).Limit(perPage).Find(&newJobs).Order("id DESC")
+		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&newJobs)
 
 		var totalCount int64
 		db.Model(&models.NewJob{}).Count(&totalCount)

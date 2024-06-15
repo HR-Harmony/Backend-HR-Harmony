@@ -154,7 +154,7 @@ func GetAllDisciplinaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		var disciplinaries []models.Disciplinary
 		var totalCount int64
 		db.Model(&models.Disciplinary{}).Count(&totalCount)
-		db.Offset(offset).Limit(perPage).Find(&disciplinaries).Order("id DESC")
+		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&disciplinaries)
 
 		successResponse := map[string]interface{}{
 			"code":           http.StatusOK,

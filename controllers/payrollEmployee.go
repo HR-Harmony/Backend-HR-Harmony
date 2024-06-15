@@ -74,7 +74,7 @@ func GetPayrollInfoByEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		// Retrieve payroll info data for the employee with pagination
 		var payrollInfos []models.PayrollInfo
-		result = query.Offset(offset).Limit(perPage).Find(&payrollInfos).Order("id DESC")
+		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&payrollInfos)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch payroll info data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -672,7 +672,7 @@ func GetAllRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 		// Retrieve request loans for the employee with pagination
 		var requestLoans []models.RequestLoan
-		result = query.Offset(offset).Limit(perPage).Find(&requestLoans).Order("id DESC")
+		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch request loans"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)

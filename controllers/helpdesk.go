@@ -152,7 +152,7 @@ func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		var helpdesks []models.Helpdesk
 		var totalCount int64
 		db.Model(&models.Helpdesk{}).Count(&totalCount)
-		db.Offset(offset).Limit(perPage).Find(&helpdesks).Order("id DESC")
+		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&helpdesks)
 
 		successResponse := map[string]interface{}{
 			"code":      http.StatusOK,

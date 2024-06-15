@@ -294,7 +294,7 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var attendance []models.Attendance
-		query.Offset(offset).Limit(perPage).Find(&attendance).Order("id DESC")
+		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&attendance)
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
@@ -946,7 +946,7 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		query.Count(&totalCount)
 
 		var overtime []models.OvertimeRequest
-		query.Offset(offset).Limit(perPage).Find(&overtime).Order("id DESC")
+		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&overtime)
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
