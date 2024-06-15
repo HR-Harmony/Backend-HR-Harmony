@@ -121,7 +121,7 @@ func GetAllCasesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		var cases []models.Case
 		var totalCount int64
 		db.Model(&models.Case{}).Count(&totalCount)
-		db.Offset(offset).Limit(perPage).Find(&cases).Order("id DESC")
+		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&cases)
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
