@@ -129,7 +129,7 @@ func GetAllShiftsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var shifts []models.Shift
-		query := db.Offset(offset).Limit(perPage)
+		query := db.Offset(offset).Limit(perPage).Order("id DESC")
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"

@@ -124,7 +124,7 @@ func GetAllProjectsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var projects []models.Project
-		if err := db.Find(&projects).Error; err != nil {
+		if err := db.Find(&projects).Order("id DESC").Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch projects"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}

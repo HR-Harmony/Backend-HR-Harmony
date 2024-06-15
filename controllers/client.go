@@ -213,7 +213,7 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			IsActive      bool   `json:"is_active"`
 		}
 		if err := query.Select("id", "first_name", "last_name", "full_name", "contact_number", "gender", "email", "username", "country", "is_active").
-			Offset(offset).Limit(perPage).Find(&clientEmployees).Error; err != nil {
+			Offset(offset).Limit(perPage).Find(&clientEmployees).Order("id DESC").Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching client data"})
 		}
 

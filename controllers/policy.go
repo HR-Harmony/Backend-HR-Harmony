@@ -125,7 +125,7 @@ func GetAllPoliciesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var policies []models.Policy
-		query := db.Offset(offset).Limit(perPage)
+		query := db.Offset(offset).Limit(perPage).Order("id DESC")
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"

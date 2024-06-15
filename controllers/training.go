@@ -123,7 +123,7 @@ func GetAllTrainersByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				"%"+strings.ToLower(searching)+"%",
 			)
 		}
-		query.Offset(offset).Limit(perPage).Find(&trainers)
+		query.Offset(offset).Limit(perPage).Find(&trainers).Order("id DESC")
 
 		var totalCount int64
 		db.Model(&models.Trainer{}).Count(&totalCount)
@@ -452,7 +452,7 @@ func GetAllTrainingSkillsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		if searching != "" {
 			query = query.Where("LOWER(training_skill) LIKE ?", "%"+searching+"%")
 		}
-		query.Offset(offset).Limit(perPage).Find(&trainingSkills)
+		query.Offset(offset).Limit(perPage).Find(&trainingSkills).Order("id DESC")
 
 		var totalCount int64
 		db.Model(&models.TrainingSkill{}).Count(&totalCount)
@@ -797,7 +797,7 @@ func GetAllTrainingsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				searching,
 			)
 		}
-		query.Offset(offset).Limit(perPage).Find(&trainings)
+		query.Offset(offset).Limit(perPage).Find(&trainings).Order("id DESC")
 
 		var totalCount int64
 		db.Model(&models.Training{}).Count(&totalCount)

@@ -129,7 +129,7 @@ func GetAllGoalTypesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var goalTypes []models.GoalType
-		if err := query.Offset(offset).Limit(perPage).Find(&goalTypes).Error; err != nil {
+		if err := query.Offset(offset).Limit(perPage).Find(&goalTypes).Order("id DESC").Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching goal types"})
 		}
 
@@ -484,7 +484,7 @@ func GetAllGoalsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var goals []models.Goal
-		if err := query.Offset(offset).Limit(perPage).Find(&goals).Error; err != nil {
+		if err := query.Offset(offset).Limit(perPage).Find(&goals).Order("id DESC").Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching goals"})
 		}
 
@@ -917,7 +917,7 @@ func GetAllKPIIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		query.Count(&totalCount)
 
 		var kpiIndicators []models.KPIIndicator
-		if err := query.Offset(offset).Limit(perPage).Find(&kpiIndicators).Error; err != nil {
+		if err := query.Offset(offset).Limit(perPage).Find(&kpiIndicators).Order("id DESC").Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching KPI indicators"})
 		}
 
@@ -1287,7 +1287,7 @@ func GetAllKPAIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		query.Count(&totalCount)
 
 		var kpaIndicators []models.KPAIndicator
-		if err := query.Offset(offset).Limit(perPage).Find(&kpaIndicators).Error; err != nil {
+		if err := query.Offset(offset).Limit(perPage).Find(&kpaIndicators).Order("id DESC").Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching KPA indicators"})
 		}
 

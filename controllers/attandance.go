@@ -946,7 +946,7 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		query.Count(&totalCount)
 
 		var overtime []models.OvertimeRequest
-		query.Offset(offset).Limit(perPage).Find(&overtime)
+		query.Offset(offset).Limit(perPage).Find(&overtime).Order("id DESC")
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,

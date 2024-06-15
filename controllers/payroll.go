@@ -68,7 +68,7 @@ func GetAllEmployeesPayrollInfo(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 
 		var employees []models.Employee
-		result = query.Offset(offset).Limit(perPage).Find(&employees)
+		result = query.Offset(offset).Limit(perPage).Find(&employees).Order("id DESC")
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve employees"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -692,7 +692,7 @@ func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var payrollInfoList []models.PayrollInfo
-		if err := query.Offset(offset).Limit(perPage).Find(&payrollInfoList).Error; err != nil {
+		if err := query.Offset(offset).Limit(perPage).Find(&payrollInfoList).Order("id DESC").Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching payroll information"})
 		}
 
@@ -858,7 +858,7 @@ func GetAllAdvanceSalariesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		query.Count(&totalCount)
 
 		var advanceSalaries []models.AdvanceSalary
-		if err := query.Offset(offset).Limit(perPage).Find(&advanceSalaries).Error; err != nil {
+		if err := query.Offset(offset).Limit(perPage).Find(&advanceSalaries).Order("id DESC").Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching advance salaries"})
 		}
 
@@ -1243,7 +1243,7 @@ func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var requestLoans []models.RequestLoan
-		if err := query.Offset(offset).Limit(perPage).Find(&requestLoans).Error; err != nil {
+		if err := query.Offset(offset).Limit(perPage).Find(&requestLoans).Order("id DESC").Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching request loans"})
 		}
 
