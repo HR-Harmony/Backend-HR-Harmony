@@ -294,7 +294,7 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var attendance []models.Attendance
-		query.Offset(offset).Limit(perPage).Find(&attendance)
+		query.Offset(offset).Limit(perPage).Find(&attendance).Order("id DESC")
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
@@ -1355,9 +1355,9 @@ func MarkAbsentEmployees(db *gorm.DB) {
 				Username:         employee.Username,
 				FullNameEmployee: employee.FirstName + " " + employee.LastName,
 				AttendanceDate:   today,
-				InTime:           "-",
-				OutTime:          "-",
-				TotalWork:        "-",
+				InTime:           "",
+				OutTime:          "",
+				TotalWork:        "",
 				Status:           "Absent",
 				LateMinutes:      lateMinutes,
 				CreatedAt:        &currentTime,
