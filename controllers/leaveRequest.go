@@ -499,6 +499,86 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		searching := c.QueryParam("searching")
 
 		var leaveRequests []models.LeaveRequest
+		query := db.Model(&models.LeaveRequest{})
+		if searching != "" {
+			searching = strings.ToLower(searching)
+			query = query.Where("LOWER(full_name_employee) LIKE ? OR LOWER(username) LIKE ? OR LOWER(leave_type) LIKE ? OR LOWER(status) LIKE ?",
+				"%"+searching+"%",
+				"%"+searching+"%",
+				"%"+searching+"%",
+				"%"+searching+"%",
+			)
+		}
+		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&leaveRequests)
+
+		var totalCount int64
+		db.Model(&models.LeaveRequest{}).Count(&totalCount)
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Leave request data retrieved successfully",
+			"data":    leaveRequests,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		searching := c.QueryParam("searching")
+
+		var leaveRequests []models.LeaveRequest
 		query := db.Model(&leaveRequests)
 		if searching != "" {
 			query = query.Where("LOWER(username) LIKE ? OR LOWER(leave_type) LIKE ? OR LOWER(start_date) LIKE ? OR LOWER(end_date) LIKE ? OR days = ?",
@@ -528,6 +608,7 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func GetLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

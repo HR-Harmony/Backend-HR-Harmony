@@ -53,7 +53,7 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		if newJob.Title == "" || newJob.JobType == "" || newJob.DesignationID == 0 || newJob.NumberOfPosition == 0 ||
-			newJob.DateClosing == "" || newJob.Gender == "" || newJob.MinimumExperience == "" ||
+			newJob.DateClosing == "" || newJob.MinimumExperience == "" ||
 			newJob.ShortDescription == "" || newJob.LongDescription == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Incomplete new job data"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -292,9 +292,6 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 		if updatedJob.DateClosing != "" {
 			newJob.DateClosing = updatedJob.DateClosing
-		}
-		if updatedJob.Gender != "" {
-			newJob.Gender = updatedJob.Gender
 		}
 		if updatedJob.MinimumExperience != "" {
 			newJob.MinimumExperience = updatedJob.MinimumExperience
