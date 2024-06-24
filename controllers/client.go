@@ -129,10 +129,8 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 				"last_name":      employee.LastName,
 				"full_name":      employee.FullName,
 				"contact_number": employee.ContactNumber,
-				"gender":         employee.Gender,
 				"email":          employee.Email,
 				"username":       employee.Username,
-				"country":        employee.Country,
 				"is_active":      employee.IsActive,
 			},
 		}
@@ -206,13 +204,12 @@ func GetAllClientsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			LastName      string `json:"last_name"`
 			FullName      string `json:"full_name"`
 			ContactNumber string `json:"contact_number"`
-			Gender        string `json:"gender"`
 			Email         string `json:"email"`
 			Username      string `json:"username"`
 			Country       string `json:"country"`
 			IsActive      bool   `json:"is_active"`
 		}
-		if err := query.Select("id", "first_name", "last_name", "full_name", "contact_number", "gender", "email", "username", "country", "is_active").
+		if err := query.Select("id", "first_name", "last_name", "full_name", "contact_number", "email", "username", "country", "is_active").
 			Order("id DESC").Offset(offset).Limit(perPage).Find(&clientEmployees).Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching client data"})
 		}
@@ -285,7 +282,6 @@ func GetClientByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"last_name":      employee.LastName,
 			"full_name":      employee.FullName,
 			"contact_number": employee.ContactNumber,
-			"gender":         employee.Gender,
 			"email":          employee.Email,
 			"username":       employee.Username,
 			"country":        employee.Country,
@@ -403,7 +399,6 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			"last_name":      existingEmployee.LastName,
 			"full_name":      existingEmployee.FullName,
 			"contact_number": existingEmployee.ContactNumber,
-			"gender":         existingEmployee.Gender,
 			"email":          existingEmployee.Email,
 			"username":       existingEmployee.Username,
 			"country":        existingEmployee.Country,
