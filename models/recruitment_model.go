@@ -11,7 +11,6 @@ type NewJob struct {
 	NumberOfPosition  int       `json:"number_of_position"`
 	IsPublish         bool      `json:"is_publish"`
 	DateClosing       string    `json:"date_closing"`
-	Gender            string    `json:"gender"`
 	MinimumExperience string    `json:"minimum_experience"`
 	ShortDescription  string    `json:"short_description"`
 	LongDescription   string    `json:"long_description"`
