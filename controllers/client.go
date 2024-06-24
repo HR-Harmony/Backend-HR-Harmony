@@ -56,7 +56,7 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 
 		if employee.FirstName == "" || employee.LastName == "" || employee.ContactNumber == "" ||
-			employee.Gender == "" || employee.Email == "" || employee.Username == "" ||
+			employee.Email == "" || employee.Username == "" ||
 			employee.Password == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid client data. All fields are required."}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -357,9 +357,6 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		if updatedEmployee.ContactNumber != "" {
 			existingEmployee.ContactNumber = updatedEmployee.ContactNumber
-		}
-		if updatedEmployee.Gender != "" {
-			existingEmployee.Gender = updatedEmployee.Gender
 		}
 		if updatedEmployee.Email != "" {
 			existingEmployee.Email = updatedEmployee.Email
