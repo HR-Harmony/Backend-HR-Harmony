@@ -114,6 +114,7 @@ func generateSalarySlipPDF(fullName string, basicSalary, lateDeduction, earlyLea
 // SendSalaryTransferNotification mengirimkan pemberitahuan transfer gaji ke karyawan via email
 func SendSalaryTransferNotification(employeeEmail, fullName string, basicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) error {
 	// Format jumlah gaji ke mata uang Rupiah
+	formattedBasicSalary := FormatToIDR(basicSalary)
 	formattedFinalSalary := FormatToIDR(finalSalary)
 	formattedLateDeduction := FormatToIDR(lateDeduction)
 	formattedEarlyLeavingDeduction := FormatToIDR(earlyLeavingDeduction)
@@ -174,7 +175,7 @@ func SendSalaryTransferNotification(employeeEmail, fullName string, basicSalary,
 		</div>
 	</body>
 	</html>
-	`, fullName, basicSalary, formattedLateDeduction, formattedEarlyLeavingDeduction, formattedOvertimePay, formattedLoanDeduction, formattedFinalSalary)
+	`, fullName, formattedBasicSalary, formattedLateDeduction, formattedEarlyLeavingDeduction, formattedOvertimePay, formattedLoanDeduction, formattedFinalSalary)
 
 	// Set konfigurasi email
 	smtpServer := os.Getenv("SMTP_SERVER")
