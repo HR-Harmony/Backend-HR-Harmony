@@ -44,7 +44,8 @@ func addThousandSeparator(number string) string {
 	return result
 }
 
-func generateSalarySlipPDF(fullName string, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) ([]byte, error) {
+// generateSalarySlipPDF menghasilkan PDF slip gaji berdasarkan informasi yang diberikan.
+func generateSalarySlipPDF(fullName string, basicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) ([]byte, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 
@@ -85,6 +86,8 @@ func generateSalarySlipPDF(fullName string, finalSalary, lateDeduction, earlyLea
 	// Isi Tabel
 	pdf.SetFont("Arial", "", 12)
 	pdf.SetFillColor(255, 255, 255)
+	pdf.CellFormat(70, 10, "Basic Salary", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(basicSalary), "1", 1, "R", false, 0, "")
 	pdf.CellFormat(70, 10, "Final Salary", "1", 0, "", false, 0, "")
 	pdf.CellFormat(70, 10, FormatToIDR(finalSalary), "1", 1, "R", false, 0, "")
 	pdf.CellFormat(70, 10, "Late Deduction", "1", 0, "", false, 0, "")
@@ -110,7 +113,8 @@ func generateSalarySlipPDF(fullName string, finalSalary, lateDeduction, earlyLea
 	return buf.Bytes(), nil
 }
 
-func SendSalaryTransferNotification(employeeEmail, fullName string, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) error {
+// SendSalaryTransferNotification mengirimkan pemberitahuan transfer gaji ke karyawan via email
+func SendSalaryTransferNotification(employeeEmail, fullName string, basicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) error {
 	// Format jumlah gaji ke mata uang Rupiah
 	formattedFinalSalary := FormatToIDR(finalSalary)
 	formattedLateDeduction := FormatToIDR(lateDeduction)
@@ -191,7 +195,7 @@ func SendSalaryTransferNotification(employeeEmail, fullName string, finalSalary,
 	m.SetBody("text/html", emailBody)
 
 	// Generate slip gaji dalam bentuk PDF
-	pdfBytes, err := generateSalarySlipPDF(fullName, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction)
+	pdfBytes, err := generateSalarySlipPDF(fullName, basicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction)
 	if err != nil {
 		return err
 	}

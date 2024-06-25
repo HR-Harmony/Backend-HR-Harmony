@@ -242,11 +242,11 @@ func UpdatePaidStatusByPayrollID(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		db.Model(&models.OvertimeRequest{}).Where("employee_id = ? AND status = ?", employee.ID, "Accepted").Updates(map[string]interface{}{"total_minutes": 0})
 
 		// Mengirim notifikasi email tentang pembayaran gaji
-		go func(email, fullName string, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) {
-			if err := helper.SendSalaryTransferNotification(email, fullName, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction); err != nil {
+		go func(email, fullName string, basicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) {
+			if err := helper.SendSalaryTransferNotification(email, fullName, basicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction); err != nil {
 				fmt.Println("Failed to send salary transfer notification email:", err)
 			}
-		}(employee.Email, employee.FirstName+" "+employee.LastName, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, float64(totalLoanDeduction))
+		}(employee.Email, employee.FirstName+" "+employee.LastName, employee.BasicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, float64(totalLoanDeduction))
 
 		// Membuat response sukses
 		successResponse := map[string]interface{}{
