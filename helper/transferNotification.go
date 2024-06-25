@@ -45,7 +45,7 @@ func addThousandSeparator(number string) string {
 }
 
 // generateSalarySlipPDF menghasilkan PDF slip gaji berdasarkan informasi yang diberikan.
-func generateSalarySlipPDF(fullName string, basicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) ([]byte, error) {
+func generateSalarySlipPDF(fullName string, basicSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) ([]byte, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 
@@ -88,8 +88,6 @@ func generateSalarySlipPDF(fullName string, basicSalary, finalSalary, lateDeduct
 	pdf.SetFillColor(255, 255, 255)
 	pdf.CellFormat(70, 10, "Basic Salary", "1", 0, "", false, 0, "")
 	pdf.CellFormat(70, 10, FormatToIDR(basicSalary), "1", 1, "R", false, 0, "")
-	pdf.CellFormat(70, 10, "Final Salary", "1", 0, "", false, 0, "")
-	pdf.CellFormat(70, 10, FormatToIDR(finalSalary), "1", 1, "R", false, 0, "")
 	pdf.CellFormat(70, 10, "Late Deduction", "1", 0, "", false, 0, "")
 	pdf.CellFormat(70, 10, FormatToIDR(lateDeduction), "1", 1, "R", false, 0, "")
 	pdf.CellFormat(70, 10, "Early Leaving Deduction", "1", 0, "", false, 0, "")
@@ -103,7 +101,7 @@ func generateSalarySlipPDF(fullName string, basicSalary, finalSalary, lateDeduct
 	pdf.SetFont("Arial", "B", 12)
 	pdf.SetFillColor(230, 230, 230)
 	pdf.CellFormat(70, 10, "Total", "1", 0, "", true, 0, "")
-	pdf.CellFormat(70, 10, FormatToIDR(finalSalary-lateDeduction-earlyLeavingDeduction+overtimePay-totalLoanDeduction), "1", 1, "R", true, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(basicSalary-lateDeduction-earlyLeavingDeduction+overtimePay-totalLoanDeduction), "1", 1, "R", true, 0, "")
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
@@ -176,7 +174,7 @@ func SendSalaryTransferNotification(employeeEmail, fullName string, basicSalary,
 		</div>
 	</body>
 	</html>
-	`, fullName, formattedFinalSalary, formattedLateDeduction, formattedEarlyLeavingDeduction, formattedOvertimePay, formattedLoanDeduction, formattedFinalSalary)
+	`, fullName, basicSalary, formattedLateDeduction, formattedEarlyLeavingDeduction, formattedOvertimePay, formattedLoanDeduction, formattedFinalSalary)
 
 	// Set konfigurasi email
 	smtpServer := os.Getenv("SMTP_SERVER")
@@ -195,7 +193,7 @@ func SendSalaryTransferNotification(employeeEmail, fullName string, basicSalary,
 	m.SetBody("text/html", emailBody)
 
 	// Generate slip gaji dalam bentuk PDF
-	pdfBytes, err := generateSalarySlipPDF(fullName, basicSalary, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction)
+	pdfBytes, err := generateSalarySlipPDF(fullName, basicSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction)
 	if err != nil {
 		return err
 	}
