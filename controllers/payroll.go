@@ -1593,6 +1593,22 @@ func UpdateRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		db.Save(&requestLoan)
 
+		// Kirim email notifikasi jika status diubah menjadi "Approved"
+		if updatedData.Status == "Approved" {
+			var employee models.Employee
+			result := db.First(&employee, requestLoan.EmployeeID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+
+			go func(email, fullName string, amount float64) {
+				if err := helper.SendLoanApprovalNotification(email, fullName, float64(requestLoan.Amount)); err != nil {
+					fmt.Println("Failed to send loan approval notification email:", err)
+				}
+			}(employee.Email, employee.FirstName+" "+employee.LastName, float64(requestLoan.Amount))
+		}
+
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
 			"error":   false,
