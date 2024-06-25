@@ -48,10 +48,7 @@ func generateSalarySlipPDF(fullName string, finalSalary, lateDeduction, earlyLea
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 
-	// Set font utama
-	pdf.SetFont("Arial", "", 12)
-
-	// Tambahkan logo di kiri atas
+	// Tambahkan logo
 	logoPath := "helper/logo.png"
 	pdf.ImageOptions(
 		logoPath, 10, 10, 30, 0, false,
@@ -59,14 +56,15 @@ func generateSalarySlipPDF(fullName string, finalSalary, lateDeduction, earlyLea
 		0, "",
 	)
 
-	// Judul
-	pdf.SetXY(50, 15)
+	// Header
 	pdf.SetFont("Arial", "B", 16)
+	pdf.SetXY(50, 15)
 	pdf.SetTextColor(0, 102, 204)
 	pdf.Cell(100, 10, "HR Harmony")
 	pdf.Ln(20)
 
 	// Informasi Karyawan
+	pdf.SetX(50)
 	pdf.SetFont("Arial", "B", 12)
 	pdf.SetTextColor(0, 0, 0)
 	pdf.Cell(40, 10, "Employee Name:")
@@ -74,39 +72,35 @@ func generateSalarySlipPDF(fullName string, finalSalary, lateDeduction, earlyLea
 	pdf.Cell(100, 10, fullName)
 	pdf.Ln(10)
 
+	// Geser ke bawah untuk memberi ruang antara header dan tabel
+	pdf.Ln(10)
+
 	// Header Tabel
-	header := []string{"Description", "Amount"}
-	data := [][]string{
-		{"Final Salary", FormatToIDR(finalSalary)},
-		{"Late Deduction", FormatToIDR(lateDeduction)},
-		{"Early Leaving Deduction", FormatToIDR(earlyLeavingDeduction)},
-		{"Overtime Pay", FormatToIDR(overtimePay)},
-		{"Loan Deduction", FormatToIDR(totalLoanDeduction)},
-	}
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetFillColor(200, 200, 200)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.CellFormat(70, 10, "Description", "1", 0, "C", true, 0, "")
+	pdf.CellFormat(70, 10, "Amount", "1", 1, "C", true, 0, "")
 
-	// Mengatur posisi untuk tabel
-	y := pdf.GetY() + 10
-	marginLeft, marginTop := 50.0, y
-	pdf.SetXY(marginLeft, marginTop)
+	// Isi Tabel
+	pdf.SetFont("Arial", "", 12)
+	pdf.SetFillColor(255, 255, 255)
+	pdf.CellFormat(70, 10, "Final Salary", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(finalSalary), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(70, 10, "Late Deduction", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(lateDeduction), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(70, 10, "Early Leaving Deduction", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(earlyLeavingDeduction), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(70, 10, "Overtime Pay", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(overtimePay), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(70, 10, "Loan Deduction", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(totalLoanDeduction), "1", 1, "R", false, 0, "")
 
-	// Menampilkan tabel dengan menggunakan fungsi CellFormat
-	widths := []float64{100.0, 50.0}
-	aligns := []string{"L", "R"}
-	for i, str := range header {
-		pdf.CellFormat(widths[i], 7, str, "1", 0, "", false, 0, "")
-	}
-	pdf.Ln(-1)
-	for _, line := range data {
-		for i, str := range line {
-			pdf.CellFormat(widths[i], 7, str, "1", 0, aligns[i], false, 0, "")
-		}
-		pdf.Ln(-1)
-	}
-
-	// Total
-	total := finalSalary - lateDeduction - earlyLeavingDeduction + overtimePay - totalLoanDeduction
-	pdf.CellFormat(widths[0], 7, "Total", "1", 0, "R", true, 0, "")
-	pdf.CellFormat(widths[1], 7, FormatToIDR(total), "1", 1, "R", true, 0, "")
+	// Tambahkan Total
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetFillColor(230, 230, 230)
+	pdf.CellFormat(70, 10, "Total", "1", 0, "", true, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(finalSalary-lateDeduction-earlyLeavingDeduction+overtimePay-totalLoanDeduction), "1", 1, "R", true, 0, "")
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
