@@ -52,6 +52,108 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		// Check each required field individually and return specific error messages
+		if announcement.Title == "" {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		if announcement.Summary == "" {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		if announcement.Description == "" {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		if announcement.StartDate == "" {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "StartDate is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		if announcement.EndDate == "" {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "EndDate is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		startDate, err := time.Parse("2006-01-02", announcement.StartDate)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid StartDate format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		endDate, err := time.Parse("2006-01-02", announcement.EndDate)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid EndDate format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		announcement.StartDate = startDate.Format("2006-01-02")
+		announcement.EndDate = endDate.Format("2006-01-02")
+
+		var existingDepartment models.Department
+		result = db.First(&existingDepartment, announcement.DepartmentID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Department not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		announcement.DepartmentName = existingDepartment.DepartmentName
+
+		currentTime := time.Now()
+		announcement.CreatedAt = &currentTime
+
+		db.Create(&announcement)
+
+		successResponse := helper.Response{
+			Code:         http.StatusCreated,
+			Error:        false,
+			Message:      "Announcement created successfully",
+			Announcement: &announcement,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+/*
+func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		var announcement models.Announcement
+		if err := c.Bind(&announcement); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		if announcement.Title == "" || announcement.Summary == "" || announcement.Description == "" || announcement.StartDate == "" || announcement.EndDate == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "All fields are required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -95,6 +197,7 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusCreated, successResponse)
 	}
 }
+*/
 
 func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

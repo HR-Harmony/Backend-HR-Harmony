@@ -241,9 +241,187 @@ func UpdatePaidStatusByPayrollID(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		db.Model(&models.Attendance{}).Where("employee_id = ?", employee.ID).Updates(map[string]interface{}{"late_minutes": 0, "early_leaving_minutes": 0})
 		db.Model(&models.OvertimeRequest{}).Where("employee_id = ? AND status = ?", employee.ID, "Accepted").Updates(map[string]interface{}{"total_minutes": 0})
 
-		/*
-			db.Model(&models.OvertimeRequest{}).Where("employee_id = ?", employee.ID).Updates(map[string]interface{}{"total_minutes": 0})
-		*/
+		// Mengirim notifikasi email tentang pembayaran gaji
+		go func(email, fullName string, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) {
+			if err := helper.SendSalaryTransferNotification(email, fullName, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction); err != nil {
+				fmt.Println("Failed to send salary transfer notification email:", err)
+			}
+		}(employee.Email, employee.FirstName+" "+employee.LastName, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, float64(totalLoanDeduction))
+
+		// Membuat response sukses
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Paid status updated successfully",
+			"employee": map[string]interface{}{
+				"id":                      employee.ID,
+				"payroll_id":              employee.PayrollID,
+				"first_name":              employee.FirstName,
+				"last_name":               employee.LastName,
+				"full_name":               employee.FullName,
+				"contact_number":          employee.ContactNumber,
+				"gender":                  employee.Gender,
+				"email":                   employee.Email,
+				"username":                employee.Username,
+				"shift_id":                employee.ShiftID,
+				"shift":                   employee.Shift,
+				"role_id":                 employee.RoleID,
+				"role":                    employee.Role,
+				"department_id":           employee.DepartmentID,
+				"department":              employee.Department,
+				"designation_id":          employee.DesignationID,
+				"designation":             employee.Designation,
+				"basic_salary":            employee.BasicSalary,
+				"hourly_rate":             employee.HourlyRate,
+				"pay_slip_type":           employee.PaySlipType,
+				"is_active":               employee.IsActive,
+				"paid_status":             employee.PaidStatus,
+				"final_salary":            finalSalary,
+				"late_deduction":          lateDeduction,
+				"early_leaving_deduction": earlyLeavingDeduction,
+				"overtime_pay":            overtimePay,
+				"loan_deduction":          totalLoanDeduction,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+// UpdatePaidStatusByPayrollID merupakan handler untuk memperbarui status pembayaran gaji berdasarkan ID payroll V2 Final
+func UpdatePaidStatusByPayrollID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Mendapatkan token dari header Authorization
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Memeriksa format token
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		// Memverifikasi token
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Mendapatkan data admin berdasarkan username
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Memeriksa apakah admin memiliki akses sebagai admin HR
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Mendapatkan ID payroll dari URL parameter
+		payrollID := c.Param("payroll_id")
+
+		// Mendapatkan data employee berdasarkan payrollID
+		var employee models.Employee
+		if err := db.Preload("PayrollInfo").Where("payroll_id = ?", payrollID).First(&employee).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Mendapatkan bulan dan tahun saat ini
+		currentMonth := time.Now().Format("2006-01")
+
+		// Mendapatkan semua data kehadiran employee pada bulan dan tahun saat ini
+		var attendances []models.Attendance
+		result = db.Where("employee_id = ? AND attendance_date LIKE ?", employee.ID, currentMonth+"%").Find(&attendances)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch attendances"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Menghitung total menit keterlambatan dan total menit early leaving dari semua kehadiran pada bulan ini
+		totalLateMinutes := 0
+		totalEarlyLeavingMinutes := 0
+		for _, attendance := range attendances {
+			totalLateMinutes += attendance.LateMinutes
+			totalEarlyLeavingMinutes += attendance.EarlyLeavingMinutes
+		}
+
+		// Menghitung potongan gaji berdasarkan total menit keterlambatan dan total menit early leaving
+		lateDeduction := (employee.HourlyRate / 60) * float64(totalLateMinutes)
+		earlyLeavingDeduction := (employee.HourlyRate / 60) * float64(totalEarlyLeavingMinutes)
+
+		// Calculate total minutes of accepted overtime requests
+		var acceptedOvertimes []models.OvertimeRequest
+		result = db.Where("employee_id = ? AND status = ?", employee.ID, "Accepted").Find(&acceptedOvertimes)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch overtime requests"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		totalOvertimeMinutes := 0
+		for _, overtime := range acceptedOvertimes {
+			totalOvertimeMinutes += overtime.TotalMinutes
+		}
+
+		// Calculate overtime pay
+		overtimePay := (employee.HourlyRate / 60) * float64(totalOvertimeMinutes)
+
+		// Calculate loan deductions for approved loans
+		var approvedLoans []models.RequestLoan
+		result = db.Where("employee_id = ? AND status = ?", employee.ID, "Approved").Find(&approvedLoans)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch loan requests"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		totalLoanDeduction := 0
+		for _, loan := range approvedLoans {
+			if loan.Remaining > 0 {
+				if loan.Remaining >= loan.MonthlyInstallmentAmt {
+					totalLoanDeduction += loan.MonthlyInstallmentAmt
+					loan.Remaining -= loan.MonthlyInstallmentAmt
+				} else {
+					totalLoanDeduction += loan.Remaining
+					loan.Remaining = 0
+				}
+				db.Save(&loan)
+			}
+		}
+
+		// Calculate final salary after all deductions and additions
+		finalSalary := employee.BasicSalary - lateDeduction - earlyLeavingDeduction + overtimePay - float64(totalLoanDeduction)
+
+		// Update employee's paid status and create payroll info
+		employee.PaidStatus = true
+		db.Save(&employee)
+
+		// Membuat catatan pembayaran gaji
+		payrollInfo := models.PayrollInfo{
+			EmployeeID:       employee.ID,
+			BasicSalary:      finalSalary,
+			PayslipType:      employee.PaySlipType,
+			PaidStatus:       employee.PaidStatus,
+			FullNameEmployee: employee.FirstName + " " + employee.LastName,
+			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
+		}
+		db.Create(&payrollInfo)
+
+		// Mereset total menit keterlambatan, total menit early leaving, dan total menit lembur untuk bulan berikutnya
+		db.Model(&models.Attendance{}).Where("employee_id = ?", employee.ID).Updates(map[string]interface{}{"late_minutes": 0, "early_leaving_minutes": 0})
+		db.Model(&models.OvertimeRequest{}).Where("employee_id = ? AND status = ?", employee.ID, "Accepted").Updates(map[string]interface{}{"total_minutes": 0})
+
 
 		// Mengirim notifikasi email tentang pembayaran gaji
 		go func(email, fullName string, finalSalary float64) {
@@ -288,6 +466,7 @@ func UpdatePaidStatusByPayrollID(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 // UpdatePaidStatusByPayrollID merupakan handler untuk memperbarui status pembayaran gaji berdasarkan ID payroll V1 Final
