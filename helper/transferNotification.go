@@ -47,22 +47,57 @@ func addThousandSeparator(number string) string {
 func generateSalarySlipPDF(fullName string, finalSalary, lateDeduction, earlyLeavingDeduction, overtimePay, totalLoanDeduction float64) ([]byte, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
+
+	// Tambahkan logo
+	logoPath := "helper/logo.png"
+	pdf.ImageOptions(
+		logoPath, 10, 10, 30, 0, false,
+		gofpdf.ImageOptions{ReadDpi: true, ImageType: "PNG"},
+		0, "",
+	)
+
+	// Header
 	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(40, 10, "Salary Slip")
-	pdf.Ln(12)
+	pdf.SetXY(50, 15)
+	pdf.SetTextColor(0, 102, 204)
+	pdf.Cell(100, 10, "HR Harmony")
+	pdf.Ln(20)
+
+	// Informasi Karyawan
+	pdf.SetX(50)
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.Cell(40, 10, "Employee Name:")
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(40, 10, fmt.Sprintf("Employee Name: %s", fullName))
+	pdf.Cell(100, 10, fullName)
 	pdf.Ln(10)
-	pdf.Cell(40, 10, fmt.Sprintf("Final Salary: %s", FormatToIDR(finalSalary)))
-	pdf.Ln(10)
-	pdf.Cell(40, 10, fmt.Sprintf("Late Deduction: %s", FormatToIDR(lateDeduction)))
-	pdf.Ln(10)
-	pdf.Cell(40, 10, fmt.Sprintf("Early Leaving Deduction: %s", FormatToIDR(earlyLeavingDeduction)))
-	pdf.Ln(10)
-	pdf.Cell(40, 10, fmt.Sprintf("Overtime Pay: %s", FormatToIDR(overtimePay)))
-	pdf.Ln(10)
-	pdf.Cell(40, 10, fmt.Sprintf("Loan Deduction: %s", FormatToIDR(totalLoanDeduction)))
-	pdf.Ln(10)
+
+	// Header Tabel
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetFillColor(200, 200, 200)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.CellFormat(70, 10, "Description", "1", 0, "C", true, 0, "")
+	pdf.CellFormat(70, 10, "Amount", "1", 1, "C", true, 0, "")
+
+	// Isi Tabel
+	pdf.SetFont("Arial", "", 12)
+	pdf.SetFillColor(255, 255, 255)
+	pdf.CellFormat(70, 10, "Final Salary", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(finalSalary), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(70, 10, "Late Deduction", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(lateDeduction), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(70, 10, "Early Leaving Deduction", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(earlyLeavingDeduction), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(70, 10, "Overtime Pay", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(overtimePay), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(70, 10, "Loan Deduction", "1", 0, "", false, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(totalLoanDeduction), "1", 1, "R", false, 0, "")
+
+	// Tambahkan Total
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetFillColor(230, 230, 230)
+	pdf.CellFormat(70, 10, "Total", "1", 0, "", true, 0, "")
+	pdf.CellFormat(70, 10, FormatToIDR(finalSalary-lateDeduction-earlyLeavingDeduction+overtimePay-totalLoanDeduction), "1", 1, "R", true, 0, "")
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
