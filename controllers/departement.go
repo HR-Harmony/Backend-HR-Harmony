@@ -9,6 +9,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -56,6 +57,12 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if department.DepartmentName == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Department name is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate DepartmentName
+		if len(department.DepartmentName) < 5 || len(department.DepartmentName) > 30 || !regexp.MustCompile(`^[a-zA-Z]+$`).MatchString(department.DepartmentName) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Department name must be between 5 and 30 characters and contain only letters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
