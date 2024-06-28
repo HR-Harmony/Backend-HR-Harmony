@@ -61,7 +61,7 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		// Validate DepartmentName
-		if len(department.DepartmentName) < 5 || len(department.DepartmentName) > 30 || !regexp.MustCompile(`^[a-zA-Z]+$`).MatchString(department.DepartmentName) {
+		if len(department.DepartmentName) < 5 || len(department.DepartmentName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(department.DepartmentName) {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Department name must be between 5 and 30 characters and contain only letters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
