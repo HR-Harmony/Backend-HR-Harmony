@@ -773,7 +773,7 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		// Validate FirstName
 		if updatedEmployee.FirstName != "" {
-			if len(updatedEmployee.FirstName) < 3 || len(updatedEmployee.FirstName) > 20 || !regexp.MustCompile(`^[a-zA-Z]+$`).MatchString(updatedEmployee.FirstName) {
+			if len(updatedEmployee.FirstName) < 3 || len(updatedEmployee.FirstName) > 20 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.FirstName) {
 				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "First name must be between 3 and 20 characters and contain only letters"})
 			}
 			existingEmployee.FirstName = updatedEmployee.FirstName
@@ -782,7 +782,7 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		// Validate LastName
 		if updatedEmployee.LastName != "" {
-			if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 20 || !regexp.MustCompile(`^[a-zA-Z]+$`).MatchString(updatedEmployee.LastName) {
+			if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 20 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
 				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 20 characters and contain only letters"})
 			}
 			existingEmployee.LastName = updatedEmployee.LastName
