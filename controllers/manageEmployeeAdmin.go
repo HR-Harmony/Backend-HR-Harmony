@@ -15,6 +15,7 @@ import (
 	"hrsale/models"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -759,17 +760,49 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
 		}
 
+		/*
+			if updatedEmployee.FirstName != "" {
+				existingEmployee.FirstName = updatedEmployee.FirstName
+				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+			}
+			if updatedEmployee.LastName != "" {
+				existingEmployee.LastName = updatedEmployee.LastName
+				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+			}
+		*/
+
+		// Validate FirstName
 		if updatedEmployee.FirstName != "" {
+			if len(updatedEmployee.FirstName) < 3 || len(updatedEmployee.FirstName) > 20 || !regexp.MustCompile(`^[a-zA-Z]+$`).MatchString(updatedEmployee.FirstName) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "First name must be between 3 and 20 characters and contain only letters"})
+			}
 			existingEmployee.FirstName = updatedEmployee.FirstName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
+
+		// Validate LastName
 		if updatedEmployee.LastName != "" {
+			if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 20 || !regexp.MustCompile(`^[a-zA-Z]+$`).MatchString(updatedEmployee.LastName) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 20 characters and contain only letters"})
+			}
 			existingEmployee.LastName = updatedEmployee.LastName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
+
+		/*
+			if updatedEmployee.ContactNumber != "" {
+				existingEmployee.ContactNumber = updatedEmployee.ContactNumber
+			}
+		*/
+
+		// Validate ContactNumber
 		if updatedEmployee.ContactNumber != "" {
+			if len(updatedEmployee.ContactNumber) < 10 || len(updatedEmployee.ContactNumber) > 14 || !regexp.MustCompile(`^[0-9]+$`).MatchString(updatedEmployee.ContactNumber) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Contact number must be between 10 and 14 digits and contain only numbers"})
+			}
 			existingEmployee.ContactNumber = updatedEmployee.ContactNumber
 		}
+
 		if updatedEmployee.Gender != "" {
 			existingEmployee.Gender = updatedEmployee.Gender
 		}
@@ -787,12 +820,34 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.IsActive = updatedEmployee.IsActive
 		}
 
+		/*
+			if updatedEmployee.Email != "" {
+				existingEmployee.Email = updatedEmployee.Email
+			}
+		*/
+
+		// Validate Email
 		if updatedEmployee.Email != "" {
+			if !regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`).MatchString(updatedEmployee.Email) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid email format"})
+			}
 			existingEmployee.Email = updatedEmployee.Email
 		}
+
+		/*
+			if updatedEmployee.Username != "" {
+				existingEmployee.Username = updatedEmployee.Username
+			}
+		*/
+
 		if updatedEmployee.Username != "" {
+			// Validate username length
+			if len(updatedEmployee.Username) < 5 || len(updatedEmployee.Username) > 15 {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Username must be between 5 and 15 characters"})
+			}
 			existingEmployee.Username = updatedEmployee.Username
 		}
+
 		if updatedEmployee.Password != "" {
 			// Hash the updated password
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedEmployee.Password), bcrypt.DefaultCost)
