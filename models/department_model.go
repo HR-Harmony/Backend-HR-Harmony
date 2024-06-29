@@ -9,4 +9,5 @@ type Department struct {
 	FullName       string     `json:"full_name"`   // tambahan
 	CreatedAt      *time.Time `json:"created_at"`
 	UpdatedAt      time.Time
+	Designations   []Designation `gorm:"foreignKey:DepartmentID" json:"designations"` // relasi balik
 }
