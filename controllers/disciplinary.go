@@ -53,6 +53,16 @@ func CreateDisciplinaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(disciplinary.Subject) < 5 || len(disciplinary.Subject) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Disciplinary subject must be between 5 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(disciplinary.Description) < 5 || len(disciplinary.Description) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Disciplinary description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		caseDate, err := time.Parse("2006-01-02", disciplinary.CaseDate)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid CaseDate format"}
@@ -306,7 +316,17 @@ func UpdateDisciplinaryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			disciplinary.CaseName = existingCase.CaseName
 		}
 
+		/*
+			if updatedDisciplinary.Subject != "" {
+				disciplinary.Subject = updatedDisciplinary.Subject
+			}
+		*/
+
 		if updatedDisciplinary.Subject != "" {
+			if len(updatedDisciplinary.Subject) < 5 || len(updatedDisciplinary.Subject) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Disciplinary subject must be between 5 and 100 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			disciplinary.Subject = updatedDisciplinary.Subject
 		}
 
@@ -319,7 +339,17 @@ func UpdateDisciplinaryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			disciplinary.CaseDate = caseDate.Format("2006-01-02")
 		}
 
+		/*
+			if updatedDisciplinary.Description != "" {
+				disciplinary.Description = updatedDisciplinary.Description
+			}
+		*/
+
 		if updatedDisciplinary.Description != "" {
+			if len(updatedDisciplinary.Description) < 5 || len(updatedDisciplinary.Description) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Disciplinary description must be between 5 and 3000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			disciplinary.Description = updatedDisciplinary.Description
 		}
 

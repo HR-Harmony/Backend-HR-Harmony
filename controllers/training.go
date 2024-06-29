@@ -8,6 +8,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -50,6 +51,38 @@ func CreateTrainerByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		var trainer models.Trainer
 		if err := c.Bind(&trainer); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(trainer.FirstName) < 1 || len(trainer.FirstName) > 100 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(trainer.FirstName) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "First name must be between 1 and 100 characters and contain only letters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(trainer.LastName) < 1 || len(trainer.LastName) > 100 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(trainer.FirstName) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last name must be between 1 and 100 characters and contain only letters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+		if !emailRegex.MatchString(trainer.Email) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid email format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		contactNumberRegex := regexp.MustCompile(`^\d{10,14}$`)
+		if !contactNumberRegex.MatchString(trainer.ContactNumber) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Contact number must be between 10 and 14 digits and contain only numbers"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(trainer.Expertise) < 5 || len(trainer.Expertise) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Expertise must be between 1 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(trainer.Address) < 5 || len(trainer.Address) > 1000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Address must be between 1 and 1000 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
@@ -253,24 +286,93 @@ func UpdateTrainerByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedTrainer.FirstName != "" {
+				trainer.FirstName = updatedTrainer.FirstName
+				trainer.FullName = trainer.FirstName + " " + trainer.LastName // Update full name
+			}
+		*/
+
 		if updatedTrainer.FirstName != "" {
+			if len(updatedTrainer.FirstName) < 1 || len(updatedTrainer.FirstName) > 100 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedTrainer.FirstName) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "First Name must be between 1 and 100 and contain only letters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			trainer.FirstName = updatedTrainer.FirstName
 			trainer.FullName = trainer.FirstName + " " + trainer.LastName // Update full name
 		}
+
+		/*
+			if updatedTrainer.LastName != "" {
+				trainer.LastName = updatedTrainer.LastName
+				trainer.FullName = trainer.FirstName + " " + trainer.LastName // Update full name
+			}
+		*/
+
 		if updatedTrainer.LastName != "" {
+			if len(updatedTrainer.LastName) < 1 || len(updatedTrainer.LastName) > 100 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedTrainer.LastName) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last Name must be between 1 and 100 and contain only letters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			trainer.LastName = updatedTrainer.LastName
 			trainer.FullName = trainer.FirstName + " " + trainer.LastName // Update full name
 		}
+
+		/*
+			if updatedTrainer.ContactNumber != "" {
+				trainer.ContactNumber = updatedTrainer.ContactNumber
+			}
+		*/
+
 		if updatedTrainer.ContactNumber != "" {
+			contactNumberRegex := regexp.MustCompile(`^\d{10,14}$`)
+			if !contactNumberRegex.MatchString(updatedTrainer.ContactNumber) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Contact number must be between 10 and 14 digits and contain only numbers"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			trainer.ContactNumber = updatedTrainer.ContactNumber
 		}
+
+		/*
+			if updatedTrainer.Email != "" {
+				trainer.Email = updatedTrainer.Email
+			}
+		*/
+
 		if updatedTrainer.Email != "" {
+			emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+			if !emailRegex.MatchString(updatedTrainer.Email) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid email format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			trainer.Email = updatedTrainer.Email
 		}
+
+		/*
+			if updatedTrainer.Expertise != "" {
+				trainer.Expertise = updatedTrainer.Expertise
+			}
+		*/
+
 		if updatedTrainer.Expertise != "" {
+			if len(updatedTrainer.Expertise) < 5 || len(updatedTrainer.Expertise) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Expertise must be between 5 and 100 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			trainer.Expertise = updatedTrainer.Expertise
 		}
+
+		/*
+			if updatedTrainer.Address != "" {
+				trainer.Address = updatedTrainer.Address
+			}
+		*/
+
 		if updatedTrainer.Address != "" {
+			if len(updatedTrainer.Address) < 5 || len(updatedTrainer.Address) > 1000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Address must be between 5 and 1000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			trainer.Address = updatedTrainer.Address
 		}
 

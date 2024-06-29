@@ -341,6 +341,35 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(employee.FirstName) < 1 || len(employee.FirstName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.FirstName) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "First Name must be between 1 and 30 characters and contain only letters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(employee.LastName) < 1 || len(employee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.LastName) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last Name must be between 1 and 30 characters and contain only letters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(employee.Username) < 5 || len(employee.Username) > 15 || !regexp.MustCompile(`^[a-zA-Z0-9\s]+$`).MatchString(employee.Username) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Username must be between 5 and 15 characters and contain only letters and numbers"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate Email using regexp
+		emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+		if !emailRegex.MatchString(employee.Email) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid email format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate ContactNumber using regexp
+		contactNumberRegex := regexp.MustCompile(`^\d{10,14}$`)
+		if !contactNumberRegex.MatchString(employee.ContactNumber) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Contact number must be between 10 and 14 digits and contain only numbers"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		passwordWithNoHash := employee.Password
 
 		// Check if the department exists
@@ -773,8 +802,8 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		// Validate FirstName
 		if updatedEmployee.FirstName != "" {
-			if len(updatedEmployee.FirstName) < 3 || len(updatedEmployee.FirstName) > 20 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.FirstName) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "First name must be between 3 and 20 characters and contain only letters"})
+			if len(updatedEmployee.FirstName) < 3 || len(updatedEmployee.FirstName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.FirstName) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "First name must be between 3 and 30 characters and contain only letters"})
 			}
 			existingEmployee.FirstName = updatedEmployee.FirstName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
@@ -782,8 +811,8 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		// Validate LastName
 		if updatedEmployee.LastName != "" {
-			if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 20 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 20 characters and contain only letters"})
+			if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 30 characters and contain only letters"})
 			}
 			existingEmployee.LastName = updatedEmployee.LastName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
