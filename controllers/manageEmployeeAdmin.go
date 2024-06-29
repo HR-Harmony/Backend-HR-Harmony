@@ -1017,6 +1017,7 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			PayrollID:                existingEmployee.PayrollID,
 			FirstName:                existingEmployee.FirstName,
 			LastName:                 existingEmployee.LastName,
+			FullName:                 existingEmployee.FullName,
 			ContactNumber:            existingEmployee.ContactNumber,
 			Gender:                   existingEmployee.Gender,
 			Email:                    existingEmployee.Email,
