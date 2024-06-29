@@ -267,12 +267,6 @@ func UpdateExitStatusByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		// Validate ExitName using regexp
-		if len(updatedExitStatus.ExitName) < 5 || len(updatedExitStatus.ExitName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedExitStatus.ExitName) {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Exit name must be between 5 and 30 characters and contain only letters"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
-		}
-
 		if updatedExitStatus.ExitName != exitStatus.ExitName {
 			var existingExitStatus models.Exit
 			result = db.Where("exit_name = ?", updatedExitStatus.ExitName).First(&existingExitStatus)

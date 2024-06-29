@@ -300,12 +300,6 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			department.DepartmentName = updateData.DepartmentName
 		}
 
-		// Validate RoleName using regexp
-		if len(updateData.DepartmentName) < 5 || len(updateData.DepartmentName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updateData.DepartmentName) {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Department name must be between 5 and 30 characters and contain only letters"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
-		}
-
 		if updateData.EmployeeID != 0 {
 			var employee models.Employee
 			result := db.First(&employee, "id = ?", updateData.EmployeeID)
