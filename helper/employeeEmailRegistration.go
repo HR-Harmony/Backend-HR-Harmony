@@ -99,7 +99,7 @@ func SendEmployeeAccountNotificationWithPlainTextPassword(employeeEmail, fullNam
                 <p><strong>Username:</strong> ` + username + `</p>
                 <p><strong>Password:</strong> ` + password + `</p>
             </div>
-            <a class="button" href="http://localhost:8080/login">Login to HR Harmony</a>
+            <a class="button" href="https://employee.hr-harmony.my.id/login">Login to HR Harmony</a>
             <div class="footer">
                 <p>&copy; 2023 HR Harmony. All rights reserved.</p>
             </div>
@@ -219,7 +219,7 @@ func SendClientAccountNotificationWithPlainTextPassword(employeeEmail, fullName,
                 <p><strong>Username:</strong> ` + username + `</p>
                 <p><strong>Password:</strong> ` + password + `</p>
             </div>
-            <a class="button" href="http://localhost:8080/login">Login to HR Harmony</a>
+            <a class="button" href="https://employee.hr-harmony.my.id/login">Login to HR Harmony</a>
             <div class="footer">
                 <p>&copy; 2023 HR Harmony. All rights reserved.</p>
             </div>

@@ -53,6 +53,11 @@ func CreateOvertimeRequestByEmployee(db *gorm.DB, secretKey []byte) echo.Handler
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(overtime.Reason) < 5 || len(overtime.Reason) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Reason must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		overtime.EmployeeID = employee.ID
 		overtime.Username = employee.Username
 		overtime.FullNameEmployee = employee.FirstName + " " + employee.LastName
@@ -304,7 +309,18 @@ func UpdateOvertimeRequestByIDByEmployee(db *gorm.DB, secretKey []byte) echo.Han
 		if updatedOvertimeRequest.OutTime != "" {
 			overtimeRequest.OutTime = updatedOvertimeRequest.OutTime
 		}
+
+		/*
+			if updatedOvertimeRequest.Reason != "" {
+				overtimeRequest.Reason = updatedOvertimeRequest.Reason
+			}
+		*/
+
 		if updatedOvertimeRequest.Reason != "" {
+			if len(updatedOvertimeRequest.Reason) < 5 || len(updatedOvertimeRequest.Reason) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Reason must be between 5 and 3000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			overtimeRequest.Reason = updatedOvertimeRequest.Reason
 		}
 

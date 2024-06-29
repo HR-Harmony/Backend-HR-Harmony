@@ -59,6 +59,21 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(newJob.Title) < 5 || len(newJob.Title) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(newJob.ShortDescription) < 5 || len(newJob.ShortDescription) > 300 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Short description must be between 5 and 300 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(newJob.LongDescription) < 5 || len(newJob.LongDescription) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "long description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		var designation models.Designation
 		result = db.First(&designation, "id = ?", newJob.DesignationID)
 		if result.Error != nil {
@@ -268,9 +283,20 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedJob.Title != "" {
+				newJob.Title = updatedJob.Title
+			}
+		*/
+
 		if updatedJob.Title != "" {
+			if len(updatedJob.Title) < 5 || len(updatedJob.Title) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			newJob.Title = updatedJob.Title
 		}
+
 		if updatedJob.JobType != "" {
 			newJob.JobType = updatedJob.JobType
 		}
@@ -296,10 +322,31 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		if updatedJob.MinimumExperience != "" {
 			newJob.MinimumExperience = updatedJob.MinimumExperience
 		}
+
+		/*
+			if updatedJob.ShortDescription != "" {
+				newJob.ShortDescription = updatedJob.ShortDescription
+			}
+		*/
 		if updatedJob.ShortDescription != "" {
+			if len(updatedJob.ShortDescription) < 5 || len(updatedJob.ShortDescription) > 300 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Short description must be between 5 and 300"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			newJob.ShortDescription = updatedJob.ShortDescription
 		}
+
+		/*
+			if updatedJob.LongDescription != "" {
+				newJob.LongDescription = updatedJob.LongDescription
+			}
+		*/
+
 		if updatedJob.LongDescription != "" {
+			if len(updatedJob.LongDescription) < 5 || len(updatedJob.LongDescription) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Long description must be between 5 and 3000"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			newJob.LongDescription = updatedJob.LongDescription
 		}
 

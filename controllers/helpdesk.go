@@ -58,6 +58,16 @@ func CreateHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(helpdesk.Subject) < 5 || len(helpdesk.Subject) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Helpdesk subject must be between 5 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(helpdesk.Description) < 5 || len(helpdesk.Description) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Helpdesk description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		var existingDepartment models.Department
 		result = db.First(&existingDepartment, helpdesk.DepartmentID)
 		if result.Error != nil {
@@ -281,7 +291,17 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedHelpdesk.Subject != "" {
+				helpdesk.Subject = updatedHelpdesk.Subject
+			}
+		*/
+
 		if updatedHelpdesk.Subject != "" {
+			if len(updatedHelpdesk.Subject) < 5 || len(updatedHelpdesk.Subject) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Helpdesk subject must be between 5 and 100 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			helpdesk.Subject = updatedHelpdesk.Subject
 		}
 
@@ -312,7 +332,17 @@ func UpdateHelpdeskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			helpdesk.EmployeeFullName = existingEmployee.FirstName + " " + existingEmployee.LastName
 		}
 
+		/*
+			if updatedHelpdesk.Description != "" {
+				helpdesk.Description = updatedHelpdesk.Description
+			}
+		*/
+
 		if updatedHelpdesk.Description != "" {
+			if len(updatedHelpdesk.Description) < 5 || len(updatedHelpdesk.Description) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Helpdesk description must be between 5 and 3000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			helpdesk.Description = updatedHelpdesk.Description
 		}
 
