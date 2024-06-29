@@ -291,18 +291,15 @@ func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.Han
 		}
 
 		var employees []models.Employee
-		query := db.Where("is_client = ? AND is_exit = ?", false, false)
+		query := db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").
+			Where("is_client = ? AND is_exit = ?", false, false)
 
 		searching := c.QueryParam("searching")
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
 			query = query.Where(
-				db.Where("full_name ILIKE ?", searchPattern).
-					Or("designation ILIKE ?", searchPattern).
-					Or("contact_number ILIKE ?", searchPattern).
-					Or("gender ILIKE ?", searchPattern).
-					Or("country ILIKE ?", searchPattern).
-					Or("role ILIKE ?", searchPattern))
+				"full_name ILIKE ? OR designation ILIKE ? OR contact_number ILIKE ? OR gender ILIKE ? OR country ILIKE ? OR role ILIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern)
 		}
 
 		if err := query.Find(&employees).Error; err != nil {
@@ -324,13 +321,13 @@ func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.Han
 				Username:                 emp.Username,
 				Password:                 emp.Password,
 				ShiftID:                  emp.ShiftID,
-				Shift:                    emp.Shift,
+				Shift:                    emp.Shift.ShiftName,
 				RoleID:                   emp.RoleID,
-				Role:                     emp.Role,
+				Role:                     emp.Role.RoleName,
 				DepartmentID:             emp.DepartmentID,
-				Department:               emp.Department,
+				Department:               emp.Department.DepartmentName,
 				DesignationID:            emp.DesignationID,
-				Designation:              emp.Designation,
+				Designation:              emp.Designation.DesignationName,
 				BasicSalary:              emp.BasicSalary,
 				HourlyRate:               emp.HourlyRate,
 				PaySlipType:              emp.PaySlipType,
