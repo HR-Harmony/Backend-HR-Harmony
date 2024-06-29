@@ -12,7 +12,6 @@ import (
 )
 
 // Admin
-
 func GetAllShiftsByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -292,129 +291,6 @@ func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.Han
 		}
 
 		var employees []models.Employee
-		query := db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").
-			Where("is_client = ? AND is_exit = ?", false, false)
-
-		searching := c.QueryParam("searching")
-		if searching != "" {
-			searchPattern := "%" + searching + "%"
-			query = query.Where(
-				db.Where("full_name ILIKE ?", searchPattern).
-					Or("designation ILIKE ?", searchPattern).
-					Or("contact_number ILIKE ?", searchPattern).
-					Or("gender ILIKE ?", searchPattern).
-					Or("country ILIKE ?", searchPattern).
-					Or("role ILIKE ?", searchPattern))
-		}
-
-		if err := query.Find(&employees).Error; err != nil {
-			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching employees"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
-
-		var employeesResponse []helper.EmployeeResponse
-		for _, emp := range employees {
-			employeeResponse := helper.EmployeeResponse{
-				ID:                       emp.ID,
-				PayrollID:                emp.PayrollID,
-				FirstName:                emp.FirstName,
-				LastName:                 emp.LastName,
-				FullName:                 emp.FullName,
-				ContactNumber:            emp.ContactNumber,
-				Gender:                   emp.Gender,
-				Email:                    emp.Email,
-				BirthdayDate:             emp.BirthdayDate,
-				Username:                 emp.Username,
-				ShiftID:                  emp.ShiftID,
-				Shift:                    emp.Shift.ShiftName, // Include shift name
-				RoleID:                   emp.RoleID,
-				Role:                     emp.Role.RoleName, // Include role name
-				DepartmentID:             emp.DepartmentID,
-				Department:               emp.Department.DepartmentName, // Include department name
-				DesignationID:            emp.DesignationID,
-				Designation:              emp.Designation.DesignationName, // Include designation name
-				BasicSalary:              emp.BasicSalary,
-				HourlyRate:               emp.HourlyRate,
-				PaySlipType:              emp.PaySlipType,
-				IsActive:                 emp.IsActive,
-				PaidStatus:               emp.PaidStatus,
-				MaritalStatus:            emp.MaritalStatus,
-				Religion:                 emp.Religion,
-				BloodGroup:               emp.BloodGroup,
-				Nationality:              emp.Nationality,
-				Citizenship:              emp.Citizenship,
-				BpjsKesehatan:            emp.BpjsKesehatan,
-				Address1:                 emp.Address1,
-				Address2:                 emp.Address2,
-				City:                     emp.City,
-				StateProvince:            emp.StateProvince,
-				ZipPostalCode:            emp.ZipPostalCode,
-				Bio:                      emp.Bio,
-				FacebookURL:              emp.FacebookURL,
-				InstagramURL:             emp.InstagramURL,
-				TwitterURL:               emp.TwitterURL,
-				LinkedinURL:              emp.LinkedinURL,
-				AccountTitle:             emp.AccountTitle,
-				AccountNumber:            emp.AccountNumber,
-				BankName:                 emp.BankName,
-				Iban:                     emp.Iban,
-				SwiftCode:                emp.SwiftCode,
-				BankBranch:               emp.BankBranch,
-				EmergencyContactFullName: emp.EmergencyContactFullName,
-				EmergencyContactNumber:   emp.EmergencyContactNumber,
-				EmergencyContactEmail:    emp.EmergencyContactEmail,
-				EmergencyContactAddress:  emp.EmergencyContactAddress,
-				CreatedAt:                emp.CreatedAt,
-				UpdatedAt:                emp.UpdatedAt,
-			}
-			employeesResponse = append(employeesResponse, employeeResponse)
-		}
-
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"code":      http.StatusOK,
-			"error":     false,
-			"message":   "All employees retrieved successfully",
-			"employees": employeesResponse,
-		})
-	}
-}
-
-/*
-func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		tokenString := c.Request().Header.Get("Authorization")
-		if tokenString == "" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		authParts := strings.SplitN(tokenString, " ", 2)
-		if len(authParts) != 2 || authParts[0] != "Bearer" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		tokenString = authParts[1]
-
-		username, err := middleware.VerifyToken(tokenString, secretKey)
-		if err != nil {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		var adminUser models.Admin
-		result := db.Where("username = ?", username).First(&adminUser)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
-			return c.JSON(http.StatusNotFound, errorResponse)
-		}
-
-		if !adminUser.IsAdminHR {
-			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
-			return c.JSON(http.StatusForbidden, errorResponse)
-		}
-
-		var employees []models.Employee
 		query := db.Where("is_client = ? AND is_exit = ?", false, false)
 
 		searching := c.QueryParam("searching")
@@ -500,7 +376,6 @@ func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.Han
 		})
 	}
 }
-*/
 
 func GetAllExitStatusByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
