@@ -9,6 +9,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -56,6 +57,12 @@ func CreateRoleByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if role.RoleName == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Role name is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate RoleName using regexp
+		if len(role.RoleName) < 5 || len(role.RoleName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(role.RoleName) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Role name must be between 5 and 30 characters and contain only letters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
@@ -275,6 +282,12 @@ func EditRoleByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if updatedRole.RoleName == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Role name is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate RoleName using regexp
+		if len(updatedRole.RoleName) < 5 || len(updatedRole.RoleName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedRole.RoleName) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Role name must be between 5 and 30 characters and contain only letters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
