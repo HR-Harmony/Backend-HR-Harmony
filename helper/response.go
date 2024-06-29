@@ -22,6 +22,7 @@ type EmployeeResponse struct {
 	PayrollID     int64   `json:"payroll_id"`
 	FirstName     string  `json:"first_name"`
 	LastName      string  `json:"last_name"`
+	FullName      string  `json:"full_name"`
 	ContactNumber string  `json:"contact_number"`
 	Gender        string  `json:"gender"`
 	Email         string  `json:"email"`
