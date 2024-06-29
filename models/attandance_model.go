@@ -33,4 +33,6 @@ type OvertimeRequest struct {
 	Status           string     `json:"status"`
 	CreatedAt        *time.Time `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
+
+	Employee Employee `gorm:"foreignKey:EmployeeID"` // Menambahkan hubungan dengan Employee
 }

@@ -950,8 +950,20 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		var totalCount int64
 		query.Count(&totalCount)
 
+		/*
+			var overtime []models.OvertimeRequest
+			query.Order("id DESC").Offset(offset).Limit(perPage).Find(&overtime)
+		*/
+
 		var overtime []models.OvertimeRequest
-		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&overtime)
+		if err := query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&overtime).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching overtime requests"})
+		}
+
+		// Setelah memuat data OvertimeRequest, atur FullNameEmployee berdasarkan Employee.FullName
+		for i := range overtime {
+			overtime[i].FullNameEmployee = overtime[i].Employee.FullName
+		}
 
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
@@ -964,6 +976,68 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 	}
 }
 
+func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		overtimeID := c.Param("id")
+		if overtimeID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Overtime ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var overtime models.OvertimeRequest
+		result = db.Preload("Employee").First(&overtime, "id = ?", overtimeID) // Preload Employee data
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Overtime Request not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Setelah memuat data OvertimeRequest, atur FullNameEmployee berdasarkan Employee.FullName
+		overtime.FullNameEmployee = overtime.Employee.FullName
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Overtime Request data retrieved successfully",
+			"data":    overtime,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
@@ -1021,6 +1095,7 @@ func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func UpdateOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
