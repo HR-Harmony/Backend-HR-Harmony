@@ -7,7 +7,6 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -59,8 +58,8 @@ func CreateExitStatusByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		// Validate ExitName
-		if len(exitStatus.ExitName) < 5 || len(exitStatus.ExitName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(exitStatus.ExitName) {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Exit name must be between 5 and 30 characters and contain only letters"}
+		if len(exitStatus.ExitName) < 5 || len(exitStatus.ExitName) > 30 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Exit name must be between 5 and 30 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
@@ -268,8 +267,8 @@ func UpdateExitStatusByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		if updatedExitStatus.ExitName != "" {
-			if len(updatedExitStatus.ExitName) < 5 || len(updatedExitStatus.ExitName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedExitStatus.ExitName) {
-				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Exit name must be between 5 and 30 characters and can only be letters"}
+			if len(updatedExitStatus.ExitName) < 5 || len(updatedExitStatus.ExitName) > 30 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Exit name must be between 5 and 30 characters"}
 				return c.JSON(http.StatusBadRequest, errorResponse)
 			}
 			exitStatus.ExitName = updatedExitStatus.ExitName
