@@ -177,8 +177,6 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 				continue // Skip invalid shift
 			}
 
-			employee.Shift = officeShift.ShiftName
-
 			// Check if the role exists
 			var role models.Role
 			result = tx.First(&role, "id = ?", employee.RoleID)
@@ -186,8 +184,6 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 				log.Println("Skipping invalid role ID:", employee.RoleID)
 				continue // Skip invalid role
 			}
-
-			employee.Role = role.RoleName
 
 			// Check if the department exists
 			var department models.Department
@@ -197,8 +193,6 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 				continue // Skip invalid department
 			}
 
-			employee.Department = department.DepartmentName
-
 			// Check if the designation exists
 			var designation models.Designation
 			result = tx.First(&designation, "id = ?", employee.DesignationID)
@@ -206,8 +200,6 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 				log.Println("Skipping invalid designation ID:", employee.DesignationID)
 				continue // Skip invalid designation
 			}
-
-			employee.Designation = designation.DesignationName
 			employee.DesignationID = designation.ID
 
 			// Check if username is unique
@@ -380,8 +372,6 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		employee.Shift = officeShift.ShiftName
-
 		// Check if the department exists
 		var role models.Role
 		result = db.First(&role, "id = ?", employee.RoleID)
@@ -389,8 +379,6 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid role name. Role not found."}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
-
-		employee.Role = role.RoleName
 
 		// Check if the department exists
 		var department models.Department
@@ -400,8 +388,6 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		employee.Department = department.DepartmentName
-
 		// Check if the designation exists
 		var designation models.Designation
 		result = db.First(&designation, "id = ?", employee.DesignationID)
@@ -410,7 +396,6 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		employee.Designation = designation.DesignationName
 		employee.DesignationID = designation.ID
 
 		// Check if username is unique
@@ -542,7 +527,11 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var employees []models.Employee
-		query := db.Where("is_client = ? AND is_exit = ?", false, false).Order("id DESC").Offset(offset).Limit(perPage)
+		query := db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").
+			Where("is_client = ? AND is_exit = ?", false, false).
+			Order("id DESC").
+			Offset(offset).
+			Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
@@ -567,6 +556,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				PayrollID:                emp.PayrollID,
 				FirstName:                emp.FirstName,
 				LastName:                 emp.LastName,
+				FullName:                 emp.FullName,
 				ContactNumber:            emp.ContactNumber,
 				Gender:                   emp.Gender,
 				Email:                    emp.Email,
@@ -574,13 +564,13 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				Username:                 emp.Username,
 				Password:                 emp.Password,
 				ShiftID:                  emp.ShiftID,
-				Shift:                    emp.Shift,
+				Shift:                    emp.Shift.ShiftName,
 				RoleID:                   emp.RoleID,
-				Role:                     emp.Role,
+				Role:                     emp.Role.RoleName,
 				DepartmentID:             emp.DepartmentID,
-				Department:               emp.Department,
+				Department:               emp.Department.DepartmentName,
 				DesignationID:            emp.DesignationID,
-				Designation:              emp.Designation,
+				Designation:              emp.Designation.DesignationName,
 				BasicSalary:              emp.BasicSalary,
 				HourlyRate:               emp.HourlyRate,
 				PaySlipType:              emp.PaySlipType,
@@ -676,7 +666,7 @@ func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var employee models.Employee
-		result = db.First(&employee, "id = ?", employeeID)
+		result = db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").First(&employee, "id = ?", employeeID)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -687,19 +677,20 @@ func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			PayrollID:                employee.PayrollID,
 			FirstName:                employee.FirstName,
 			LastName:                 employee.LastName,
+			FullName:                 employee.FullName,
 			ContactNumber:            employee.ContactNumber,
 			Gender:                   employee.Gender,
 			Email:                    employee.Email,
 			Username:                 employee.Username,
 			Password:                 employee.Password,
 			ShiftID:                  employee.ShiftID,
-			Shift:                    employee.Shift,
+			Shift:                    employee.Shift.ShiftName,
 			RoleID:                   employee.RoleID,
-			Role:                     employee.Role,
+			Role:                     employee.Role.RoleName,
 			DepartmentID:             employee.DepartmentID,
-			Department:               employee.Department,
+			Department:               employee.Department.DepartmentName,
 			DesignationID:            employee.DesignationID,
-			Designation:              employee.Designation,
+			Designation:              employee.Designation.DesignationName,
 			BasicSalary:              employee.BasicSalary,
 			HourlyRate:               employee.HourlyRate,
 			PaySlipType:              employee.PaySlipType,
@@ -779,7 +770,11 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 
 		var existingEmployee models.Employee
-		result = db.First(&existingEmployee, "id = ?", employeeID)
+		result = db.Preload("Shift").
+			Preload("Role").
+			Preload("Department").
+			Preload("Designation").
+			First(&existingEmployee, "id = ?", employeeID)
 		if result.Error != nil {
 			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"})
 		}
@@ -788,17 +783,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		if err := c.Bind(&updatedEmployee); err != nil {
 			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
 		}
-
-		/*
-			if updatedEmployee.FirstName != "" {
-				existingEmployee.FirstName = updatedEmployee.FirstName
-				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
-			}
-			if updatedEmployee.LastName != "" {
-				existingEmployee.LastName = updatedEmployee.LastName
-				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
-			}
-		*/
 
 		// Validate FirstName
 		if updatedEmployee.FirstName != "" {
@@ -817,12 +801,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.LastName = updatedEmployee.LastName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
-
-		/*
-			if updatedEmployee.ContactNumber != "" {
-				existingEmployee.ContactNumber = updatedEmployee.ContactNumber
-			}
-		*/
 
 		// Validate ContactNumber
 		if updatedEmployee.ContactNumber != "" {
@@ -849,12 +827,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.IsActive = updatedEmployee.IsActive
 		}
 
-		/*
-			if updatedEmployee.Email != "" {
-				existingEmployee.Email = updatedEmployee.Email
-			}
-		*/
-
 		// Validate Email
 		if updatedEmployee.Email != "" {
 			if !regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`).MatchString(updatedEmployee.Email) {
@@ -862,12 +834,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			}
 			existingEmployee.Email = updatedEmployee.Email
 		}
-
-		/*
-			if updatedEmployee.Username != "" {
-				existingEmployee.Username = updatedEmployee.Username
-			}
-		*/
 
 		if updatedEmployee.Username != "" {
 			// Validate username length
@@ -893,7 +859,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid shift name. Shift not found."})
 			}
 			existingEmployee.ShiftID = updatedEmployee.ShiftID
-			existingEmployee.Shift = officeShift.ShiftName
 		}
 		if updatedEmployee.RoleID != 0 {
 			var role models.Role
@@ -902,7 +867,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid role name. Role not found."})
 			}
 			existingEmployee.RoleID = updatedEmployee.RoleID
-			existingEmployee.Role = role.RoleName
 		}
 		if updatedEmployee.DepartmentID != 0 {
 			var department models.Department
@@ -911,7 +875,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid department name. Department not found."})
 			}
 			existingEmployee.DepartmentID = updatedEmployee.DepartmentID
-			existingEmployee.Department = department.DepartmentName
 		}
 		if updatedEmployee.DesignationID != 0 {
 			var designation models.Designation
@@ -920,7 +883,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid designation ID. Designation not found."})
 			}
 			existingEmployee.DesignationID = updatedEmployee.DesignationID
-			existingEmployee.Designation = designation.DesignationName
 		}
 		if updatedEmployee.BasicSalary != 0 {
 			existingEmployee.BasicSalary = updatedEmployee.BasicSalary
@@ -975,7 +937,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		if updatedEmployee.ZipPostalCode != "" {
 			existingEmployee.ZipPostalCode = updatedEmployee.ZipPostalCode
 		}
-
 		if updatedEmployee.Bio != "" {
 			existingEmployee.Bio = updatedEmployee.Bio
 		}
@@ -1053,13 +1014,13 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			Username:                 existingEmployee.Username,
 			Password:                 existingEmployee.Password,
 			ShiftID:                  existingEmployee.ShiftID,
-			Shift:                    existingEmployee.Shift,
+			Shift:                    existingEmployee.Shift.ShiftName,
 			RoleID:                   existingEmployee.RoleID,
-			Role:                     existingEmployee.Role,
+			Role:                     existingEmployee.Role.RoleName,
 			DepartmentID:             existingEmployee.DepartmentID,
-			Department:               existingEmployee.Department,
+			Department:               existingEmployee.Department.DepartmentName,
 			DesignationID:            existingEmployee.DesignationID,
-			Designation:              existingEmployee.Designation,
+			Designation:              existingEmployee.Designation.DesignationName,
 			BasicSalary:              existingEmployee.BasicSalary,
 			HourlyRate:               existingEmployee.HourlyRate,
 			PaySlipType:              existingEmployee.PaySlipType,
