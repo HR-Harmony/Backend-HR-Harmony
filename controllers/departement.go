@@ -296,7 +296,17 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updateData.DepartmentName != "" {
+				department.DepartmentName = updateData.DepartmentName
+			}
+		*/
+
 		if updateData.DepartmentName != "" {
+			if len(updateData.DepartmentName) < 5 || len(updateData.DepartmentName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updateData.DepartmentName) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Department name must be between 5 and 30 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			department.DepartmentName = updateData.DepartmentName
 		}
 
