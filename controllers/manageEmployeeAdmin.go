@@ -177,9 +177,7 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 				continue // Skip invalid shift
 			}
 
-			/*
-				employee.Shift = officeShift.ShiftName
-			*/
+			employee.Shift = officeShift.ShiftName
 
 			// Check if the role exists
 			var role models.Role
@@ -189,9 +187,7 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 				continue // Skip invalid role
 			}
 
-			/*
-				employee.Role = role.RoleName
-			*/
+			employee.Role = role.RoleName
 
 			// Check if the department exists
 			var department models.Department
@@ -201,9 +197,7 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 				continue // Skip invalid department
 			}
 
-			/*
-				employee.Department = department.DepartmentName
-			*/
+			employee.Department = department.DepartmentName
 
 			// Check if the designation exists
 			var designation models.Designation
@@ -213,10 +207,8 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 				continue // Skip invalid designation
 			}
 
-			/*
-				employee.Designation = designation.DesignationName
-				employee.DesignationID = designation.ID
-			*/
+			employee.Designation = designation.DesignationName
+			employee.DesignationID = designation.ID
 
 			// Check if username is unique
 			var existingUsername models.Employee
@@ -388,9 +380,7 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		/*
-			employee.Shift = officeShift.ShiftName
-		*/
+		employee.Shift = officeShift.ShiftName
 
 		// Check if the department exists
 		var role models.Role
@@ -400,9 +390,7 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		/*
-			employee.Role = role.RoleName
-		*/
+		employee.Role = role.RoleName
 
 		// Check if the department exists
 		var department models.Department
@@ -412,9 +400,7 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		/*
-			employee.Department = department.DepartmentName
-		*/
+		employee.Department = department.DepartmentName
 
 		// Check if the designation exists
 		var designation models.Designation
@@ -424,10 +410,8 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		/*
-			employee.Designation = designation.DesignationName
-			employee.DesignationID = designation.ID
-		*/
+		employee.Designation = designation.DesignationName
+		employee.DesignationID = designation.ID
 
 		// Check if username is unique
 		var existingUsername models.Employee
@@ -509,151 +493,6 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 	}
 }
 
-func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		tokenString := c.Request().Header.Get("Authorization")
-		if tokenString == "" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		authParts := strings.SplitN(tokenString, " ", 2)
-		if len(authParts) != 2 || authParts[0] != "Bearer" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		tokenString = authParts[1]
-
-		username, err := middleware.VerifyToken(tokenString, secretKey)
-		if err != nil {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		var adminUser models.Admin
-		result := db.Where("username = ?", username).First(&adminUser)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
-			return c.JSON(http.StatusNotFound, errorResponse)
-		}
-
-		if !adminUser.IsAdminHR {
-			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
-			return c.JSON(http.StatusForbidden, errorResponse)
-		}
-
-		page, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil || page <= 0 {
-			page = 1
-		}
-
-		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
-		if err != nil || perPage <= 0 {
-			perPage = 10
-		}
-
-		offset := (page - 1) * perPage
-
-		searching := c.QueryParam("searching")
-
-		var employees []models.Employee
-		query := db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").
-			Where("is_client = ? AND is_exit = ?", false, false).Order("id DESC").Offset(offset).Limit(perPage)
-
-		if searching != "" {
-			searchPattern := "%" + searching + "%"
-			query = query.Where(
-				db.Where("full_name ILIKE ?", searchPattern).
-					Or("designation ILIKE ?", searchPattern).
-					Or("contact_number ILIKE ?", searchPattern).
-					Or("gender ILIKE ?", searchPattern).
-					Or("country ILIKE ?", searchPattern).
-					Or("role ILIKE ?", searchPattern))
-		}
-
-		if err := query.Find(&employees).Error; err != nil {
-			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching employees"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
-
-		var employeesResponse []helper.EmployeeResponse
-		for _, emp := range employees {
-			employeeResponse := helper.EmployeeResponse{
-				ID:                       emp.ID,
-				PayrollID:                emp.PayrollID,
-				FirstName:                emp.FirstName,
-				LastName:                 emp.LastName,
-				FullName:                 emp.FullName,
-				ContactNumber:            emp.ContactNumber,
-				Gender:                   emp.Gender,
-				Email:                    emp.Email,
-				BirthdayDate:             emp.BirthdayDate,
-				Username:                 emp.Username,
-				Password:                 emp.Password,
-				ShiftID:                  emp.ShiftID,
-				Shift:                    emp.Shift.ShiftName, // Ambil nama shift dari struct Shift
-				RoleID:                   emp.RoleID,
-				Role:                     emp.Role.RoleName, // Ambil nama role dari struct Role
-				DepartmentID:             emp.DepartmentID,
-				Department:               emp.Department.DepartmentName, // Ambil nama department dari struct Department
-				DesignationID:            emp.DesignationID,
-				Designation:              emp.Designation.DesignationName, // Ambil nama designation dari struct Designation
-				BasicSalary:              emp.BasicSalary,
-				HourlyRate:               emp.HourlyRate,
-				PaySlipType:              emp.PaySlipType,
-				IsActive:                 emp.IsActive,
-				PaidStatus:               emp.PaidStatus,
-				MaritalStatus:            emp.MaritalStatus,
-				Religion:                 emp.Religion,
-				BloodGroup:               emp.BloodGroup,
-				Nationality:              emp.Nationality,
-				Citizenship:              emp.Citizenship,
-				BpjsKesehatan:            emp.BpjsKesehatan,
-				Address1:                 emp.Address1,
-				Address2:                 emp.Address2,
-				City:                     emp.City,
-				StateProvince:            emp.StateProvince,
-				ZipPostalCode:            emp.ZipPostalCode,
-				Bio:                      emp.Bio,
-				FacebookURL:              emp.FacebookURL,
-				InstagramURL:             emp.InstagramURL,
-				TwitterURL:               emp.TwitterURL,
-				LinkedinURL:              emp.LinkedinURL,
-				AccountTitle:             emp.AccountTitle,
-				AccountNumber:            emp.AccountNumber,
-				BankName:                 emp.BankName,
-				Iban:                     emp.Iban,
-				SwiftCode:                emp.SwiftCode,
-				BankBranch:               emp.BankBranch,
-				EmergencyContactFullName: emp.EmergencyContactFullName,
-				EmergencyContactNumber:   emp.EmergencyContactNumber,
-				EmergencyContactEmail:    emp.EmergencyContactEmail,
-				EmergencyContactAddress:  emp.EmergencyContactAddress,
-				CreatedAt:                emp.CreatedAt,
-				UpdatedAt:                emp.UpdatedAt,
-			}
-			employeesResponse = append(employeesResponse, employeeResponse)
-		}
-
-		var totalCount int64
-		db.Model(&models.Employee{}).Where("is_client = ?", false).Count(&totalCount)
-
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"code":      http.StatusOK,
-			"error":     false,
-			"message":   "All employees retrieved successfully",
-			"employees": employeesResponse,
-			"pagination": map[string]interface{}{
-				"total_count": totalCount,
-				"page":        page,
-				"per_page":    perPage,
-			},
-		})
-	}
-}
-
-/*
 func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -795,119 +634,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
-*/
 
-func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		tokenString := c.Request().Header.Get("Authorization")
-		if tokenString == "" {
-			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		authParts := strings.SplitN(tokenString, " ", 2)
-		if len(authParts) != 2 || authParts[0] != "Bearer" {
-			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		tokenString = authParts[1]
-
-		username, err := middleware.VerifyToken(tokenString, secretKey)
-		if err != nil {
-			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		var adminUser models.Admin
-		result := db.Where("username = ?", username).First(&adminUser)
-		if result.Error != nil {
-			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
-			return c.JSON(http.StatusNotFound, errorResponse)
-		}
-
-		if !adminUser.IsAdminHR {
-			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
-			return c.JSON(http.StatusForbidden, errorResponse)
-		}
-
-		employeeID := c.Param("id")
-		if employeeID == "" {
-			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee ID is missing"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
-		}
-
-		var employee models.Employee
-		result = db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").
-			First(&employee, "id = ?", employeeID)
-		if result.Error != nil {
-			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
-			return c.JSON(http.StatusNotFound, errorResponse)
-		}
-
-		employeeResponse := helper.EmployeeResponse{
-			ID:                       employee.ID,
-			PayrollID:                employee.PayrollID,
-			FirstName:                employee.FirstName,
-			LastName:                 employee.LastName,
-			ContactNumber:            employee.ContactNumber,
-			Gender:                   employee.Gender,
-			Email:                    employee.Email,
-			Username:                 employee.Username,
-			Password:                 employee.Password,
-			ShiftID:                  employee.ShiftID,
-			Shift:                    employee.Shift.ShiftName, // Ambil nama shift dari struct Shift
-			RoleID:                   employee.RoleID,
-			Role:                     employee.Role.RoleName, // Ambil nama role dari struct Role
-			DepartmentID:             employee.DepartmentID,
-			Department:               employee.Department.DepartmentName, // Ambil nama department dari struct Department
-			DesignationID:            employee.DesignationID,
-			Designation:              employee.Designation.DesignationName, // Ambil nama designation dari struct Designation
-			BasicSalary:              employee.BasicSalary,
-			HourlyRate:               employee.HourlyRate,
-			PaySlipType:              employee.PaySlipType,
-			IsActive:                 employee.IsActive,
-			PaidStatus:               employee.PaidStatus,
-			MaritalStatus:            employee.MaritalStatus,
-			Religion:                 employee.Religion,
-			BloodGroup:               employee.BloodGroup,
-			Nationality:              employee.Nationality,
-			Citizenship:              employee.Citizenship,
-			BpjsKesehatan:            employee.BpjsKesehatan,
-			Address1:                 employee.Address1,
-			Address2:                 employee.Address2,
-			City:                     employee.City,
-			StateProvince:            employee.StateProvince,
-			ZipPostalCode:            employee.ZipPostalCode,
-			Bio:                      employee.Bio,
-			FacebookURL:              employee.FacebookURL,
-			InstagramURL:             employee.InstagramURL,
-			TwitterURL:               employee.TwitterURL,
-			LinkedinURL:              employee.LinkedinURL,
-			AccountTitle:             employee.AccountTitle,
-			AccountNumber:            employee.AccountNumber,
-			BankName:                 employee.BankName,
-			Iban:                     employee.Iban,
-			SwiftCode:                employee.SwiftCode,
-			BankBranch:               employee.BankBranch,
-			EmergencyContactFullName: employee.EmergencyContactFullName,
-			EmergencyContactNumber:   employee.EmergencyContactNumber,
-			EmergencyContactEmail:    employee.EmergencyContactEmail,
-			EmergencyContactAddress:  employee.EmergencyContactAddress,
-			CreatedAt:                employee.CreatedAt,
-			UpdatedAt:                employee.UpdatedAt,
-		}
-
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"code":     http.StatusOK,
-			"error":    false,
-			"message":  "Employee retrieved successfully",
-			"employee": employeeResponse,
-		})
-	}
-}
-
-/*
 func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -1016,337 +743,7 @@ func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
-*/
 
-func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		tokenString := c.Request().Header.Get("Authorization")
-		if tokenString == "" {
-			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"})
-		}
-
-		authParts := strings.SplitN(tokenString, " ", 2)
-		if len(authParts) != 2 || authParts[0] != "Bearer" {
-			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"})
-		}
-
-		tokenString = authParts[1]
-
-		username, err := middleware.VerifyToken(tokenString, secretKey)
-		if err != nil {
-			return c.JSON(http.StatusUnauthorized, helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"})
-		}
-
-		var adminUser models.Admin
-		result := db.Where("username = ?", username).First(&adminUser)
-		if result.Error != nil {
-			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"})
-		}
-
-		if !adminUser.IsAdminHR {
-			return c.JSON(http.StatusForbidden, helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"})
-		}
-
-		employeeID := c.Param("id")
-		if employeeID == "" {
-			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Employee ID is missing"})
-		}
-
-		var existingEmployee models.Employee
-		result = db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").
-			First(&existingEmployee, "id = ?", employeeID)
-		if result.Error != nil {
-			return c.JSON(http.StatusNotFound, helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"})
-		}
-
-		var updatedEmployee models.Employee
-		if err := c.Bind(&updatedEmployee); err != nil {
-			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
-		}
-
-		// Validate and update fields
-		if updatedEmployee.FirstName != "" {
-			if len(updatedEmployee.FirstName) < 3 || len(updatedEmployee.FirstName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.FirstName) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "First name must be between 3 and 30 characters and contain only letters"})
-			}
-			existingEmployee.FirstName = updatedEmployee.FirstName
-			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
-		}
-
-		if updatedEmployee.LastName != "" {
-			if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 30 characters and contain only letters"})
-			}
-			existingEmployee.LastName = updatedEmployee.LastName
-			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
-		}
-
-		if updatedEmployee.ContactNumber != "" {
-			if len(updatedEmployee.ContactNumber) < 10 || len(updatedEmployee.ContactNumber) > 14 || !regexp.MustCompile(`^[0-9]+$`).MatchString(updatedEmployee.ContactNumber) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Contact number must be between 10 and 14 digits and contain only numbers"})
-			}
-			existingEmployee.ContactNumber = updatedEmployee.ContactNumber
-		}
-
-		if updatedEmployee.Gender != "" {
-			existingEmployee.Gender = updatedEmployee.Gender
-		}
-
-		if updatedEmployee.BirthdayDate != "" {
-			startDate, err := time.Parse("2006-01-02", updatedEmployee.BirthdayDate)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"})
-			}
-			existingEmployee.BirthdayDate = startDate.Format("2006-01-02")
-		}
-
-		if updatedEmployee.IsActive != existingEmployee.IsActive {
-			existingEmployee.IsActive = updatedEmployee.IsActive
-		}
-
-		if updatedEmployee.Email != "" {
-			if !regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`).MatchString(updatedEmployee.Email) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid email format"})
-			}
-			existingEmployee.Email = updatedEmployee.Email
-		}
-
-		if updatedEmployee.Username != "" {
-			if len(updatedEmployee.Username) < 5 || len(updatedEmployee.Username) > 15 || !regexp.MustCompile(`^[a-zA-Z0-9_]+$`).MatchString(updatedEmployee.Username) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Username must be between 5 and 15 characters and contain only letters and numbers"})
-			}
-			existingEmployee.Username = updatedEmployee.Username
-		}
-
-		if updatedEmployee.Password != "" {
-			// Hash the updated password
-			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedEmployee.Password), bcrypt.DefaultCost)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to hash password"})
-			}
-			existingEmployee.Password = string(hashedPassword)
-		}
-
-		if updatedEmployee.ShiftID != 0 {
-			var officeShift models.Shift
-			result = db.First(&officeShift, "id = ?", updatedEmployee.ShiftID)
-			if result.Error != nil {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid shift name. Shift not found."})
-			}
-			existingEmployee.ShiftID = updatedEmployee.ShiftID
-		}
-
-		if updatedEmployee.RoleID != 0 {
-			var role models.Role
-			result = db.First(&role, "id = ?", updatedEmployee.RoleID)
-			if result.Error != nil {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid role name. Role not found."})
-			}
-			existingEmployee.RoleID = updatedEmployee.RoleID
-		}
-
-		if updatedEmployee.DepartmentID != 0 {
-			var department models.Department
-			result = db.First(&department, "id = ?", updatedEmployee.DepartmentID)
-			if result.Error != nil {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid department name. Department not found."})
-			}
-			existingEmployee.DepartmentID = updatedEmployee.DepartmentID
-		}
-
-		if updatedEmployee.DesignationID != 0 {
-			var designation models.Designation
-			result = db.First(&designation, "id = ?", updatedEmployee.DesignationID)
-			if result.Error != nil {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid designation ID. Designation not found."})
-			}
-			existingEmployee.DesignationID = updatedEmployee.DesignationID
-		}
-
-		if updatedEmployee.BasicSalary != 0 {
-			existingEmployee.BasicSalary = updatedEmployee.BasicSalary
-		}
-
-		if updatedEmployee.HourlyRate != 0 {
-			existingEmployee.HourlyRate = updatedEmployee.HourlyRate
-		}
-
-		if updatedEmployee.PaySlipType != "" {
-			existingEmployee.PaySlipType = updatedEmployee.PaySlipType
-		}
-
-		if updatedEmployee.MaritalStatus != "" {
-			existingEmployee.MaritalStatus = updatedEmployee.MaritalStatus
-		}
-
-		if updatedEmployee.Religion != "" {
-			existingEmployee.Religion = updatedEmployee.Religion
-		}
-
-		if updatedEmployee.BloodGroup != "" {
-			existingEmployee.BloodGroup = updatedEmployee.BloodGroup
-		}
-
-		if updatedEmployee.Nationality != "" {
-			existingEmployee.Nationality = updatedEmployee.Nationality
-		}
-
-		if updatedEmployee.Citizenship != "" {
-			existingEmployee.Citizenship = updatedEmployee.Citizenship
-		}
-
-		if updatedEmployee.BpjsKesehatan != "" {
-			existingEmployee.BpjsKesehatan = updatedEmployee.BpjsKesehatan
-		}
-
-		if updatedEmployee.Address1 != "" {
-			existingEmployee.Address1 = updatedEmployee.Address1
-		}
-
-		if updatedEmployee.Address2 != "" {
-			existingEmployee.Address2 = updatedEmployee.Address2
-		}
-
-		if updatedEmployee.City != "" {
-			existingEmployee.City = updatedEmployee.City
-		}
-
-		if updatedEmployee.StateProvince != "" {
-			existingEmployee.StateProvince = updatedEmployee.StateProvince
-		}
-
-		if updatedEmployee.ZipPostalCode != "" {
-			existingEmployee.ZipPostalCode = updatedEmployee.ZipPostalCode
-		}
-
-		if updatedEmployee.Bio != "" {
-			existingEmployee.Bio = updatedEmployee.Bio
-		}
-
-		if updatedEmployee.FacebookURL != "" {
-			existingEmployee.FacebookURL = updatedEmployee.FacebookURL
-		}
-
-		if updatedEmployee.InstagramURL != "" {
-			existingEmployee.InstagramURL = updatedEmployee.InstagramURL
-		}
-
-		if updatedEmployee.TwitterURL != "" {
-			existingEmployee.TwitterURL = updatedEmployee.TwitterURL
-		}
-
-		if updatedEmployee.LinkedinURL != "" {
-			existingEmployee.LinkedinURL = updatedEmployee.LinkedinURL
-		}
-
-		if updatedEmployee.AccountTitle != "" {
-			existingEmployee.AccountTitle = updatedEmployee.AccountTitle
-		}
-
-		if updatedEmployee.AccountNumber != "" {
-			existingEmployee.AccountNumber = updatedEmployee.AccountNumber
-		}
-
-		if updatedEmployee.BankName != "" {
-			existingEmployee.BankName = updatedEmployee.BankName
-		}
-
-		if updatedEmployee.Iban != "" {
-			existingEmployee.Iban = updatedEmployee.Iban
-		}
-
-		if updatedEmployee.SwiftCode != "" {
-			existingEmployee.SwiftCode = updatedEmployee.SwiftCode
-		}
-
-		if updatedEmployee.BankBranch != "" {
-			existingEmployee.BankBranch = updatedEmployee.BankBranch
-		}
-
-		if updatedEmployee.EmergencyContactFullName != "" {
-			existingEmployee.EmergencyContactFullName = updatedEmployee.EmergencyContactFullName
-		}
-
-		if updatedEmployee.EmergencyContactNumber != "" {
-			existingEmployee.EmergencyContactNumber = updatedEmployee.EmergencyContactNumber
-		}
-
-		if updatedEmployee.EmergencyContactEmail != "" {
-			existingEmployee.EmergencyContactEmail = updatedEmployee.EmergencyContactEmail
-		}
-
-		if updatedEmployee.EmergencyContactAddress != "" {
-			existingEmployee.EmergencyContactAddress = updatedEmployee.EmergencyContactAddress
-		}
-
-		if err := db.Save(&existingEmployee).Error; err != nil {
-			return c.JSON(http.StatusInternalServerError, helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to update employee data"})
-		}
-
-		// Exclude PayrollInfo from the response
-		employeeWithoutPayrollInfo := helper.EmployeeResponse{
-			ID:                       existingEmployee.ID,
-			PayrollID:                existingEmployee.PayrollID,
-			FirstName:                existingEmployee.FirstName,
-			LastName:                 existingEmployee.LastName,
-			FullName:                 existingEmployee.FullName,
-			ContactNumber:            existingEmployee.ContactNumber,
-			Gender:                   existingEmployee.Gender,
-			Email:                    existingEmployee.Email,
-			Username:                 existingEmployee.Username,
-			ShiftID:                  existingEmployee.ShiftID,
-			Shift:                    existingEmployee.Shift.ShiftName, // Include shift name
-			RoleID:                   existingEmployee.RoleID,
-			Role:                     existingEmployee.Role.RoleName, // Include role name
-			DepartmentID:             existingEmployee.DepartmentID,
-			Department:               existingEmployee.Department.DepartmentName, // Include department name
-			DesignationID:            existingEmployee.DesignationID,
-			Designation:              existingEmployee.Designation.DesignationName, // Include designation name
-			BasicSalary:              existingEmployee.BasicSalary,
-			HourlyRate:               existingEmployee.HourlyRate,
-			PaySlipType:              existingEmployee.PaySlipType,
-			IsActive:                 existingEmployee.IsActive,
-			PaidStatus:               existingEmployee.PaidStatus,
-			MaritalStatus:            existingEmployee.MaritalStatus,
-			Religion:                 existingEmployee.Religion,
-			BloodGroup:               existingEmployee.BloodGroup,
-			Nationality:              existingEmployee.Nationality,
-			Citizenship:              existingEmployee.Citizenship,
-			BpjsKesehatan:            existingEmployee.BpjsKesehatan,
-			Address1:                 existingEmployee.Address1,
-			Address2:                 existingEmployee.Address2,
-			City:                     existingEmployee.City,
-			StateProvince:            existingEmployee.StateProvince,
-			ZipPostalCode:            existingEmployee.ZipPostalCode,
-			Bio:                      existingEmployee.Bio,
-			FacebookURL:              existingEmployee.FacebookURL,
-			InstagramURL:             existingEmployee.InstagramURL,
-			TwitterURL:               existingEmployee.TwitterURL,
-			LinkedinURL:              existingEmployee.LinkedinURL,
-			AccountTitle:             existingEmployee.AccountTitle,
-			AccountNumber:            existingEmployee.AccountNumber,
-			BankName:                 existingEmployee.BankName,
-			Iban:                     existingEmployee.Iban,
-			SwiftCode:                existingEmployee.SwiftCode,
-			BankBranch:               existingEmployee.BankBranch,
-			EmergencyContactFullName: existingEmployee.EmergencyContactFullName,
-			EmergencyContactNumber:   existingEmployee.EmergencyContactNumber,
-			EmergencyContactEmail:    existingEmployee.EmergencyContactEmail,
-			EmergencyContactAddress:  existingEmployee.EmergencyContactAddress,
-			CreatedAt:                existingEmployee.CreatedAt,
-			UpdatedAt:                existingEmployee.UpdatedAt,
-		}
-
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"code":     http.StatusOK,
-			"error":    false,
-			"message":  "Employee account updated successfully",
-			"employee": employeeWithoutPayrollInfo,
-		})
-	}
-}
-
-/*
 func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -1392,6 +789,17 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
 		}
 
+		/*
+			if updatedEmployee.FirstName != "" {
+				existingEmployee.FirstName = updatedEmployee.FirstName
+				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+			}
+			if updatedEmployee.LastName != "" {
+				existingEmployee.LastName = updatedEmployee.LastName
+				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+			}
+		*/
+
 		// Validate FirstName
 		if updatedEmployee.FirstName != "" {
 			if len(updatedEmployee.FirstName) < 3 || len(updatedEmployee.FirstName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.FirstName) {
@@ -1409,6 +817,12 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.LastName = updatedEmployee.LastName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
+
+		/*
+			if updatedEmployee.ContactNumber != "" {
+				existingEmployee.ContactNumber = updatedEmployee.ContactNumber
+			}
+		*/
 
 		// Validate ContactNumber
 		if updatedEmployee.ContactNumber != "" {
@@ -1435,6 +849,11 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.IsActive = updatedEmployee.IsActive
 		}
 
+		/*
+			if updatedEmployee.Email != "" {
+				existingEmployee.Email = updatedEmployee.Email
+			}
+		*/
 
 		// Validate Email
 		if updatedEmployee.Email != "" {
@@ -1444,6 +863,11 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.Email = updatedEmployee.Email
 		}
 
+		/*
+			if updatedEmployee.Username != "" {
+				existingEmployee.Username = updatedEmployee.Username
+			}
+		*/
 
 		if updatedEmployee.Username != "" {
 			// Validate username length
@@ -1470,7 +894,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			}
 			existingEmployee.ShiftID = updatedEmployee.ShiftID
 			existingEmployee.Shift = officeShift.ShiftName
-
 		}
 		if updatedEmployee.RoleID != 0 {
 			var role models.Role
@@ -1480,7 +903,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			}
 			existingEmployee.RoleID = updatedEmployee.RoleID
 			existingEmployee.Role = role.RoleName
-
 		}
 		if updatedEmployee.DepartmentID != 0 {
 			var department models.Department
@@ -1490,7 +912,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			}
 			existingEmployee.DepartmentID = updatedEmployee.DepartmentID
 			existingEmployee.Department = department.DepartmentName
-
 		}
 		if updatedEmployee.DesignationID != 0 {
 			var designation models.Designation
@@ -1500,7 +921,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			}
 			existingEmployee.DesignationID = updatedEmployee.DesignationID
 			existingEmployee.Designation = designation.DesignationName
-
 		}
 		if updatedEmployee.BasicSalary != 0 {
 			existingEmployee.BasicSalary = updatedEmployee.BasicSalary
@@ -1683,7 +1103,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		})
 	}
 }
-*/
 
 func DeleteEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
