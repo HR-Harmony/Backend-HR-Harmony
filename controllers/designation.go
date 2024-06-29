@@ -7,7 +7,6 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -59,8 +58,8 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		// Validate RoleName using regexp
-		if len(designation.DesignationName) < 5 || len(designation.DesignationName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(designation.DesignationName) {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation name must be between 5 and 30 characters and contain only letters"}
+		if len(designation.DesignationName) < 5 || len(designation.DesignationName) > 30 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation name must be between 5 and 30 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
@@ -305,8 +304,8 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		*/
 
 		if updatedDesignation.DesignationName != "" {
-			if len(updatedDesignation.DesignationName) < 5 || len(updatedDesignation.DesignationName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedDesignation.DesignationName) {
-				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation name must be between 5 and 30 characters and can only be letters"}
+			if len(updatedDesignation.DesignationName) < 5 || len(updatedDesignation.DesignationName) > 30 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation name must be between 5 and 30 characters"}
 				return c.JSON(http.StatusBadRequest, errorResponse)
 			}
 			existingDesignation.DesignationName = updatedDesignation.DesignationName
