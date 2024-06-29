@@ -53,18 +53,40 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		// Check each required field individually and return specific error messages
-		if announcement.Title == "" {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title is required"}
+
+		/*
+			if announcement.Title == "" {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title is required"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			if announcement.Summary == "" {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary is required"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			if announcement.Description == "" {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description is required"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+		*/
+
+		// Validate Title
+		if len(announcement.Title) < 5 || len(announcement.Title) > 50 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 50 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
-		if announcement.Summary == "" {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary is required"}
+
+		// Validate Summary
+		if len(announcement.Summary) < 5 || len(announcement.Summary) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 100 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
-		if announcement.Description == "" {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description is required"}
+
+		// Validate Description
+		if len(announcement.Description) < 5 || len(announcement.Description) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description must be between 5 and 3000 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
+
 		if announcement.StartDate == "" {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "StartDate is required"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
@@ -381,7 +403,17 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedAnnouncement.Title != "" {
+				announcement.Title = updatedAnnouncement.Title
+			}
+		*/
+
 		if updatedAnnouncement.Title != "" {
+			if len(updatedAnnouncement.Title) < 5 || len(updatedAnnouncement.Title) > 50 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 50 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			announcement.Title = updatedAnnouncement.Title
 		}
 
@@ -396,11 +428,29 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			announcement.DepartmentName = newDepartment.DepartmentName
 		}
 
+		/*
+			if updatedAnnouncement.Summary != "" {
+				announcement.Summary = updatedAnnouncement.Summary
+			}
+
+			if updatedAnnouncement.Description != "" {
+				announcement.Description = updatedAnnouncement.Description
+			}
+		*/
+
 		if updatedAnnouncement.Summary != "" {
+			if len(updatedAnnouncement.Summary) < 5 || len(updatedAnnouncement.Summary) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 100 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			announcement.Summary = updatedAnnouncement.Summary
 		}
 
 		if updatedAnnouncement.Description != "" {
+			if len(updatedAnnouncement.Description) < 5 || len(updatedAnnouncement.Description) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description must be between 5 and 3000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			announcement.Description = updatedAnnouncement.Description
 		}
 
