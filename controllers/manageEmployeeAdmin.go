@@ -584,6 +584,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				PayrollID:                emp.PayrollID,
 				FirstName:                emp.FirstName,
 				LastName:                 emp.LastName,
+				FullName:                 emp.FullName,
 				ContactNumber:            emp.ContactNumber,
 				Gender:                   emp.Gender,
 				Email:                    emp.Email,
