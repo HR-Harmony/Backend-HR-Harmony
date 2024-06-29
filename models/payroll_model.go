@@ -44,4 +44,6 @@ type RequestLoan struct {
 	Status                string    `json:"status"`
 	Remaining             int       `json:"remaining"`
 	CreatedAt             time.Time `json:"created_at"`
+
+	Employee Employee `gorm:"foreignKey:EmployeeID"` // Menambahkan hubungan dengan Employee
 }
