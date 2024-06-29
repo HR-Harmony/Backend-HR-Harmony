@@ -296,6 +296,11 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		var attendance []models.Attendance
 		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&attendance)
 
+		// Setelah memuat data Attendance, atur FullNameEmployee berdasarkan Employee.FullName
+		for i := range attendance {
+			attendance[i].FullNameEmployee = attendance[i].Employee.FullName
+		}
+
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,
@@ -353,6 +358,8 @@ func GetAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Attendance not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
+
+		attendance.FullNameEmployee = attendance.Employee.FullName
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
