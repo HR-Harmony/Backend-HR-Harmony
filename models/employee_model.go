@@ -15,16 +15,16 @@ type Employee struct {
 	Username      string `json:"username"`
 	Password      string `json:"password"`
 	ShiftID       uint   `json:"shift_id"`
-	Shift         Shift  `gorm:"foreignKey:ShiftID" json:"shift"`
+	Shift         Shift  `gorm:"foreignKey:ShiftID; constraint:OnDelete:RESTRICT" json:"shift"`
 	//Shift         string      `json:"shift"`
 	RoleID uint `json:"role_id"`
-	Role   Role `gorm:"foreignKey:RoleID" json:"role"`
+	Role   Role `gorm:"foreignKey:RoleID; constraint:OnDelete:RESTRICT" json:"role"`
 	//Role          string      `json:"role"`
 	DepartmentID uint       `json:"department_id"`
-	Department   Department `gorm:"foreignKey:DepartmentID" json:"department"`
+	Department   Department `gorm:"foreignKey:DepartmentID; constraint:OnDelete:RESTRICT" json:"department"`
 	//Department    string      `json:"department"`
 	DesignationID uint        `json:"designation_id"`
-	Designation   Designation `gorm:"foreignKey:DesignationID" json:"designation"`
+	Designation   Designation `gorm:"foreignKey:DesignationID; constraint:OnDelete:RESTRICT" json:"designation"`
 	//Designation   string      `json:"designation"`
 	BasicSalary float64     `json:"basic_salary"`
 	HourlyRate  float64     `json:"hourly_rate"`
