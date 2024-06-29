@@ -351,7 +351,7 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		if len(employee.Username) < 5 || len(employee.Username) > 15 || !regexp.MustCompile(`^[a-zA-Z0-9\s]+$`).MatchString(employee.Username) {
+		if len(employee.Username) < 5 || len(employee.Username) > 15 || !regexp.MustCompile(`^[a-zA-Z0-9_]+$`).MatchString(employee.Username) {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Username must be between 5 and 15 characters and contain only letters and numbers"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
@@ -871,8 +871,8 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		if updatedEmployee.Username != "" {
 			// Validate username length
-			if len(updatedEmployee.Username) < 5 || len(updatedEmployee.Username) > 15 {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Username must be between 5 and 15 characters"})
+			if len(updatedEmployee.Username) < 5 || len(updatedEmployee.Username) > 15 || !regexp.MustCompile(`^[a-zA-Z0-9_]+$`).MatchString(updatedEmployee.Username) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Username must be between 5 and 15 characters and contain only letters and numbers"})
 			}
 			existingEmployee.Username = updatedEmployee.Username
 		}

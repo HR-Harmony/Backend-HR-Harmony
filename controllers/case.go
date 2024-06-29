@@ -7,7 +7,6 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -58,8 +57,8 @@ func CreateCaseByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		if len(newCase.CaseName) < 5 || len(newCase.CaseName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(newCase.CaseName) {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Case name must be between 5 and 30 characters and contain only letters"}
+		if len(newCase.CaseName) < 5 || len(newCase.CaseName) > 30 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Case name must be between 5 and 30 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
@@ -264,8 +263,8 @@ func UpdateCaseByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		*/
 
 		if updatedCase.CaseName != "" {
-			if len(updatedCase.CaseName) < 5 || len(updatedCase.CaseName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedCase.CaseName) {
-				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Case name must be between 5 and 30 characters and contain only letters"}
+			if len(updatedCase.CaseName) < 5 || len(updatedCase.CaseName) > 30 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Case name must be between 5 and 30 characters"}
 				return c.JSON(http.StatusBadRequest, errorResponse)
 			}
 			existingCase.CaseName = updatedCase.CaseName
