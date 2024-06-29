@@ -16,7 +16,7 @@ type Employee struct {
 	Password      string `json:"password"`
 	ShiftID       uint   `json:"shift_id"`
 	Shift         Shift  `gorm:"foreignKey:ShiftID" json:"shift"`
-	//Shift         string      `json:"shift"`
+	//Shift  string `json:"shift"`
 	RoleID uint `json:"role_id"`
 	Role   Role `gorm:"foreignKey:RoleID" json:"role"`
 	//Role          string      `json:"role"`
