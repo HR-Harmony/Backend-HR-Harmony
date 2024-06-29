@@ -53,6 +53,16 @@ func CreateHelpdeskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(helpdesk.Subject) < 5 || len(helpdesk.Subject) > 30 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Helpdesk subject must be between 5 and 30 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(helpdesk.Description) < 5 || len(helpdesk.Description) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Helpdesk description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		helpdesk.EmployeeID = employee.ID
 		helpdesk.EmployeeUsername = employee.Username
 		helpdesk.EmployeeFullName = employee.FirstName + " " + employee.LastName
@@ -246,7 +256,17 @@ func UpdateHelpdeskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedHelpdesk.Subject != "" {
+				helpdesk.Subject = updatedHelpdesk.Subject
+			}
+		*/
+
 		if updatedHelpdesk.Subject != "" {
+			if len(updatedHelpdesk.Subject) < 5 || len(updatedHelpdesk.Subject) > 30 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Helpdesk subject must be between 5 and 30 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			helpdesk.Subject = updatedHelpdesk.Subject
 		}
 
@@ -265,7 +285,17 @@ func UpdateHelpdeskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			helpdesk.Priority = updatedHelpdesk.Priority
 		}
 
+		/*
+			if updatedHelpdesk.Description != "" {
+				helpdesk.Description = updatedHelpdesk.Description
+			}
+		*/
+
 		if updatedHelpdesk.Description != "" {
+			if len(updatedHelpdesk.Description) < 5 || len(updatedHelpdesk.Description) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Helpdesk description must be between 5 and 3000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			helpdesk.Description = updatedHelpdesk.Description
 		}
 

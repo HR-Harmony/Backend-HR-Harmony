@@ -57,6 +57,21 @@ func CreateProjectByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(project.Title) < 5 || len(project.Title) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(project.Summary) < 5 || len(project.Summary) > 300 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 300 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(project.Description) < 5 || len(project.Description) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		startDate, err := time.Parse("2006-01-02", project.StartDate)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid StartDate format"}
@@ -294,7 +309,17 @@ func UpdateProjectByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedProject.Title != "" {
+				existingProject.Title = updatedProject.Title
+			}
+		*/
+
 		if updatedProject.Title != "" {
+			if len(updatedProject.Title) < 5 || len(updatedProject.Title) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			existingProject.Title = updatedProject.Title
 		}
 
@@ -327,7 +352,17 @@ func UpdateProjectByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			existingProject.EndDate = updatedProject.EndDate
 		}
 
+		/*
+			if updatedProject.Summary != "" {
+				existingProject.Summary = updatedProject.Summary
+			}
+		*/
+
 		if updatedProject.Summary != "" {
+			if len(updatedProject.Summary) < 5 || len(updatedProject.Summary) > 300 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 300"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			existingProject.Summary = updatedProject.Summary
 		}
 
@@ -343,7 +378,17 @@ func UpdateProjectByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			existingProject.DepartmentName = department.DepartmentName
 		}
 
+		/*
+			if updatedProject.Description != "" {
+				existingProject.Description = updatedProject.Description
+			}
+		*/
+
 		if updatedProject.Description != "" {
+			if len(updatedProject.Description) < 5 || len(updatedProject.Description) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description must be between 5 and 3000"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			existingProject.Description = updatedProject.Description
 		}
 

@@ -580,6 +580,11 @@ func CreateRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(requestLoan.Reason) < 5 || len(requestLoan.Reason) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Reason must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		requestLoan.Status = "Pending"
 		requestLoan.Emi = requestLoan.MonthlyInstallmentAmt
 		requestLoan.Remaining = requestLoan.Amount - requestLoan.Paid
@@ -832,9 +837,21 @@ func UpdateRequestLoanByIDByEmployee(db *gorm.DB, secretKey []byte) echo.Handler
 		if updatedData.MonthlyInstallmentAmt != 0 {
 			requestLoan.MonthlyInstallmentAmt = updatedData.MonthlyInstallmentAmt
 		}
+
+		/*
+			if updatedData.Reason != "" {
+				requestLoan.Reason = updatedData.Reason
+			}
+		*/
+
 		if updatedData.Reason != "" {
+			if len(updatedData.Reason) < 5 || len(updatedData.Reason) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Reason must be between 5 and 3000 characters and contain only letters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			requestLoan.Reason = updatedData.Reason
 		}
+
 		if updatedData.Emi != 0 {
 			requestLoan.Emi = updatedData.Emi
 		}

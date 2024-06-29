@@ -306,7 +306,7 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if updatedDesignation.DesignationName != "" {
 			if len(updatedDesignation.DesignationName) < 5 || len(updatedDesignation.DesignationName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedDesignation.DesignationName) {
-				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation name must be between 5 and 30 characters"}
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation name must be between 5 and 30 characters and can only be letters"}
 				return c.JSON(http.StatusBadRequest, errorResponse)
 			}
 			existingDesignation.DesignationName = updatedDesignation.DesignationName
@@ -319,7 +319,7 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		*/
 
 		if updatedDesignation.Description != "" {
-			if len(updatedDesignation.Description) < 5 || len(updatedDesignation.Description) > 3000 || !regexp.MustCompile(`^[\w\s\p{P}]+$`).MatchString(updatedDesignation.Description) {
+			if len(updatedDesignation.Description) < 5 || len(updatedDesignation.Description) > 3000 {
 				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation description must be between 5 and 3000 characters"}
 				return c.JSON(http.StatusBadRequest, errorResponse)
 			}

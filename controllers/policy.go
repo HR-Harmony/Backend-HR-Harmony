@@ -57,6 +57,16 @@ func CreatePolicyByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(policy.Title) < 5 || len(policy.Title) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Policy title must be between 5 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(policy.Description) < 5 || len(policy.Description) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Policy description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		currentTime := time.Now()
 		policy.CreatedAt = &currentTime
 
@@ -266,11 +276,31 @@ func UpdatePolicyByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedPolicy.Title != "" {
+				existingPolicy.Title = updatedPolicy.Title
+			}
+		*/
+
 		if updatedPolicy.Title != "" {
+			if len(updatedPolicy.Title) < 5 || len(updatedPolicy.Title) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Policy title must be between 5 and 100 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			existingPolicy.Title = updatedPolicy.Title
 		}
 
+		/*
+			if updatedPolicy.Description != "" {
+				existingPolicy.Description = updatedPolicy.Description
+			}
+		*/
+
 		if updatedPolicy.Description != "" {
+			if len(updatedPolicy.Title) < 5 || len(updatedPolicy.Title) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Policy description must be between 5 and 3000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			existingPolicy.Description = updatedPolicy.Description
 		}
 

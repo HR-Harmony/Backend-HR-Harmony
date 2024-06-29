@@ -161,6 +161,21 @@ func CreateTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		if len(task.Title) < 5 || len(task.Title) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(task.Summary) < 5 || len(task.Summary) > 300 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 300 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(task.Description) < 5 || len(task.Description) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		startDate, err := time.Parse("2006-01-02", task.StartDate)
 		if err != nil {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid StartDate format"}
@@ -360,9 +375,20 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedTask.Title != "" {
+				existingTask.Title = updatedTask.Title
+			}
+		*/
+
 		if updatedTask.Title != "" {
+			if len(updatedTask.Title) < 5 || len(updatedTask.Title) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			existingTask.Title = updatedTask.Title
 		}
+
 		if updatedTask.StartDate != "" {
 			startDate, err := time.Parse("2006-01-02", updatedTask.StartDate)
 			if err != nil {
@@ -392,10 +418,32 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 			existingTask.ProjectName = existingProject.Title
 		}
+
+		/*
+			if updatedTask.Summary != "" {
+				existingTask.Summary = updatedTask.Summary
+			}
+		*/
+
 		if updatedTask.Summary != "" {
+			if len(updatedTask.Summary) < 5 || len(updatedTask.Summary) > 300 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 300"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			existingTask.Summary = updatedTask.Summary
 		}
+
+		/*
+			if updatedTask.Description != "" {
+				existingTask.Description = updatedTask.Description
+			}
+		*/
+
 		if updatedTask.Description != "" {
+			if len(updatedTask.Description) < 5 || len(updatedTask.Description) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description must be between 5 and 3000"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			existingTask.Description = updatedTask.Description
 		}
 

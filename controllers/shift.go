@@ -7,6 +7,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -54,6 +55,12 @@ func CreateShiftByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		if shift.ShiftName == "" {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Shift name is required"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Validate RoleName using regexp
+		if len(shift.ShiftName) < 5 || len(shift.ShiftName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(shift.ShiftName) {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Shift name must be between 5 and 30 characters and contain only letters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
@@ -270,9 +277,20 @@ func EditShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			if updatedShift.ShiftName != "" {
+				shift.ShiftName = updatedShift.ShiftName
+			}
+		*/
+
 		if updatedShift.ShiftName != "" {
+			if len(updatedShift.ShiftName) < 5 || len(updatedShift.ShiftName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedShift.ShiftName) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Shift name must be between 5 and 30 characters and can only be letters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
 			shift.ShiftName = updatedShift.ShiftName
 		}
+
 		if updatedShift.MondayInTime != "" {
 			shift.MondayInTime = updatedShift.MondayInTime
 		}

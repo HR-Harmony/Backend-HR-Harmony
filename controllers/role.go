@@ -280,12 +280,24 @@ func EditRoleByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		if updatedRole.RoleName == "" {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Role name is required"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
+		/*
+			if updatedRole.RoleName == "" {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Role name is required"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+		*/
+
+		if updatedRole.RoleName != "" {
+			if len(updatedRole.RoleName) < 5 || len(updatedRole.RoleName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedRole.RoleName) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Roll name must be between 5 and 30 characters and contain only letters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			role.RoleName = updatedRole.RoleName
 		}
 
-		role.RoleName = updatedRole.RoleName
+		/*
+			role.RoleName = updatedRole.RoleName
+		*/
 		role.UpdatedAt = time.Now()
 
 		db.Save(&role)
