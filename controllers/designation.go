@@ -323,7 +323,7 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Designation description must be between 5 and 3000 characters"}
 				return c.JSON(http.StatusBadRequest, errorResponse)
 			}
-			existingDesignation.DesignationName = updatedDesignation.DesignationName
+			existingDesignation.Description = updatedDesignation.Description
 		}
 
 		db.Save(&existingDesignation)
