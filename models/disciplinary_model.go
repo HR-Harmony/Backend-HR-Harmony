@@ -15,7 +15,6 @@ type Disciplinary struct {
 	UsernameEmployee string     `json:"username_employee"`
 	FullNameEmployee string     `json:"full_name_employee"`
 	CaseID           uint       `json:"case_id"`
-	Case             Case       `gorm:"foreignKey:CaseID;references:ID" json:"case"`
 	CaseName         string     `json:"case_name"`
 	Subject          string     `json:"subject"`
 	CaseDate         string     `json:"case_date"`

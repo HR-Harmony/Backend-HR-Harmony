@@ -12,6 +12,7 @@ import (
 )
 
 // Admin
+
 func GetAllShiftsByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -291,15 +292,18 @@ func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.Han
 		}
 
 		var employees []models.Employee
-		query := db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").
-			Where("is_client = ? AND is_exit = ?", false, false)
+		query := db.Where("is_client = ? AND is_exit = ?", false, false)
 
 		searching := c.QueryParam("searching")
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
 			query = query.Where(
-				"full_name ILIKE ? OR designation ILIKE ? OR contact_number ILIKE ? OR gender ILIKE ? OR country ILIKE ? OR role ILIKE ?",
-				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern)
+				db.Where("full_name ILIKE ?", searchPattern).
+					Or("designation ILIKE ?", searchPattern).
+					Or("contact_number ILIKE ?", searchPattern).
+					Or("gender ILIKE ?", searchPattern).
+					Or("country ILIKE ?", searchPattern).
+					Or("role ILIKE ?", searchPattern))
 		}
 
 		if err := query.Find(&employees).Error; err != nil {
@@ -321,13 +325,13 @@ func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.Han
 				Username:                 emp.Username,
 				Password:                 emp.Password,
 				ShiftID:                  emp.ShiftID,
-				Shift:                    emp.Shift.ShiftName,
+				Shift:                    emp.Shift,
 				RoleID:                   emp.RoleID,
-				Role:                     emp.Role.RoleName,
+				Role:                     emp.Role,
 				DepartmentID:             emp.DepartmentID,
-				Department:               emp.Department.DepartmentName,
+				Department:               emp.Department,
 				DesignationID:            emp.DesignationID,
-				Designation:              emp.Designation.DesignationName,
+				Designation:              emp.Designation,
 				BasicSalary:              emp.BasicSalary,
 				HourlyRate:               emp.HourlyRate,
 				PaySlipType:              emp.PaySlipType,

@@ -154,16 +154,7 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		offset := (page - 1) * perPage
 
 		var newJobs []models.NewJob
-		result = db.Preload("Designation.Department").Order("id DESC").Offset(offset).Limit(perPage).Find(&newJobs)
-		if result.Error != nil {
-			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to retrieve new jobs"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
-
-		/*
-			var newJobs []models.NewJob
-			db.Order("id DESC").Offset(offset).Limit(perPage).Find(&newJobs)
-		*/
+		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&newJobs)
 
 		var totalCount int64
 		db.Model(&models.NewJob{}).Count(&totalCount)
@@ -223,17 +214,8 @@ func GetNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		/*
-			var newJob models.NewJob
-			result = db.First(&newJob, "id = ?", newJobID)
-			if result.Error != nil {
-				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "New job not found"}
-				return c.JSON(http.StatusNotFound, errorResponse)
-			}
-		*/
-
 		var newJob models.NewJob
-		result = db.Preload("Designation.Department").First(&newJob, "id = ?", newJobID)
+		result = db.First(&newJob, "id = ?", newJobID)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "New job not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)

@@ -245,17 +245,8 @@ func GetAllTasksByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
-		/*
-			var tasks []models.Task
-			result = db.Preload("Notes").Find(&tasks).Order("id DESC")
-			if result.Error != nil {
-				errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
-				return c.JSON(http.StatusInternalServerError, errorResponse)
-			}
-		*/
-
 		var tasks []models.Task
-		result = db.Preload("Notes").Preload("Project").Order("id DESC").Find(&tasks)
+		result = db.Preload("Notes").Find(&tasks).Order("id DESC")
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -307,17 +298,8 @@ func GetTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		/*
-			var task models.Task
-			result = db.Preload("Notes").First(&task, uint(taskID))
-			if result.Error != nil {
-				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
-				return c.JSON(http.StatusNotFound, errorResponse)
-			}
-		*/
-
 		var task models.Task
-		result = db.Preload("Notes").Preload("Project").First(&task, uint(taskID))
+		result = db.Preload("Notes").First(&task, uint(taskID))
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)

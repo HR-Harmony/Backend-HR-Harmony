@@ -142,91 +142,6 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var designations []models.Designation
-		query := db.Preload("Department").Order("id DESC").Offset(offset).Limit(perPage)
-
-		if searching != "" {
-			searchPattern := "%" + searching + "%"
-			query = query.Where("department_name ILIKE ? OR designation_name ILIKE ?", searchPattern, searchPattern)
-		}
-
-		if err := query.Find(&designations).Error; err != nil {
-			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch Designation records"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
-
-		var totalCount int64
-		countQuery := db.Model(&models.Designation{})
-		if searching != "" {
-			searchPattern := "%" + searching + "%"
-			countQuery = countQuery.Where("department_name ILIKE ? OR designation_name ILIKE ?", searchPattern, searchPattern)
-		}
-		countQuery.Count(&totalCount)
-
-		successResponse := map[string]interface{}{
-			"code":         http.StatusOK,
-			"error":        false,
-			"message":      "Designations retrieved successfully",
-			"designations": designations,
-			"pagination": map[string]interface{}{
-				"total_count": totalCount,
-				"page":        page,
-				"per_page":    perPage,
-			},
-		}
-		return c.JSON(http.StatusOK, successResponse)
-	}
-}
-
-/*
-func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		tokenString := c.Request().Header.Get("Authorization")
-		if tokenString == "" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		authParts := strings.SplitN(tokenString, " ", 2)
-		if len(authParts) != 2 || authParts[0] != "Bearer" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		tokenString = authParts[1]
-
-		username, err := middleware.VerifyToken(tokenString, secretKey)
-		if err != nil {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		var adminUser models.Admin
-		result := db.Where("username = ?", username).First(&adminUser)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
-			return c.JSON(http.StatusNotFound, errorResponse)
-		}
-
-		if !adminUser.IsAdminHR {
-			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
-			return c.JSON(http.StatusForbidden, errorResponse)
-		}
-
-		page, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil || page <= 0 {
-			page = 1
-		}
-
-		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
-		if err != nil || perPage <= 0 {
-			perPage = 10
-		}
-
-		offset := (page - 1) * perPage
-
-		searching := c.QueryParam("searching")
-
-		var designations []models.Designation
 		query := db.Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
@@ -261,66 +176,7 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
-*/
 
-func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		tokenString := c.Request().Header.Get("Authorization")
-		if tokenString == "" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		authParts := strings.SplitN(tokenString, " ", 2)
-		if len(authParts) != 2 || authParts[0] != "Bearer" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		tokenString = authParts[1]
-
-		username, err := middleware.VerifyToken(tokenString, secretKey)
-		if err != nil {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		var adminUser models.Admin
-		result := db.Where("username = ?", username).First(&adminUser)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
-			return c.JSON(http.StatusNotFound, errorResponse)
-		}
-
-		if !adminUser.IsAdminHR {
-			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
-			return c.JSON(http.StatusForbidden, errorResponse)
-		}
-
-		designationID, err := strconv.ParseUint(c.Param("id"), 10, 32)
-		if err != nil {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid designation ID"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
-		}
-
-		var designation models.Designation
-		result = db.Preload("Department").Where("id = ?", designationID).First(&designation)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Designation not found"}
-			return c.JSON(http.StatusNotFound, errorResponse)
-		}
-
-		successResponse := map[string]interface{}{
-			"code":        http.StatusOK,
-			"error":       false,
-			"message":     "Designation retrieved successfully",
-			"designation": designation,
-		}
-		return c.JSON(http.StatusOK, successResponse)
-	}
-}
-
-/*
 func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -377,7 +233,6 @@ func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
-*/
 
 func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

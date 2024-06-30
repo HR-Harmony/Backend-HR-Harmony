@@ -39,7 +39,7 @@ func EmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var employee models.Employee
-		result := db.Preload("Shift").Preload("Role").Preload("Department").Preload("Designation").Where("username = ?", username).First(&employee)
+		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch employee data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -55,11 +55,11 @@ func EmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"email":                       employee.Email,
 			"username":                    employee.Username,
 			"shift_id":                    employee.ShiftID,
-			"shift":                       employee.Shift.ShiftName,
+			"shift":                       employee.Shift,
 			"role_id":                     employee.RoleID,
-			"role":                        employee.Role.RoleName,
+			"role":                        employee.Role,
 			"department_id":               employee.DepartmentID,
-			"department":                  employee.Department.DepartmentName,
+			"department":                  employee.Department,
 			"basic_salary":                employee.BasicSalary,
 			"hourly_rate":                 employee.HourlyRate,
 			"pay_slip_type":               employee.PaySlipType,
@@ -294,13 +294,13 @@ func UpdateEmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			"Username":                 existingEmployee.Username,
 			"Password":                 existingEmployee.Password,
 			"ShiftID":                  existingEmployee.ShiftID,
-			"Shift":                    existingEmployee.Shift.ShiftName,
+			"Shift":                    existingEmployee.Shift,
 			"RoleID":                   existingEmployee.RoleID,
-			"Role":                     existingEmployee.Role.RoleName,
+			"Role":                     existingEmployee.Role,
 			"DepartmentID":             existingEmployee.DepartmentID,
-			"Department":               existingEmployee.Department.DepartmentName,
+			"Department":               existingEmployee.Department,
 			"DesignationID":            existingEmployee.DesignationID,
-			"Designation":              existingEmployee.Designation.DesignationName,
+			"Designation":              existingEmployee.Designation,
 			"BasicSalary":              existingEmployee.BasicSalary,
 			"HourlyRate":               existingEmployee.HourlyRate,
 			"PaySlipType":              existingEmployee.PaySlipType,
