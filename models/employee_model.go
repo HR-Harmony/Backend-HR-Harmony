@@ -26,7 +26,7 @@ type Employee struct {
 	HourlyRate    float64     `json:"hourly_rate"`
 	PaySlipType   string      `json:"pay_slip_type"`
 	IsClient      bool        `json:"is_client" gorm:"default:false"`
-	IsActive      *bool       `json:"is_active" gorm:"default:true"`
+	IsActive      bool        `json:"is_active" gorm:"default:true"`
 	IsExit        bool        `json:"is_exit" gorm:"default:false"`
 	PaidStatus    bool        `json:"paid_status" gorm:"default:false"`
 	Country       string      `json:"country"`
