@@ -586,7 +586,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				BasicSalary:              emp.BasicSalary,
 				HourlyRate:               emp.HourlyRate,
 				PaySlipType:              emp.PaySlipType,
-				IsActive:                 emp.IsActive,
+				IsActive:                 *emp.IsActive,
 				PaidStatus:               emp.PaidStatus,
 				MaritalStatus:            emp.MaritalStatus,
 				Religion:                 emp.Religion,
@@ -705,7 +705,7 @@ func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			BasicSalary:              employee.BasicSalary,
 			HourlyRate:               employee.HourlyRate,
 			PaySlipType:              employee.PaySlipType,
-			IsActive:                 employee.IsActive,
+			IsActive:                 *employee.IsActive,
 			PaidStatus:               employee.PaidStatus,
 			MaritalStatus:            employee.MaritalStatus,
 			Religion:                 employee.Religion,
@@ -849,19 +849,8 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.BirthdayDate = startDate.Format("2006-01-02")
 		}
 
-		/*
-			if updatedEmployee.IsActive != existingEmployee.IsActive  {
-				existingEmployee.IsActive = updatedEmployee.IsActive
-			}
-		*/
-
-		// Periksa perubahan IsActive
-		if updatedEmployee.IsActive != existingEmployee.IsActive {
-			if updatedEmployee.IsActive {
-				existingEmployee.IsActive = true
-			} else {
-				existingEmployee.IsActive = false
-			}
+		if updatedEmployee.IsActive != nil {
+			existingEmployee.IsActive = updatedEmployee.IsActive
 		}
 
 		/*
@@ -1078,7 +1067,7 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			BasicSalary:              existingEmployee.BasicSalary,
 			HourlyRate:               existingEmployee.HourlyRate,
 			PaySlipType:              existingEmployee.PaySlipType,
-			IsActive:                 existingEmployee.IsActive,
+			IsActive:                 *existingEmployee.IsActive,
 			PaidStatus:               existingEmployee.PaidStatus,
 			MaritalStatus:            existingEmployee.MaritalStatus,
 			Religion:                 existingEmployee.Religion,
@@ -1256,9 +1245,9 @@ func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Update status IsActive berdasarkan disable account
 		if !exitData.DisableAccount {
-			employee.IsActive = true
+			*employee.IsActive = true
 		} else {
-			employee.IsActive = false
+			*employee.IsActive = false
 		}
 
 		employee.IsExit = true
