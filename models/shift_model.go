@@ -21,5 +21,5 @@ type Shift struct {
 	SundayOutTime    string     `json:"sunday_out_time"`
 	CreatedAt        *time.Time `json:"created_at"`
 	UpdatedAt        time.Time
-	Employee         []Employee `gorm:"foreignKey:ShiftID;references:ID" json:"employee"`
+	Employee         []Employee `gorm:"foreignKey:ShiftID;references:ID;constraint:OnDelete:RESTRICT" json:"employee"`
 }
