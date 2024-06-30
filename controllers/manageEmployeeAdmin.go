@@ -1324,8 +1324,13 @@ func GetAllExitEmployees(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Handle search parameter
 		searching := c.QueryParam("searching")
 
+		/*
+			var exitEmployees []models.ExitEmployee
+			query := db.Order("id DESC").Offset(offset).Limit(perPage)
+		*/
+
 		var exitEmployees []models.ExitEmployee
-		query := db.Order("id DESC").Offset(offset).Limit(perPage)
+		query := db.Preload("Exit").Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
@@ -1401,9 +1406,18 @@ func GetExitEmployeeByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Extract ExitEmployee ID from the request
 		exitEmployeeID := c.Param("id")
 
-		// Fetch the ExitEmployee record by ID
+		/*
+			// Fetch the ExitEmployee record by ID
+			var exitEmployee models.ExitEmployee
+			if err := db.Where("id = ?", exitEmployeeID).First(&exitEmployee).Error; err != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "ExitEmployee not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+		*/
+
+		// Fetch the ExitEmployee record by ID with preload on Exit
 		var exitEmployee models.ExitEmployee
-		if err := db.Where("id = ?", exitEmployeeID).First(&exitEmployee).Error; err != nil {
+		if err := db.Preload("Exit").Where("id = ?", exitEmployeeID).First(&exitEmployee).Error; err != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "ExitEmployee not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
