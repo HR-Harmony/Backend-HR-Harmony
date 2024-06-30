@@ -7,4 +7,5 @@ type Role struct {
 	RoleName  string     `json:"role_name"`
 	CreatedAt *time.Time `json:"created_at"`
 	UpdatedAt time.Time
+	Employee  []Employee `gorm:"foreignKey:RoleID;references:ID" json:"role"`
 }

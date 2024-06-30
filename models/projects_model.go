@@ -24,4 +24,5 @@ type Project struct {
 	ProjectBar     int        `json:"project_bar"`
 	CreatedAt      *time.Time `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`
+	Task           []Task     `gorm:"foreignKey:ProjectID;references:ID" json:"task"`
 }

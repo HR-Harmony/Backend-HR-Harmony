@@ -3,10 +3,11 @@ package models
 import "time"
 
 type Exit struct {
-	ID        uint       `gorm:"primaryKey" json:"id"`
-	ExitName  string     `json:"exit_name"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt time.Time
+	ID           uint       `gorm:"primaryKey" json:"id"`
+	ExitName     string     `json:"exit_name"`
+	CreatedAt    *time.Time `json:"created_at"`
+	UpdatedAt    time.Time
+	ExitEmployee []ExitEmployee `gorm:"foreignKey:ExitID;references:ID" json:"exit_employee"`
 }
 
 type ExitEmployee struct {
