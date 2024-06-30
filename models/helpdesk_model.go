@@ -7,10 +7,8 @@ type Helpdesk struct {
 	Subject          string     `json:"subject"`
 	Priority         string     `json:"priority"`
 	DepartmentID     uint       `json:"department_id"`
-	Department       Department `gorm:"foreignKey:DepartmentID;references:ID" json:"department"`
 	DepartmentName   string     `json:"department_name"`
 	EmployeeID       uint       `json:"employee_id"`
-	Employee         Employee   `gorm:"foreignKey:EmployeeID;references:ID" json:"employee"`
 	EmployeeUsername string     `json:"employee_username"`
 	EmployeeFullName string     `json:"employee_full_name"`
 	Description      string     `json:"description"`

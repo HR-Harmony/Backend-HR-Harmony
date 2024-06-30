@@ -8,7 +8,6 @@ type Project struct {
 	ID             uint       `gorm:"primaryKey" json:"id"`
 	Title          string     `json:"title"`
 	EmployeeID     uint       `json:"employee_id"`
-	Employee       Employee   `gorm:"foreignKey:EmployeeID;references:ID" json:"employee"`
 	Username       string     `json:"username"`
 	ClientName     string     `json:"client_name"`
 	EstimatedHour  int        `json:"estimated_hour"`

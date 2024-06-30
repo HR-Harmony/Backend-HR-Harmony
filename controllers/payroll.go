@@ -1607,13 +1607,8 @@ func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var requestLoans []models.RequestLoan
-		if err := query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans).Error; err != nil {
+		if err := query.Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans).Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching request loans"})
-		}
-
-		// Setelah memuat data RequestLoan, Anda dapat mengonversi EmployeeID menjadi FullnameEmployee
-		for i := range requestLoans {
-			requestLoans[i].FullnameEmployee = requestLoans[i].Employee.FullName
 		}
 
 		successResponse := map[string]interface{}{
@@ -1670,14 +1665,11 @@ func GetRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var requestLoan models.RequestLoan
-		result = db.Preload("Employee").First(&requestLoan, requestLoanID) // Preload Employee data
+		result = db.First(&requestLoan, requestLoanID)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Request Loan not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
-
-		// Set fullname_employee based on loaded Employee data
-		requestLoan.FullnameEmployee = requestLoan.Employee.FullName
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
