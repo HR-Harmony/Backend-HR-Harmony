@@ -324,7 +324,7 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 
 		// Validate all employee data
-		if employee.FirstName == "" || employee.LastName == "" || employee.ContactNumber == "" ||
+		if employee.FirstName == "" || employee.ContactNumber == "" ||
 			employee.Gender == "" || employee.Email == "" || employee.Username == "" ||
 			employee.Password == "" || employee.ShiftID == 0 || employee.RoleID == 0 ||
 			employee.DepartmentID == 0 || employee.BasicSalary == 0 || employee.HourlyRate == 0 ||
