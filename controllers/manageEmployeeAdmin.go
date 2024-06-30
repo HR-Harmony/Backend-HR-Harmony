@@ -850,16 +850,18 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 
 		/*
-			if updatedEmployee.IsActive != existingEmployee.IsActive {
+			if updatedEmployee.IsActive != existingEmployee.IsActive  {
 				existingEmployee.IsActive = updatedEmployee.IsActive
 			}
 		*/
 
+		// Periksa perubahan IsActive
 		if updatedEmployee.IsActive != existingEmployee.IsActive {
-			existingEmployee.IsActive = updatedEmployee.IsActive
-		} else {
-			// Jika IsActive tidak disertakan dalam permintaan, biarkan nilainya tetap sama
-			existingEmployee.IsActive = existingEmployee.IsActive
+			if updatedEmployee.IsActive {
+				existingEmployee.IsActive = true
+			} else {
+				existingEmployee.IsActive = false
+			}
 		}
 
 		/*
