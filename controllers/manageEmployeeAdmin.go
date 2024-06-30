@@ -3,6 +3,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ import (
 	"hrsale/helper"
 	"hrsale/middleware"
 	"hrsale/models"
+	"io"
 	"log"
 	"net/http"
 	"regexp"
@@ -849,8 +851,19 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.BirthdayDate = startDate.Format("2006-01-02")
 		}
 
-		if updatedEmployee.IsActive {
-			existingEmployee.IsActive = updatedEmployee.IsActive
+		// Check for the presence of IsActive in the request and update if included
+		if c.Request().Body != nil {
+			body, err := io.ReadAll(c.Request().Body)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Failed to read request body"})
+			}
+			var bodyMap map[string]interface{}
+			if err := json.Unmarshal(body, &bodyMap); err != nil {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
+			}
+			if _, ok := bodyMap["is_active"]; ok {
+				existingEmployee.IsActive = updatedEmployee.IsActive
+			}
 		}
 
 		/*
