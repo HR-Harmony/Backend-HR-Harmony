@@ -849,12 +849,6 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.BirthdayDate = startDate.Format("2006-01-02")
 		}
 
-		if updatedEmployee.IsActive {
-			existingEmployee.IsActive = updatedEmployee.IsActive
-		} else {
-			existingEmployee.IsActive = false
-		}
-
 		/*
 			if updatedEmployee.Email != "" {
 				existingEmployee.Email = updatedEmployee.Email
