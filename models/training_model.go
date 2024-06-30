@@ -12,6 +12,7 @@ type Trainer struct {
 	Expertise     string     `json:"expertise"`
 	Address       string     `json:"address"`
 	CreatedAt     *time.Time `json:"created_at"`
+	Training      []Training `gorm:"foreignKey:TrainerID;references:ID" json:"training"`
 }
 
 type TrainingSkill struct {
@@ -19,6 +20,7 @@ type TrainingSkill struct {
 	TrainingSkill string `json:"training_skill"`
 	CreatedAt     *time.Time
 	UpdateAt      time.Time
+	Training      []Training `gorm:"foreignKey:TrainingSkillID;references:ID" json:"training"`
 }
 
 type Training struct {

@@ -10,4 +10,5 @@ type Designation struct {
 	DesignationName string     `json:"designation_name"`
 	Description     string     `json:"description"`
 	CreatedAt       time.Time  `json:"created_at"`
+	Employee        []Employee `gorm:"foreignKey:DesignationID;references:ID" json:"employee"`
 }
