@@ -83,7 +83,7 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		db.Create(&designation)
 
 		// Preload the Department data
-		db.Preload("Department").First(&designation, designation.ID)
+		db.Preload("Department.Employee").First(&designation, designation.ID)
 
 		successResponse := helper.Response{
 			Code:        http.StatusCreated,
@@ -345,7 +345,7 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		db.Save(&existingDesignation)
 
 		// Preload the Department data
-		db.Preload("Department").First(&existingDesignation, existingDesignation.ID)
+		db.Preload("Department.Employee").First(&existingDesignation, existingDesignation.ID)
 
 		successResponse := helper.Response{
 			Code:        http.StatusOK,
