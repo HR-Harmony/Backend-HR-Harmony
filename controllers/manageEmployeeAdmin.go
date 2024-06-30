@@ -160,7 +160,7 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 			passwordWithNoHash := employee.Password
 
 			// Validate all employee data
-			if employee.FirstName == "" || employee.LastName == "" || employee.ContactNumber == "" ||
+			if employee.FirstName == "" || employee.ContactNumber == "" ||
 				employee.Gender == "" || employee.Email == "" || employee.Username == "" ||
 				employee.Password == "" || employee.ShiftID == 0 || employee.RoleID == 0 ||
 				employee.DepartmentID == 0 || employee.BasicSalary == 0 || employee.HourlyRate == 0 ||
@@ -332,7 +332,7 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 
 		// Validate all employee data
-		if employee.FirstName == "" || employee.LastName == "" || employee.ContactNumber == "" ||
+		if employee.FirstName == "" || employee.ContactNumber == "" ||
 			employee.Gender == "" || employee.Email == "" || employee.Username == "" ||
 			employee.Password == "" || employee.ShiftID == 0 || employee.RoleID == 0 ||
 			employee.DepartmentID == 0 || employee.BasicSalary == 0 || employee.HourlyRate == 0 ||
@@ -346,10 +346,12 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		if len(employee.LastName) < 1 || len(employee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.LastName) {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last Name must be between 1 and 30 characters and contain only letters"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
-		}
+		/*
+			if len(employee.LastName) < 1 || len(employee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.LastName) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last Name must be between 1 and 30 characters and contain only letters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+		*/
 
 		if len(employee.Username) < 5 || len(employee.Username) > 15 || !regexp.MustCompile(`^[a-zA-Z0-9_]+$`).MatchString(employee.Username) {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Username must be between 5 and 15 characters and contain only letters and numbers"}
@@ -811,9 +813,11 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		// Validate LastName
 		if updatedEmployee.LastName != "" {
-			if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 30 characters and contain only letters"})
-			}
+			/*
+				if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
+					return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 30 characters and contain only letters"})
+				}
+			*/
 			existingEmployee.LastName = updatedEmployee.LastName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
@@ -845,8 +849,17 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.BirthdayDate = startDate.Format("2006-01-02")
 		}
 
+		/*
+			if updatedEmployee.IsActive != existingEmployee.IsActive {
+				existingEmployee.IsActive = updatedEmployee.IsActive
+			}
+		*/
+
 		if updatedEmployee.IsActive != existingEmployee.IsActive {
 			existingEmployee.IsActive = updatedEmployee.IsActive
+		} else {
+			// Jika IsActive tidak disertakan dalam permintaan, biarkan nilainya tetap sama
+			existingEmployee.IsActive = existingEmployee.IsActive
 		}
 
 		/*
