@@ -272,7 +272,7 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			response := DesignationResponse{
 				ID:              d.ID,
 				DepartmentID:    d.DepartmentID,
-				DepartmentName:  d.Department.DepartmentName,
+				DepartmentName:  d.DepartmentName,
 				DesignationName: d.DesignationName,
 				Description:     d.Description,
 				CreatedAt:       d.CreatedAt,
@@ -434,7 +434,7 @@ func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		designationResponse := DesignationResponse{
 			ID:              designation.ID,
 			DepartmentID:    designation.DepartmentID,
-			DepartmentName:  designation.Department.DepartmentName,
+			DepartmentName:  designation.DepartmentName,
 			DesignationName: designation.DesignationName,
 			Description:     designation.Description,
 			CreatedAt:       designation.CreatedAt,
@@ -594,7 +594,7 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		designationResponse := DesignationResponse{
 			ID:              existingDesignation.ID,
 			DepartmentID:    existingDesignation.DepartmentID,
-			DepartmentName:  existingDesignation.Department.DepartmentName,
+			DepartmentName:  existingDesignation.DepartmentName,
 			DesignationName: existingDesignation.DesignationName,
 			Description:     existingDesignation.Description,
 			CreatedAt:       existingDesignation.CreatedAt,
