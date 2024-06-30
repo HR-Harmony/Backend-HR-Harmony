@@ -144,8 +144,13 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Handle search parameters
 		searching := c.QueryParam("searching")
 
+		/*
+			var departments []models.Department
+			query := db.Order("id DESC").Offset(offset).Limit(perPage)
+		*/
+
 		var departments []models.Department
-		query := db.Order("id DESC").Offset(offset).Limit(perPage)
+		query := db.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
@@ -221,9 +226,18 @@ func GetDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			var department models.Department
+			result = db.First(&department, uint(departmentID))
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Department not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+		*/
+
+		// Fetch the Department record by ID with preload on Employee
 		var department models.Department
-		result = db.First(&department, uint(departmentID))
-		if result.Error != nil {
+		if err := db.Preload("Employee").First(&department, uint(departmentID)).Error; err != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Department not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
