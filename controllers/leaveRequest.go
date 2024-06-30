@@ -859,6 +859,81 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 }
 */
 
+func GetLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		leaveRequestID := c.Param("id")
+		if leaveRequestID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Leave request ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var leaveRequest models.LeaveRequest
+		result = db.First(&leaveRequest, "id = ?", leaveRequestID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Leave request not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		response := LeaveRequestResponse{
+			ID:               leaveRequest.ID,
+			EmployeeID:       leaveRequest.EmployeeID,
+			Username:         leaveRequest.Username,
+			FullNameEmployee: leaveRequest.FullNameEmployee,
+			LeaveTypeID:      leaveRequest.LeaveTypeID,
+			LeaveType:        leaveRequest.LeaveType,
+			StartDate:        leaveRequest.StartDate,
+			EndDate:          leaveRequest.EndDate,
+			IsHalfDay:        leaveRequest.IsHalfDay,
+			Remarks:          leaveRequest.Remarks,
+			LeaveReason:      leaveRequest.LeaveReason,
+			Days:             leaveRequest.Days,
+			Status:           leaveRequest.Status,
+			CreatedAt:        leaveRequest.CreatedAt,
+			UpdatedAt:        leaveRequest.UpdatedAt,
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Leave request retrieved successfully",
+			"data":    response,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
 /*
 func GetLeaveRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
