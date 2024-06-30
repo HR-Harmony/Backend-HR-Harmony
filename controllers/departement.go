@@ -73,7 +73,7 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var employee models.Employee
-		result = db.First(&employee, "id = ?", department.EmployeeID)
+		result = db.Preload("Employee").First(&employee, "id = ?", department.EmployeeID)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
