@@ -88,6 +88,8 @@ func CreateOvertimeRequestByEmployee(db *gorm.DB, secretKey []byte) echo.Handler
 
 		db.Create(&overtime)
 
+		db.Preload("Employee").First(&overtime, overtime.ID)
+
 		err = helper.SendOvertimeRequestNotification(employee.Email, overtime.FullNameEmployee, overtime.Date, overtime.InTime, overtime.OutTime, overtime.Reason)
 		if err != nil {
 			fmt.Println("Failed to send overtime request notification email:", err)
@@ -163,7 +165,7 @@ func GetAllOvertimeRequestsByEmployee(db *gorm.DB, secretKey []byte) echo.Handle
 
 		// Retrieve overtime requests for the employee with pagination
 		var overtimeRequests []models.OvertimeRequest
-		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&overtimeRequests)
+		result = query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&overtimeRequests)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch overtime requests"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -226,7 +228,7 @@ func GetOvertimeRequestByIDByEmployee(db *gorm.DB, secretKey []byte) echo.Handle
 		}
 
 		var overtimeRequest models.OvertimeRequest
-		result = db.Where("id = ?", overtimeRequestID).First(&overtimeRequest)
+		result = db.Preload("Employee").Where("id = ?", overtimeRequestID).First(&overtimeRequest)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Overtime request not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -338,6 +340,8 @@ func UpdateOvertimeRequestByIDByEmployee(db *gorm.DB, secretKey []byte) echo.Han
 		overtimeRequest.Status = overtimeRequest.Status
 
 		db.Save(&overtimeRequest)
+
+		db.Preload("Employee").First(&overtimeRequest, overtimeRequest.ID)
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,

@@ -334,6 +334,139 @@ func DeleteGoalTypeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 // Tracking Goals
 
+type GoalResponse struct {
+	ID                uint   `json:"id"`
+	GoalTypeID        uint   `json:"goal_type_id"`
+	GoalTypeName      string `json:"goal_type_name"`
+	ProjectID         uint   `json:"project_id"`
+	ProjectName       string `json:"project_name"`
+	TaskID            uint   `json:"task_id"`
+	TaskName          string `json:"task_name"`
+	TrainingID        uint   `json:"training_id"`
+	TrainingSkillID   uint   `json:"training_skill_id"`
+	TrainingSkillName string `json:"training_skill_name"`
+	Subject           string `json:"subject"`
+	TargetAchievement string `json:"target_achievement"`
+	StartDate         string `json:"start_date"`
+	EndDate           string `json:"end_date"`
+	Description       string `json:"description"`
+	GoalRating        uint   `json:"goal_rating"`
+	ProgressBar       uint   `json:"progress_bar"`
+	Status            string `json:"status"`
+	CreatedAt         string `json:"created_at"`
+}
+
+func CreateGoalByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		var goal models.Goal
+		if err := c.Bind(&goal); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if goal.GoalTypeID == 0 || goal.Subject == "" || goal.TargetAchievement == "" || goal.StartDate == "" || goal.EndDate == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid goal data. All fields are required."}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var goalType models.GoalType
+		result = db.First(&goalType, "id = ?", goal.GoalTypeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Goal type not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		goal.GoalTypeName = goalType.GoalType
+
+		if goal.StartDate != "" {
+			startDate, err := time.Parse("2006-01-02", goal.StartDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			goal.StartDate = startDate.Format("2006-01-02")
+		}
+
+		if goal.EndDate != "" {
+			endDate, err := time.Parse("2006-01-02", goal.EndDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid EndDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			goal.EndDate = endDate.Format("2006-01-02")
+		}
+
+		goal.GoalRating = 0
+		goal.ProgressBar = 0
+		goal.Status = "Not Started"
+
+		goal.CreatedAt = time.Now().Format("2006-01-02")
+
+		db.Create(&goal)
+
+		response := GoalResponse{
+			ID:                goal.ID,
+			GoalTypeID:        goal.GoalTypeID,
+			GoalTypeName:      goal.GoalTypeName,
+			ProjectID:         goal.ProjectID,
+			ProjectName:       goal.ProjectName,
+			TaskID:            goal.TaskID,
+			TaskName:          goal.TaskName,
+			TrainingID:        goal.TrainingID,
+			TrainingSkillID:   goal.TrainingSkillID,
+			TrainingSkillName: goal.TrainingSkillName,
+			Subject:           goal.Subject,
+			TargetAchievement: goal.TargetAchievement,
+			StartDate:         goal.StartDate,
+			EndDate:           goal.EndDate,
+			Description:       goal.Description,
+			GoalRating:        goal.GoalRating,
+			ProgressBar:       goal.ProgressBar,
+			Status:            goal.Status,
+			CreatedAt:         goal.CreatedAt,
+		}
+
+		successResponse := map[string]interface{}{
+			"Code":    http.StatusOK,
+			"Message": "Goal added successfully",
+			"Data":    response,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func CreateGoalByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -422,7 +555,110 @@ func CreateGoalByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, response)
 	}
 }
+*/
 
+func GetAllGoalsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.Goal{})
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(goal_type_name) LIKE ? OR LOWER(subject) LIKE ? OR LOWER(start_date) LIKE ? OR LOWER(end_date) LIKE ? OR LOWER(status) LIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern,
+			)
+		}
+
+		var totalCount int64
+		query.Count(&totalCount)
+
+		var goals []models.Goal
+		if err := query.Order("id DESC").Offset(offset).Limit(perPage).Find(&goals).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching goals"})
+		}
+
+		var goalsResponse []GoalResponse
+		for _, goal := range goals {
+			goalsResponse = append(goalsResponse, GoalResponse{
+				ID:                goal.ID,
+				GoalTypeID:        goal.GoalTypeID,
+				GoalTypeName:      goal.GoalTypeName,
+				ProjectID:         goal.ProjectID,
+				ProjectName:       goal.ProjectName,
+				TaskID:            goal.TaskID,
+				TaskName:          goal.TaskName,
+				TrainingID:        goal.TrainingID,
+				TrainingSkillID:   goal.TrainingSkillID,
+				TrainingSkillName: goal.TrainingSkillName,
+				Subject:           goal.Subject,
+				TargetAchievement: goal.TargetAchievement,
+				StartDate:         goal.StartDate,
+				EndDate:           goal.EndDate,
+				Description:       goal.Description,
+				GoalRating:        goal.GoalRating,
+				ProgressBar:       goal.ProgressBar,
+				Status:            goal.Status,
+				CreatedAt:         goal.CreatedAt,
+			})
+		}
+
+		successResponse := map[string]interface{}{
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "All goals retrieved successfully",
+			"goals":      goalsResponse,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetAllGoalsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -498,7 +734,84 @@ func GetAllGoalsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
+func GetGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		goalID := c.Param("id")
+		if goalID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Goal ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var goal models.Goal
+		result = db.First(&goal, goalID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Goal not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		goalResponse := GoalResponse{
+			ID:                goal.ID,
+			GoalTypeID:        goal.GoalTypeID,
+			ProjectID:         goal.ProjectID,
+			TaskID:            goal.TaskID,
+			TrainingID:        goal.TrainingID,
+			TrainingSkillID:   goal.TrainingSkillID,
+			Subject:           goal.Subject,
+			TargetAchievement: goal.TargetAchievement,
+			StartDate:         goal.StartDate,
+			EndDate:           goal.EndDate,
+			Description:       goal.Description,
+			GoalRating:        goal.GoalRating,
+			ProgressBar:       goal.ProgressBar,
+			Status:            goal.Status,
+			CreatedAt:         goal.CreatedAt,
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Goal retrieved successfully",
+			"data":    goalResponse,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -555,7 +868,188 @@ func GetGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, response)
 	}
 }
+*/
 
+func UpdateGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		goalID := c.Param("id")
+		if goalID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Goal ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var goal models.Goal
+		result = db.First(&goal, "id = ?", goalID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Goal not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var updatedGoal models.Goal
+		if err := c.Bind(&updatedGoal); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if updatedGoal.GoalTypeID != 0 {
+			var goalType models.GoalType
+			result = db.First(&goalType, "id = ?", updatedGoal.GoalTypeID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid goal type ID. Goal type not found."}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			updatedGoal.GoalTypeName = goalType.GoalType
+		}
+
+		if updatedGoal.ProjectID != 0 {
+			var project models.Project
+			result = db.First(&project, updatedGoal.ProjectID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Project not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			updatedGoal.ProjectName = project.Title
+		}
+
+		if updatedGoal.TaskID != 0 {
+			var task models.Task
+			result = db.First(&task, updatedGoal.TaskID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			updatedGoal.TaskName = task.Title
+		}
+
+		if updatedGoal.TrainingID != 0 {
+			var training models.Training
+			result = db.First(&training, updatedGoal.TrainingID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Training not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+		}
+
+		if updatedGoal.TrainingSkillID != 0 {
+			var trainingSkill models.TrainingSkill
+			result = db.First(&trainingSkill, updatedGoal.TrainingSkillID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Training Skill ID not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			updatedGoal.TrainingSkillName = trainingSkill.TrainingSkill
+		}
+
+		if updatedGoal.Subject != "" {
+			goal.Subject = updatedGoal.Subject
+		}
+		if updatedGoal.TargetAchievement != "" {
+			goal.TargetAchievement = updatedGoal.TargetAchievement
+		}
+		if updatedGoal.StartDate != "" {
+			startDate, err := time.Parse("2006-01-02", updatedGoal.StartDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid StartDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			goal.StartDate = startDate.Format("2006-01-02")
+		}
+		if updatedGoal.EndDate != "" {
+			endDate, err := time.Parse("2006-01-02", updatedGoal.EndDate)
+			if err != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid EndDate format"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			goal.EndDate = endDate.Format("2006-01-02")
+		}
+
+		if updatedGoal.Description != "" {
+			goal.Description = updatedGoal.Description
+		}
+
+		if updatedGoal.GoalRating != 0 {
+			goal.GoalRating = updatedGoal.GoalRating
+		}
+
+		if updatedGoal.GoalRating < 0 || updatedGoal.GoalRating > 5 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid GoalRating. Must be between 0 and 5."}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if updatedGoal.ProgressBar != 0 {
+			goal.ProgressBar = updatedGoal.ProgressBar
+		}
+
+		if updatedGoal.Status != "" {
+			goal.Status = updatedGoal.Status
+		}
+
+		db.Save(&goal)
+
+		// Prepare response
+		response := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Goal updated successfully",
+			"data": GoalResponse{
+				ID:                goal.ID,
+				GoalTypeID:        goal.GoalTypeID,
+				GoalTypeName:      goal.GoalTypeName,
+				ProjectID:         goal.ProjectID,
+				ProjectName:       goal.ProjectName,
+				TaskID:            goal.TaskID,
+				TaskName:          goal.TaskName,
+				TrainingID:        goal.TrainingID,
+				TrainingSkillID:   goal.TrainingSkillID,
+				TrainingSkillName: goal.TrainingSkillName,
+				Subject:           goal.Subject,
+				TargetAchievement: goal.TargetAchievement,
+				StartDate:         goal.StartDate,
+				EndDate:           goal.EndDate,
+				Description:       goal.Description,
+				GoalRating:        goal.GoalRating,
+				ProgressBar:       goal.ProgressBar,
+				Status:            goal.Status,
+				CreatedAt:         goal.CreatedAt,
+			},
+		}
+		return c.JSON(http.StatusOK, response)
+	}
+}
+
+/*
 func UpdateGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -721,6 +1215,7 @@ func UpdateGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, response)
 	}
 }
+*/
 
 func DeleteGoalByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

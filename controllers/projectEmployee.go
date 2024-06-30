@@ -45,6 +45,122 @@ func AddProjectByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		var project models.Project
 		if err := c.Bind(&project); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(project.Title) < 5 || len(project.Title) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(project.Summary) < 5 || len(project.Summary) > 300 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 300 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(project.Description) < 5 || len(project.Description) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var department models.Department
+		if err := db.Where("id = ?", project.DepartmentID).First(&department).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid department ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var clientEmployee models.Employee
+		if err := db.Where("id = ? AND is_client = ?", project.EmployeeID, true).First(&clientEmployee).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid client employee ID or employee is not a client"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		project.Username = clientEmployee.Username
+		project.ClientName = clientEmployee.FirstName + " " + clientEmployee.LastName
+		project.DepartmentName = department.DepartmentName
+
+		startDate, err := time.Parse("2006-01-02", project.StartDate)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid start date format. Use yyyy-mm-dd"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		endDate, err := time.Parse("2006-01-02", project.EndDate)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid end date format. Use yyyy-mm-dd"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		project.StartDate = startDate.Format("2006-01-02")
+		project.EndDate = endDate.Format("2006-01-02")
+
+		project.Status = "Not Started"
+
+		if err := db.Create(&project).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to create project"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		projectResponse := ProjectResponse{
+			ID:             project.ID,
+			Title:          project.Title,
+			EmployeeID:     project.EmployeeID,
+			Username:       project.Username,
+			ClientName:     project.ClientName,
+			EstimatedHour:  project.EstimatedHour,
+			Priority:       project.Priority,
+			StartDate:      project.StartDate,
+			EndDate:        project.EndDate,
+			Summary:        project.Summary,
+			DepartmentID:   project.DepartmentID,
+			DepartmentName: project.DepartmentName,
+			Description:    project.Description,
+			Status:         project.Status,
+			ProjectBar:     project.ProjectBar,
+			CreatedAt:      project.CreatedAt,
+			UpdatedAt:      project.UpdatedAt,
+		}
+
+		return c.JSON(http.StatusCreated, map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Project added successfully",
+			"project": projectResponse,
+		})
+	}
+}
+
+/*
+func AddProjectByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var project models.Project
+		if err := c.Bind(&project); err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: err.Error()}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
@@ -108,7 +224,78 @@ func AddProjectByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
+*/
 
+func GetAllProjectsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var projects []models.Project
+		if err := db.Find(&projects).Order("id DESC").Error; err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch projects"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Map projects to ProjectResponse
+		var projectsResponse []ProjectResponse
+		for _, project := range projects {
+			projectResponse := ProjectResponse{
+				ID:             project.ID,
+				Title:          project.Title,
+				EmployeeID:     project.EmployeeID,
+				Username:       project.Username,
+				ClientName:     project.ClientName,
+				EstimatedHour:  project.EstimatedHour,
+				Priority:       project.Priority,
+				StartDate:      project.StartDate,
+				EndDate:        project.EndDate,
+				Summary:        project.Summary,
+				DepartmentID:   project.DepartmentID,
+				DepartmentName: project.DepartmentName,
+				Description:    project.Description,
+				Status:         project.Status,
+				ProjectBar:     project.ProjectBar,
+				CreatedAt:      project.CreatedAt,
+				UpdatedAt:      project.UpdatedAt,
+			}
+			projectsResponse = append(projectsResponse, projectResponse)
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":     http.StatusOK,
+			"error":    false,
+			"message":  "List of projects retrieved successfully",
+			"projects": projectsResponse,
+		})
+	}
+}
+
+/*
 func GetAllProjectsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -152,7 +339,80 @@ func GetAllProjectsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
+*/
 
+func GetProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid project ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var project models.Project
+		if err := db.First(&project, projectID).Error; err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Project not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Map project to ProjectResponse
+		projectResponse := ProjectResponse{
+			ID:             project.ID,
+			Title:          project.Title,
+			EmployeeID:     project.EmployeeID,
+			Username:       project.Username,
+			ClientName:     project.ClientName,
+			EstimatedHour:  project.EstimatedHour,
+			Priority:       project.Priority,
+			StartDate:      project.StartDate,
+			EndDate:        project.EndDate,
+			Summary:        project.Summary,
+			DepartmentID:   project.DepartmentID,
+			DepartmentName: project.DepartmentName,
+			Description:    project.Description,
+			Status:         project.Status,
+			ProjectBar:     project.ProjectBar,
+			CreatedAt:      project.CreatedAt,
+			UpdatedAt:      project.UpdatedAt,
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Project retrieved successfully",
+			"project": projectResponse,
+		})
+	}
+}
+
+/*
 func GetProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -202,6 +462,7 @@ func GetProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
+*/
 
 func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -264,11 +525,176 @@ func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		/*
-			if updatedProject.Title != "" {
-				existingProject.Title = updatedProject.Title
+		// Validate and update project fields
+		if updatedProject.Title != "" {
+			if len(updatedProject.Title) < 5 || len(updatedProject.Title) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
 			}
-		*/
+			existingProject.Title = updatedProject.Title
+		}
+
+		if updatedProject.EmployeeID != 0 {
+			var clientEmployee models.Employee
+			result := db.Where("id = ? AND is_client = ?", updatedProject.EmployeeID, true).First(&clientEmployee)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid client employee ID or employee is not a client"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			existingProject.EmployeeID = updatedProject.EmployeeID
+			existingProject.Username = clientEmployee.Username
+			existingProject.ClientName = clientEmployee.FirstName + " " + clientEmployee.LastName
+		}
+
+		if updatedProject.EstimatedHour != 0 {
+			existingProject.EstimatedHour = updatedProject.EstimatedHour
+		}
+
+		if updatedProject.Priority != "" {
+			existingProject.Priority = updatedProject.Priority
+		}
+
+		if updatedProject.StartDate != "" {
+			existingProject.StartDate = updatedProject.StartDate
+		}
+
+		if updatedProject.EndDate != "" {
+			existingProject.EndDate = updatedProject.EndDate
+		}
+
+		if updatedProject.Summary != "" {
+			if len(updatedProject.Summary) < 5 || len(updatedProject.Summary) > 300 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 300 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			existingProject.Summary = updatedProject.Summary
+		}
+
+		if updatedProject.DepartmentID != 0 {
+			existingProject.DepartmentID = updatedProject.DepartmentID
+
+			var department models.Department
+			result := db.First(&department, updatedProject.DepartmentID)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Department not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			existingProject.DepartmentName = department.DepartmentName
+		}
+
+		if updatedProject.Description != "" {
+			if len(updatedProject.Description) < 5 || len(updatedProject.Description) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Description must be between 5 and 3000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			existingProject.Description = updatedProject.Description
+		}
+
+		if updatedProject.Status != "" {
+			existingProject.Status = updatedProject.Status
+		}
+
+		if updatedProject.ProjectBar != nil {
+			existingProject.ProjectBar = *updatedProject.ProjectBar
+		}
+
+		currentTime := time.Now()
+		existingProject.UpdatedAt = currentTime
+
+		db.Save(&existingProject)
+
+		// Prepare the response in ProjectResponse format
+		projectResponse := ProjectResponse{
+			ID:             existingProject.ID,
+			Title:          existingProject.Title,
+			EmployeeID:     existingProject.EmployeeID,
+			Username:       existingProject.Username,
+			ClientName:     existingProject.ClientName,
+			EstimatedHour:  existingProject.EstimatedHour,
+			Priority:       existingProject.Priority,
+			StartDate:      existingProject.StartDate,
+			EndDate:        existingProject.EndDate,
+			Summary:        existingProject.Summary,
+			DepartmentID:   existingProject.DepartmentID,
+			DepartmentName: existingProject.DepartmentName,
+			Description:    existingProject.Description,
+			Status:         existingProject.Status,
+			ProjectBar:     existingProject.ProjectBar,
+			CreatedAt:      existingProject.CreatedAt,
+			UpdatedAt:      existingProject.UpdatedAt,
+		}
+
+		successResponse := map[string]interface{}{
+			"Code":    http.StatusOK,
+			"Error":   false,
+			"Message": "Project updated successfully",
+			"Project": &projectResponse,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employeeUser models.Employee
+		result := db.Where("username = ?", username).First(&employeeUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid project ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var existingProject models.Project
+		result = db.First(&existingProject, projectID)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Project not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var updatedProject struct {
+			Title         string `json:"title"`
+			EmployeeID    uint   `json:"employee_id"`
+			EstimatedHour int    `json:"estimated_hour"`
+			Priority      string `json:"priority"`
+			StartDate     string `json:"start_date"`
+			EndDate       string `json:"end_date"`
+			Summary       string `json:"summary"`
+			DepartmentID  uint   `json:"department_id"`
+			Description   string `json:"description"`
+			Status        string `json:"status"`
+			ProjectBar    *int   `json:"project_bar"`
+		}
+
+		if err := c.Bind(&updatedProject); err != nil {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
 
 		if updatedProject.Title != "" {
 			if len(updatedProject.Title) < 5 || len(updatedProject.Title) > 100 {
@@ -306,12 +732,6 @@ func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			existingProject.EndDate = updatedProject.EndDate
 		}
 
-		/*
-			if updatedProject.Summary != "" {
-				existingProject.Summary = updatedProject.Summary
-			}
-		*/
-
 		if updatedProject.Summary != "" {
 			if len(updatedProject.Summary) < 5 || len(updatedProject.Summary) > 300 {
 				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Summary must be between 5 and 300"}
@@ -331,12 +751,6 @@ func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			}
 			existingProject.DepartmentName = department.DepartmentName
 		}
-
-		/*
-			if updatedProject.Description != "" {
-				existingProject.Description = updatedProject.Description
-			}
-		*/
 
 		if updatedProject.Description != "" {
 			if len(updatedProject.Description) < 5 || len(updatedProject.Description) > 3000 {
@@ -368,6 +782,7 @@ func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 func UpdateProjectByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {

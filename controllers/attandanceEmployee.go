@@ -627,7 +627,7 @@ func EmployeeAttendance(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Retrieve attendances for the employee with pagination
 		var attendances []models.Attendance
-		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&attendances)
+		result = query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&attendances)
 		if result.Error != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch attendance data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -689,7 +689,7 @@ func EmployeeAttendanceByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var attendance models.Attendance
-		result = db.Where("id = ?", attendanceID).First(&attendance)
+		result = db.Preload("Employee").Where("id = ?", attendanceID).First(&attendance)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Attendance ID not found"}

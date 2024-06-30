@@ -12,6 +12,130 @@ import (
 	"time"
 )
 
+type NewJobResponse struct {
+	ID                uint      `json:"id"`
+	Title             string    `json:"title"`
+	JobType           string    `json:"job_type"`
+	DesignationID     uint      `json:"designation_id"`
+	DesignationName   string    `json:"designation_name"`
+	NumberOfPosition  int       `json:"number_of_position"`
+	IsPublish         bool      `json:"is_publish"`
+	DateClosing       string    `json:"date_closing"`
+	MinimumExperience string    `json:"minimum_experience"`
+	ShortDescription  string    `json:"short_description"`
+	LongDescription   string    `json:"long_description"`
+	CreatedAt         time.Time `json:"created_at"`
+}
+
+func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		var newJob models.NewJob
+		if err := c.Bind(&newJob); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if newJob.Title == "" || newJob.JobType == "" || newJob.DesignationID == 0 || newJob.NumberOfPosition == 0 ||
+			newJob.DateClosing == "" || newJob.MinimumExperience == "" ||
+			newJob.ShortDescription == "" || newJob.LongDescription == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Incomplete new job data"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(newJob.Title) < 5 || len(newJob.Title) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(newJob.ShortDescription) < 5 || len(newJob.ShortDescription) > 300 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Short description must be between 5 and 300 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		if len(newJob.LongDescription) < 5 || len(newJob.LongDescription) > 3000 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Long description must be between 5 and 3000 characters"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var designation models.Designation
+		result = db.First(&designation, "id = ?", newJob.DesignationID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Designation not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		newJob.DesignationName = designation.DesignationName
+
+		dateClosing, err := time.Parse("2006-01-02", newJob.DateClosing)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid DateClosing format. Use yyyy-mm-dd format"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+		newJob.DateClosing = dateClosing.Format("2006-01-02")
+
+		newJob.CreatedAt = time.Now()
+
+		if err := db.Create(&newJob).Error; err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to create new job"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "New job created successfully",
+			"data": NewJobResponse{
+				ID:                newJob.ID,
+				Title:             newJob.Title,
+				JobType:           newJob.JobType,
+				DesignationID:     newJob.DesignationID,
+				DesignationName:   newJob.DesignationName,
+				NumberOfPosition:  newJob.NumberOfPosition,
+				IsPublish:         newJob.IsPublish,
+				DateClosing:       newJob.DateClosing,
+				MinimumExperience: newJob.MinimumExperience,
+				ShortDescription:  newJob.ShortDescription,
+				LongDescription:   newJob.LongDescription,
+				CreatedAt:         newJob.CreatedAt,
+			},
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+/*
 func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -106,7 +230,94 @@ func CreateNewJobByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusCreated, successResponse)
 	}
 }
+*/
 
+func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		var newJobs []models.NewJob
+		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&newJobs)
+
+		var totalCount int64
+		db.Model(&models.NewJob{}).Count(&totalCount)
+
+		var newJobResponses []NewJobResponse
+		for _, job := range newJobs {
+			newJobResponses = append(newJobResponses, NewJobResponse{
+				ID:                job.ID,
+				Title:             job.Title,
+				JobType:           job.JobType,
+				DesignationID:     job.DesignationID,
+				DesignationName:   job.DesignationName,
+				NumberOfPosition:  job.NumberOfPosition,
+				IsPublish:         job.IsPublish,
+				DateClosing:       job.DateClosing,
+				MinimumExperience: job.MinimumExperience,
+				ShortDescription:  job.ShortDescription,
+				LongDescription:   job.LongDescription,
+				CreatedAt:         job.CreatedAt,
+			})
+		}
+
+		successResponse := map[string]interface{}{
+			"code":     http.StatusOK,
+			"error":    false,
+			"message":  "All new jobs retrieved successfully",
+			"new_jobs": newJobResponses,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -173,7 +384,80 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
+func GetNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		newJobID := c.Param("id")
+		if newJobID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "New job ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var newJob models.NewJob
+		result = db.First(&newJob, newJobID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "New job not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		newJobResponse := NewJobResponse{
+			ID:                newJob.ID,
+			Title:             newJob.Title,
+			JobType:           newJob.JobType,
+			DesignationID:     newJob.DesignationID,
+			DesignationName:   newJob.DesignationName,
+			NumberOfPosition:  newJob.NumberOfPosition,
+			IsPublish:         newJob.IsPublish,
+			DateClosing:       newJob.DateClosing,
+			MinimumExperience: newJob.MinimumExperience,
+			ShortDescription:  newJob.ShortDescription,
+			LongDescription:   newJob.LongDescription,
+			CreatedAt:         newJob.CreatedAt,
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "New job retrieved successfully",
+			"new_job": newJobResponse,
+		})
+	}
+}
+
+/*
 func GetNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -229,6 +513,7 @@ func GetNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
+*/
 
 func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -283,11 +568,141 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		/*
-			if updatedJob.Title != "" {
-				newJob.Title = updatedJob.Title
+		if updatedJob.Title != "" {
+			if len(updatedJob.Title) < 5 || len(updatedJob.Title) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Title must be between 5 and 100 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
 			}
-		*/
+			newJob.Title = updatedJob.Title
+		}
+
+		if updatedJob.JobType != "" {
+			newJob.JobType = updatedJob.JobType
+		}
+
+		if updatedJob.DesignationID != 0 {
+			var designation models.Designation
+			result = db.First(&designation, updatedJob.DesignationID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Designation not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			newJob.DesignationID = updatedJob.DesignationID
+			newJob.DesignationName = designation.DesignationName
+		}
+
+		if updatedJob.NumberOfPosition != 0 {
+			newJob.NumberOfPosition = updatedJob.NumberOfPosition
+		}
+
+		if updatedJob.IsPublish != newJob.IsPublish {
+			newJob.IsPublish = updatedJob.IsPublish
+		}
+
+		if updatedJob.DateClosing != "" {
+			newJob.DateClosing = updatedJob.DateClosing
+		}
+
+		if updatedJob.MinimumExperience != "" {
+			newJob.MinimumExperience = updatedJob.MinimumExperience
+		}
+
+		if updatedJob.ShortDescription != "" {
+			if len(updatedJob.ShortDescription) < 5 || len(updatedJob.ShortDescription) > 300 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Short description must be between 5 and 300 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			newJob.ShortDescription = updatedJob.ShortDescription
+		}
+
+		if updatedJob.LongDescription != "" {
+			if len(updatedJob.LongDescription) < 5 || len(updatedJob.LongDescription) > 3000 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Long description must be between 5 and 3000 characters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			newJob.LongDescription = updatedJob.LongDescription
+		}
+
+		db.Save(&newJob)
+
+		newJobResponse := NewJobResponse{
+			ID:                newJob.ID,
+			Title:             newJob.Title,
+			JobType:           newJob.JobType,
+			DesignationID:     newJob.DesignationID,
+			DesignationName:   newJob.DesignationName,
+			NumberOfPosition:  newJob.NumberOfPosition,
+			IsPublish:         newJob.IsPublish,
+			DateClosing:       newJob.DateClosing,
+			MinimumExperience: newJob.MinimumExperience,
+			ShortDescription:  newJob.ShortDescription,
+			LongDescription:   newJob.LongDescription,
+			CreatedAt:         newJob.CreatedAt,
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "New job updated successfully",
+			"data":    newJobResponse,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		newJobID := c.Param("id")
+		if newJobID == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "New job ID is missing"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var newJob models.NewJob
+		result = db.First(&newJob, "id = ?", newJobID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "New job not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var updatedJob models.NewJob
+		if err := c.Bind(&updatedJob); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
 
 		if updatedJob.Title != "" {
 			if len(updatedJob.Title) < 5 || len(updatedJob.Title) > 100 {
@@ -323,11 +738,6 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			newJob.MinimumExperience = updatedJob.MinimumExperience
 		}
 
-		/*
-			if updatedJob.ShortDescription != "" {
-				newJob.ShortDescription = updatedJob.ShortDescription
-			}
-		*/
 		if updatedJob.ShortDescription != "" {
 			if len(updatedJob.ShortDescription) < 5 || len(updatedJob.ShortDescription) > 300 {
 				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Short description must be between 5 and 300"}
@@ -335,12 +745,6 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 			newJob.ShortDescription = updatedJob.ShortDescription
 		}
-
-		/*
-			if updatedJob.LongDescription != "" {
-				newJob.LongDescription = updatedJob.LongDescription
-			}
-		*/
 
 		if updatedJob.LongDescription != "" {
 			if len(updatedJob.LongDescription) < 5 || len(updatedJob.LongDescription) > 3000 {
@@ -361,6 +765,7 @@ func UpdateNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func DeleteNewJobByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
