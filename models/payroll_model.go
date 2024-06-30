@@ -33,6 +33,7 @@ type AdvanceSalary struct {
 type RequestLoan struct {
 	ID                    uint      `gorm:"primaryKey" json:"id"`
 	EmployeeID            uint      `json:"employee_id"`
+	Employee              Employee  `gorm:"foreignKey:EmployeeID;references:ID" json:"employee"`
 	FullnameEmployee      string    `json:"fullname_employee"`
 	MonthAndYear          string    `json:"month_and_year"` // Format: yyyy-mm
 	Amount                int       `json:"amount"`
@@ -44,6 +45,4 @@ type RequestLoan struct {
 	Status                string    `json:"status"`
 	Remaining             int       `json:"remaining"`
 	CreatedAt             time.Time `json:"created_at"`
-
-	Employee Employee `gorm:"foreignKey:EmployeeID"` // Menambahkan hubungan dengan Employee
 }
