@@ -295,7 +295,7 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		var attendance []models.Attendance
 		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&attendance)
-		
+
 		successResponse := map[string]interface{}{
 			"code":       http.StatusOK,
 			"error":      false,

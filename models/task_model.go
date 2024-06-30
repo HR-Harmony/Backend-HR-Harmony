@@ -11,6 +11,7 @@ type Task struct {
 	EndDate       string     `json:"end_date"`
 	EstimatedHour int        `json:"estimated_hour"`
 	ProjectID     uint       `json:"project_id"`
+	Project       Project    `gorm:"foreignKey:ProjectID" json:"project"` // Add this line
 	ProjectName   string     `json:"project_name"`
 	Summary       string     `json:"summary"`
 	Description   string     `json:"description"`
