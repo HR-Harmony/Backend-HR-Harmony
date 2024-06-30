@@ -3,7 +3,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -14,7 +13,6 @@ import (
 	"hrsale/helper"
 	"hrsale/middleware"
 	"hrsale/models"
-	"io"
 	"log"
 	"net/http"
 	"regexp"
@@ -588,7 +586,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				BasicSalary:              emp.BasicSalary,
 				HourlyRate:               emp.HourlyRate,
 				PaySlipType:              emp.PaySlipType,
-				IsActive:                 emp.IsActive,
+				IsActive:                 *emp.IsActive,
 				PaidStatus:               emp.PaidStatus,
 				MaritalStatus:            emp.MaritalStatus,
 				Religion:                 emp.Religion,
@@ -707,7 +705,7 @@ func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			BasicSalary:              employee.BasicSalary,
 			HourlyRate:               employee.HourlyRate,
 			PaySlipType:              employee.PaySlipType,
-			IsActive:                 employee.IsActive,
+			IsActive:                 *employee.IsActive,
 			PaidStatus:               employee.PaidStatus,
 			MaritalStatus:            employee.MaritalStatus,
 			Religion:                 employee.Religion,
@@ -851,19 +849,8 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.BirthdayDate = startDate.Format("2006-01-02")
 		}
 
-		// Check for the presence of IsActive in the request and update if included
-		if c.Request().Body != nil {
-			body, err := io.ReadAll(c.Request().Body)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Failed to read request body"})
-			}
-			var bodyMap map[string]interface{}
-			if err := json.Unmarshal(body, &bodyMap); err != nil {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
-			}
-			if _, ok := bodyMap["is_active"]; ok {
-				existingEmployee.IsActive = updatedEmployee.IsActive
-			}
+		if updatedEmployee.IsActive != nil {
+			existingEmployee.IsActive = updatedEmployee.IsActive
 		}
 
 		/*
@@ -1080,7 +1067,7 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			BasicSalary:              existingEmployee.BasicSalary,
 			HourlyRate:               existingEmployee.HourlyRate,
 			PaySlipType:              existingEmployee.PaySlipType,
-			IsActive:                 existingEmployee.IsActive,
+			IsActive:                 *existingEmployee.IsActive,
 			PaidStatus:               existingEmployee.PaidStatus,
 			MaritalStatus:            existingEmployee.MaritalStatus,
 			Religion:                 existingEmployee.Religion,
@@ -1258,9 +1245,9 @@ func ExitEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		// Update status IsActive berdasarkan disable account
 		if !exitData.DisableAccount {
-			employee.IsActive = true
+			*employee.IsActive = true
 		} else {
-			employee.IsActive = false
+			*employee.IsActive = false
 		}
 
 		employee.IsExit = true

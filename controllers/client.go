@@ -107,7 +107,7 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		employee.IsClient = true
 
-		employee.IsActive = true
+		*employee.IsActive = true
 
 		db.Create(&employee)
 
@@ -361,10 +361,10 @@ func UpdateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			existingEmployee.Country = updatedEmployee.Country
 		}
 
-		if updatedEmployee.IsActive {
+		if *updatedEmployee.IsActive {
 			existingEmployee.IsActive = updatedEmployee.IsActive
 		} else {
-			existingEmployee.IsActive = false
+			*existingEmployee.IsActive = false
 		}
 
 		if updatedEmployee.Username != "" {

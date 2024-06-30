@@ -42,7 +42,7 @@ func EmployeeLogin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			}
 		}
 
-		if !existingEmployee.IsActive {
+		if !*existingEmployee.IsActive {
 			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Account is not active"}
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}

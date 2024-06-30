@@ -335,7 +335,7 @@ func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.Han
 				BasicSalary:              emp.BasicSalary,
 				HourlyRate:               emp.HourlyRate,
 				PaySlipType:              emp.PaySlipType,
-				IsActive:                 emp.IsActive,
+				IsActive:                 *emp.IsActive,
 				PaidStatus:               emp.PaidStatus,
 				MaritalStatus:            emp.MaritalStatus,
 				Religion:                 emp.Religion,
