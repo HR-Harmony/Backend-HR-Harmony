@@ -125,6 +125,9 @@ func CreateAnnouncementByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		db.Create(&announcement)
 
+		// Preload the Department data
+		db.Preload("Department.Employee").First(&announcement, announcement.ID)
+
 		successResponse := helper.Response{
 			Code:         http.StatusCreated,
 			Error:        false,
@@ -270,7 +273,7 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var announcements []models.Announcement
-		query := db.Order("id DESC").Offset(offset).Limit(perPage)
+		query := db.Preload("Department.Employee").Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
@@ -338,7 +341,7 @@ func GetAnnouncementByIDForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		announcementID := c.Param("id")
 
 		var announcement models.Announcement
-		result = db.First(&announcement, announcementID)
+		result = db.Preload("Department.Employee").First(&announcement, announcementID)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Announcement not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -473,6 +476,9 @@ func UpdateAnnouncementForAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 
 		db.Save(&announcement)
+
+		// Preload the Department data
+		db.Preload("Department.Employee").First(&announcement, announcement.ID)
 
 		successResponse := helper.Response{
 			Code:         http.StatusOK,
