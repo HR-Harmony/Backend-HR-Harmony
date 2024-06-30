@@ -602,6 +602,8 @@ func CreateRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 		db.Create(&requestLoan)
 
+		db.Preload("Employee").First(&requestLoan, requestLoan.ID)
+
 		// Mengirim notifikasi email kepada karyawan
 		err = helper.SendRequestLoanNotification(employee.Email, employee.FullName, requestLoan.MonthAndYear, requestLoan.Amount, requestLoan.OneTimeDeduct, requestLoan.MonthlyInstallmentAmt, requestLoan.Reason)
 		if err != nil {
@@ -677,7 +679,7 @@ func GetAllRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 
 		// Retrieve request loans for the employee with pagination
 		var requestLoans []models.RequestLoan
-		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans)
+		result = query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch request loans"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -726,7 +728,7 @@ func GetRequestLoanByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 
 		var employee models.Employee
-		result := db.Where("username = ?", username).First(&employee)
+		result := db.Preload("Employee").Where("username = ?", username).First(&employee)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch employee data"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -865,6 +867,8 @@ func UpdateRequestLoanByIDByEmployee(db *gorm.DB, secretKey []byte) echo.Handler
 		}
 
 		db.Save(&requestLoan)
+
+		db.Preload("Employee").First(&requestLoan, requestLoan.ID)
 
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
