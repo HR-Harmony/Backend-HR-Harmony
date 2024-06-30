@@ -141,8 +141,13 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		// Handle search parameters
 		searching := c.QueryParam("searching")
 
+		/*
+			var designations []models.Designation
+			query := db.Order("id DESC").Offset(offset).Limit(perPage)
+		*/
+
 		var designations []models.Designation
-		query := db.Order("id DESC").Offset(offset).Limit(perPage)
+		query := db.Preload("Department.Employee").Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
@@ -217,8 +222,17 @@ func GetDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			var designation models.Designation
+			result = db.Where("id = ?", designationID).First(&designation)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Designation not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+		*/
+
 		var designation models.Designation
-		result = db.Where("id = ?", designationID).First(&designation)
+		result = db.Preload("Department.Employee").Where("id = ?", designationID).First(&designation)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Designation not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
