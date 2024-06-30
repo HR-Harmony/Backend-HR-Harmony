@@ -69,7 +69,7 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var existingDepartment models.Department
-		result = db.Where("id = ?", designation.DepartmentID).First(&existingDepartment)
+		result = db.Preload("Department").Where("id = ?", designation.DepartmentID).First(&existingDepartment)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Department not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
