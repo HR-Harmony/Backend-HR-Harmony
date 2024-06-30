@@ -206,6 +206,8 @@ func CreateTaskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		db.Create(&task)
 
+		db.Preload("Project.Employee").First(&task, task.ID)
+
 		successResponse := helper.Response{
 			Code:    http.StatusCreated,
 			Error:   false,
@@ -246,7 +248,7 @@ func GetAllTasksByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var tasks []models.Task
-		result = db.Preload("Notes").Find(&tasks).Order("id DESC")
+		result = db.Preload("Project.Employee").Preload("Notes").Find(&tasks).Order("id DESC")
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -299,7 +301,7 @@ func GetTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var task models.Task
-		result = db.Preload("Notes").First(&task, uint(taskID))
+		result = db.Preload("Project.Employee").Preload("Notes").First(&task, uint(taskID))
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -459,6 +461,8 @@ func UpdateTaskByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		existingTask.UpdatedAt = currentTime
 
 		db.Save(&existingTask)
+
+		db.Preload("Project.Employee").First(&existingTask, existingTask.ID)
 
 		successResponse := helper.Response{
 			Code:    http.StatusOK,

@@ -1531,6 +1531,8 @@ func CreateRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		db.Create(&requestLoan)
 
+		db.Preload("Employee").First(&requestLoan, requestLoan.ID)
+
 		// Mengirim notifikasi email kepada karyawan
 		err = helper.SendRequestLoanNotification(employee.Email, employee.FullName, requestLoan.MonthAndYear, requestLoan.Amount, requestLoan.OneTimeDeduct, requestLoan.MonthlyInstallmentAmt, requestLoan.Reason)
 		if err != nil {
@@ -1607,7 +1609,7 @@ func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var requestLoans []models.RequestLoan
-		if err := query.Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans).Error; err != nil {
+		if err := query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans).Error; err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching request loans"})
 		}
 
@@ -1665,7 +1667,7 @@ func GetRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var requestLoan models.RequestLoan
-		result = db.First(&requestLoan, requestLoanID)
+		result = db.Preload("Employee").First(&requestLoan, requestLoanID)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Request Loan not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -1788,6 +1790,8 @@ func UpdateRequestLoanByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 		}
 
 		db.Save(&requestLoan)
+
+		db.Preload("Employee").First(&requestLoan, requestLoan.ID)
 
 		// Kirim email notifikasi jika status diubah menjadi "Approved"
 		if updatedData.Status == "Approved" {

@@ -20,7 +20,7 @@ type Goal struct {
 	Task              Task          `gorm:"foreignKey:TaskID;references:ID" json:"task"`
 	TaskName          string        `json:"task_name"`
 	TrainingID        uint          `json:"training_id"`
-	Training          Task          `gorm:"foreignKey:TrainingID ;references:ID" json:"training"`
+	Training          Training      `gorm:"foreignKey:TrainingID ;references:ID" json:"training"`
 	TrainingSkillID   uint          `json:"training_skill_id"`
 	TrainingSkill     TrainingSkill `gorm:"foreignKey:TrainingSkillID ;references:ID" json:"training_skill"`
 	TrainingSkillName string        `json:"training_skill_name"`

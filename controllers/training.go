@@ -745,6 +745,150 @@ func DeleteTrainingSkillByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 	}
 }
 
+//Training
+
+type TrainingResponse struct {
+	ID               uint       `gorm:"primaryKey" json:"id"`
+	TrainerID        uint       `json:"trainer_id"`
+	FullNameTrainer  string     `json:"full_name_trainer"`
+	TrainingSkillID  uint       `json:"training_skill_id"`
+	TrainingSkill    string     `json:"training_skill"`
+	TrainingCost     int        `json:"training_cost"`
+	EmployeeID       uint       `json:"employee_id"`
+	FullNameEmployee string     `json:"full_name_employee"`
+	GoalTypeID       uint       `json:"goal_type_id"`
+	GoalType         string     `json:"goal_type"`
+	Performance      string     `json:"performance"`
+	StartDate        string     `json:"start_date"`
+	EndDate          string     `json:"end_date"`
+	Status           string     `json:"status"`
+	Description      string     `json:"description"`
+	CreatedAt        *time.Time `json:"created_at"`
+	UpdateAt         time.Time  `json:"update_at"`
+}
+
+func CreateTrainingByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		var training models.Training
+		if err := c.Bind(&training); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		_, err = time.Parse("2006-01-02", training.StartDate)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid start_date format. Required format: yyyy-mm-dd"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		_, err = time.Parse("2006-01-02", training.EndDate)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid end_date format. Required format: yyyy-mm-dd"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var trainer models.Trainer
+		result = db.First(&trainer, "id = ?", training.TrainerID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Trainer not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		training.FullNameTrainer = trainer.FullName
+
+		var trainingSkill models.TrainingSkill
+		result = db.First(&trainingSkill, "id = ?", training.TrainingSkillID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Training skill not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		training.TrainingSkill = trainingSkill.TrainingSkill
+
+		var employee models.Employee
+		result = db.First(&employee, "id = ?", training.EmployeeID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+		training.FullNameEmployee = employee.FullName
+
+		training.Status = "Pending"
+
+		if err := db.Create(&training).Error; err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to create training"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Mengirim notifikasi email kepada karyawan
+		err = helper.SendTrainingNotification(employee.Email, employee.FullName, trainer.FullName, trainingSkill.TrainingSkill, training.StartDate, training.EndDate)
+		if err != nil {
+			fmt.Println("Failed to send training notification email:", err)
+			// Tangani kesalahan sesuai kebutuhan Anda, misalnya dengan memberikan respons ke klien atau mencatat log
+		}
+
+		// Prepare the response using TrainingResponse struct
+		trainingResponse := TrainingResponse{
+			ID:               training.ID,
+			TrainerID:        training.TrainerID,
+			FullNameTrainer:  training.FullNameTrainer,
+			TrainingSkillID:  training.TrainingSkillID,
+			TrainingSkill:    training.TrainingSkill,
+			TrainingCost:     training.TrainingCost,
+			EmployeeID:       training.EmployeeID,
+			FullNameEmployee: training.FullNameEmployee,
+			GoalTypeID:       training.GoalTypeID,
+			GoalType:         training.GoalType,
+			Performance:      training.Performance,
+			StartDate:        training.StartDate,
+			EndDate:          training.EndDate,
+			Status:           training.Status,
+			Description:      training.Description,
+			CreatedAt:        training.CreatedAt,
+			UpdateAt:         training.UpdateAt,
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusCreated,
+			"error":   false,
+			"message": "Training created successfully",
+			"data":    trainingResponse,
+		}
+		return c.JSON(http.StatusCreated, successResponse)
+	}
+}
+
+/*
 func CreateTrainingByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -844,7 +988,108 @@ func CreateTrainingByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusCreated, successResponse)
 	}
 }
+*/
 
+func GetAllTrainingsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		searching := c.QueryParam("searching")
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		var trainings []models.Training
+		query := db.Model(&trainings)
+		if searching != "" {
+			searching = strings.ToLower(searching)
+			query = query.Where("LOWER(full_name_trainer) LIKE ? OR LOWER(training_skill) LIKE ? OR LOWER(full_name_employee) LIKE ? OR CAST(training_cost AS VARCHAR) LIKE ?",
+				"%"+searching+"%",
+				"%"+searching+"%",
+				"%"+searching+"%",
+				searching,
+			)
+		}
+		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&trainings)
+
+		var totalCount int64
+		db.Model(&models.Training{}).Count(&totalCount)
+
+		// Prepare TrainingResponse for each training
+		var trainingResponses []TrainingResponse
+		for _, training := range trainings {
+			trainingResponse := TrainingResponse{
+				ID:               training.ID,
+				TrainerID:        training.TrainerID,
+				FullNameTrainer:  training.FullNameTrainer,
+				TrainingSkillID:  training.TrainingSkillID,
+				TrainingSkill:    training.TrainingSkill,
+				TrainingCost:     training.TrainingCost,
+				EmployeeID:       training.EmployeeID,
+				FullNameEmployee: training.FullNameEmployee,
+				GoalTypeID:       training.GoalTypeID,
+				GoalType:         training.GoalType,
+				Performance:      training.Performance,
+				StartDate:        training.StartDate,
+				EndDate:          training.EndDate,
+				Status:           training.Status,
+				Description:      training.Description,
+				CreatedAt:        training.CreatedAt,
+				UpdateAt:         training.UpdateAt,
+			}
+			trainingResponses = append(trainingResponses, trainingResponse)
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Trainings fetched successfully",
+			"data":    trainingResponses,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetAllTrainingsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -918,7 +1163,82 @@ func GetAllTrainingsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
+func GetTrainingByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		trainingID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid training ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var training models.Training
+		result = db.First(&training, trainingID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Training not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Prepare TrainingResponse
+		trainingResponse := TrainingResponse{
+			ID:               training.ID,
+			TrainerID:        training.TrainerID,
+			FullNameTrainer:  training.FullNameTrainer,
+			TrainingSkillID:  training.TrainingSkillID,
+			TrainingSkill:    training.TrainingSkill,
+			TrainingCost:     training.TrainingCost,
+			EmployeeID:       training.EmployeeID,
+			FullNameEmployee: training.FullNameEmployee,
+			GoalTypeID:       training.GoalTypeID,
+			GoalType:         training.GoalType,
+			Performance:      training.Performance,
+			StartDate:        training.StartDate,
+			EndDate:          training.EndDate,
+			Status:           training.Status,
+			Description:      training.Description,
+			CreatedAt:        training.CreatedAt,
+			UpdateAt:         training.UpdateAt,
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Training fetched successfully",
+			"data":    trainingResponse,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetTrainingByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -970,7 +1290,163 @@ func GetTrainingByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
+func UpdateTrainingByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		trainingID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid training ID"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		var training models.Training
+		result = db.First(&training, trainingID)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Training not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var updatedTraining models.Training
+		if err := c.Bind(&updatedTraining); err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
+		// Update fields based on the provided update payload
+		if updatedTraining.TrainerID != 0 {
+			var trainer models.Trainer
+			result = db.First(&trainer, "id = ?", updatedTraining.TrainerID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Trainer not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			training.TrainerID = updatedTraining.TrainerID
+			training.FullNameTrainer = trainer.FullName
+		}
+
+		if updatedTraining.TrainingSkillID != 0 {
+			var trainingSkill models.TrainingSkill
+			result = db.First(&trainingSkill, "id = ?", updatedTraining.TrainingSkillID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Training skill not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			training.TrainingSkillID = updatedTraining.TrainingSkillID
+			training.TrainingSkill = trainingSkill.TrainingSkill
+		}
+
+		if updatedTraining.TrainingCost != 0 {
+			training.TrainingCost = updatedTraining.TrainingCost
+		}
+
+		if updatedTraining.EmployeeID != 0 {
+			var employee models.Employee
+			result = db.First(&employee, "id = ?", updatedTraining.EmployeeID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+			training.EmployeeID = updatedTraining.EmployeeID
+			training.FullNameEmployee = employee.FullName
+		}
+
+		if updatedTraining.GoalTypeID != 0 {
+			var goalType models.GoalType
+			result = db.First(&goalType, "id = ?", updatedTraining.GoalTypeID)
+			if result.Error != nil {
+				errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid goal type ID. Goal type not found."}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+			training.GoalTypeID = updatedTraining.GoalTypeID
+			training.GoalType = goalType.GoalType
+		}
+
+		if updatedTraining.Performance != "" {
+			training.Performance = updatedTraining.Performance
+		}
+
+		if updatedTraining.StartDate != "" {
+			training.StartDate = updatedTraining.StartDate
+		}
+
+		if updatedTraining.EndDate != "" {
+			training.EndDate = updatedTraining.EndDate
+		}
+
+		if updatedTraining.Status != "" {
+			training.Status = updatedTraining.Status
+		}
+
+		if updatedTraining.Description != "" {
+			training.Description = updatedTraining.Description
+		}
+
+		// Save the updated training record
+		if err := db.Save(&training).Error; err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to update training"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Prepare the response with TrainingResponse structure
+		response := TrainingResponse{
+			ID:               training.ID,
+			TrainerID:        training.TrainerID,
+			FullNameTrainer:  training.FullNameTrainer,
+			TrainingSkillID:  training.TrainingSkillID,
+			TrainingSkill:    training.TrainingSkill,
+			TrainingCost:     training.TrainingCost,
+			EmployeeID:       training.EmployeeID,
+			FullNameEmployee: training.FullNameEmployee,
+			GoalTypeID:       training.GoalTypeID,
+			GoalType:         training.GoalType,
+			Performance:      training.Performance,
+			StartDate:        training.StartDate,
+			EndDate:          training.EndDate,
+			Status:           training.Status,
+			Description:      training.Description,
+			CreatedAt:        training.CreatedAt,
+			UpdateAt:         training.UpdateAt,
+		}
+
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Training updated successfully",
+			"data":    response,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func UpdateTrainingByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -1097,6 +1573,7 @@ func UpdateTrainingByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func DeleteTrainingByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
