@@ -14,6 +14,7 @@ type ExitEmployee struct {
 	EmployeeID       uint      `json:"employee_id"`
 	FullNameEmployee string    `json:"full_name_employee"`
 	ExitID           uint      `json:"exit_id"`
+	Exit             Exit      `gorm:"foreignKey:ExitID;references:ID" json:"exit"`
 	ExitName         string    `json:"exit_name"`
 	DisableAccount   bool      `json:"disable_account"`
 	ExitInterview    string    `json:"exit_interview"`
