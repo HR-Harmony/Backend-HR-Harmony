@@ -338,10 +338,12 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		if len(employee.LastName) < 1 || len(employee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.LastName) {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last Name must be between 1 and 30 characters and contain only letters"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
-		}
+		/*
+			if len(employee.LastName) < 1 || len(employee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.LastName) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last Name must be between 1 and 30 characters and contain only letters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+		*/
 
 		if len(employee.Username) < 5 || len(employee.Username) > 15 || !regexp.MustCompile(`^[a-zA-Z0-9_]+$`).MatchString(employee.Username) {
 			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Username must be between 5 and 15 characters and contain only letters and numbers"}
@@ -795,9 +797,11 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 
 		// Validate LastName
 		if updatedEmployee.LastName != "" {
-			if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 30 characters and contain only letters"})
-			}
+			/*
+				if len(updatedEmployee.LastName) < 3 || len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
+					return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name must be between 3 and 30 characters and contain only letters"})
+				}
+			*/
 			existingEmployee.LastName = updatedEmployee.LastName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
