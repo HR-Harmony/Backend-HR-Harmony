@@ -6,7 +6,6 @@ type Announcement struct {
 	ID             uint       `gorm:"primaryKey" json:"id"`
 	Title          string     `json:"title"`
 	DepartmentID   uint       `json:"department_id"`
-	Department     Department `gorm:"foreignKey:DepartmentID;references:ID" json:"department"`
 	DepartmentName string     `json:"department_name"`
 	Summary        string     `json:"summary"`
 	Description    string     `json:"description"`
