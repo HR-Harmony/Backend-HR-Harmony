@@ -73,7 +73,7 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var employee models.Employee
-		result = db.Preload("Employee").First(&employee, "id = ?", department.EmployeeID)
+		result = db.First(&employee, "id = ?", department.EmployeeID)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -84,6 +84,8 @@ func CreateDepartemntsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		department.CreatedAt = &currentTime
 
 		db.Create(&department)
+
+		db.Preload("Employee").First(&department, department.ID)
 
 		successResponse := helper.Response{
 			Code:       http.StatusCreated,
@@ -336,6 +338,8 @@ func EditDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		department.UpdatedAt = time.Now()
 		db.Save(&department)
+
+		db.Preload("Employee").First(&department, department.ID)
 
 		successResponse := helper.Response{
 			Code:       http.StatusOK,

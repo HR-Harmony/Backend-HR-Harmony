@@ -69,7 +69,7 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		var existingDepartment models.Department
-		result = db.Preload("Department").Where("id = ?", designation.DepartmentID).First(&existingDepartment)
+		result = db.Where("id = ?", designation.DepartmentID).First(&existingDepartment)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Department not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -81,6 +81,9 @@ func CreateDesignationByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		designation.CreatedAt = currentTime
 
 		db.Create(&designation)
+
+		// Preload the Department data
+		db.Preload("Department").First(&designation, designation.ID)
 
 		successResponse := helper.Response{
 			Code:        http.StatusCreated,
@@ -340,6 +343,9 @@ func UpdateDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		db.Save(&existingDesignation)
+
+		// Preload the Department data
+		db.Preload("Department").First(&existingDesignation, existingDesignation.ID)
 
 		successResponse := helper.Response{
 			Code:        http.StatusOK,
