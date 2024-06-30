@@ -60,8 +60,8 @@ func CreateRoleByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		// Validate RoleName using regexp
-		if len(role.RoleName) < 5 || len(role.RoleName) > 30 {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Role name must be between 5 and 30 characters"}
+		if len(role.RoleName) < 5 || len(role.RoleName) > 100 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Role name must be between 5 and 100 characters"}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
@@ -287,8 +287,8 @@ func EditRoleByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		*/
 
 		if updatedRole.RoleName != "" {
-			if len(updatedRole.RoleName) < 5 || len(updatedRole.RoleName) > 30 {
-				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Roll name must be between 5 and 30 characters"}
+			if len(updatedRole.RoleName) < 5 || len(updatedRole.RoleName) > 100 {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Roll name must be between 5 and 100 characters"}
 				return c.JSON(http.StatusBadRequest, errorResponse)
 			}
 			role.RoleName = updatedRole.RoleName
