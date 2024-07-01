@@ -261,6 +261,14 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Update the FullName in departments based on the employee_id
+		for i, dep := range departments {
+			var employee models.Employee
+			if err := db.Where("id = ?", dep.EmployeeID).First(&employee).Error; err == nil {
+				departments[i].FullName = employee.FullName
+			}
+		}
+
 		var totalCount int64
 		countQuery := db.Model(&models.Department{})
 		if searching != "" {

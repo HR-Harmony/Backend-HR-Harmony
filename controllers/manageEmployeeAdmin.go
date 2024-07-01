@@ -558,6 +558,11 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		}
 
 		// Update data
+		if err := query.Find(&employees).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching employees"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
 		for _, emp := range employees {
 			var shift models.Shift
 			if err := db.First(&shift, emp.ShiftID).Error; err == nil {
