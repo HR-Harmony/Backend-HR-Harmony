@@ -1001,124 +1001,6 @@ func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		authParts := strings.SplitN(tokenString, " ", 2)
-		if len(authParts) != 2 || authParts[0] != "Bearer" {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		tokenString = authParts[1]
-
-		username, err := middleware.VerifyToken(tokenString, secretKey)
-		if err != nil {
-			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
-			return c.JSON(http.StatusUnauthorized, errorResponse)
-		}
-
-		var adminUser models.Admin
-		result := db.Where("username = ?", username).First(&adminUser)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
-			return c.JSON(http.StatusNotFound, errorResponse)
-		}
-
-		if !adminUser.IsAdminHR {
-			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
-			return c.JSON(http.StatusForbidden, errorResponse)
-		}
-
-		page, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil || page <= 0 {
-			page = 1
-		}
-
-		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
-		if err != nil || perPage <= 0 {
-			perPage = 10
-		}
-
-		offset := (page - 1) * perPage
-
-		searching := c.QueryParam("searching")
-
-		query := db.Model(&models.Employee{}).Where("is_client = ? AND is_exit = ?", false, false)
-		if searching != "" {
-			searchPattern := "%" + strings.ToLower(searching) + "%"
-			query = query.Where("LOWER(full_name) LIKE ?", searchPattern)
-		}
-
-		var employees []models.Employee
-		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&employees)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve employees"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
-
-		var payrollInfoList []map[string]interface{}
-		var employeeIDs []uint
-		employeeMap := make(map[uint]string)
-
-		for _, employee := range employees {
-			payrollInfo := map[string]interface{}{
-				"payroll_id":   employee.PayrollID,
-				"username":     employee.Username,
-				"full_name":    employee.FullName,
-				"employee_id":  employee.ID,
-				"payslip_type": employee.PaySlipType,
-				"basic_salary": employee.BasicSalary,
-				"hourly_rate":  employee.HourlyRate,
-				"paid_status":  employee.PaidStatus,
-			}
-			payrollInfoList = append(payrollInfoList, payrollInfo)
-			employeeIDs = append(employeeIDs, employee.ID)
-			employeeMap[employee.ID] = ""
-		}
-
-		// Batch fetch employee full names
-		var employeesFullNames []struct {
-			ID       uint   `json:"id"`
-			FullName string `json:"full_name"`
-		}
-		db.Model(&models.Employee{}).Select("id, full_name").Where("id IN (?)", employeeIDs).Scan(&employeesFullNames)
-
-		for _, emp := range employeesFullNames {
-			employeeMap[emp.ID] = emp.FullName
-		}
-
-		// Assign full names to payrollInfoList
-		for i, payrollInfo := range payrollInfoList {
-			if fullName, ok := employeeMap[payrollInfo["employee_id"].(uint)]; ok {
-				payrollInfoList[i]["full_name_employee"] = fullName
-			}
-		}
-
-		var totalCount int64
-		query.Count(&totalCount)
-
-		successResponse := map[string]interface{}{
-			"Code":        http.StatusOK,
-			"Error":       false,
-			"Message":     "Employee payroll information retrieved successfully",
-			"PayrollInfo": payrollInfoList,
-			"Pagination": map[string]interface{}{
-				"total_count": totalCount,
-				"page":        page,
-				"per_page":    perPage,
-			},
-		}
-		return c.JSON(http.StatusOK, successResponse)
-	}
-}
-
-/*
-func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		tokenString := c.Request().Header.Get("Authorization")
-		if tokenString == "" {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": http.StatusUnauthorized, "error": true, "message": "Authorization token is missing"})
 		}
 
@@ -1186,7 +1068,6 @@ func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
-*/
 
 func CreateAdvanceSalaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

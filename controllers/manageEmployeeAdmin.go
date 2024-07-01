@@ -495,6 +495,223 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 	}
 }
 
+// GetAllEmployeesByAdmin returns all employees with related information (shift, role, department, and designation).
+func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Get token from Authorization header
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Verify token format
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Extract token string
+		tokenString = authParts[1]
+
+		// Verify token and get username
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Find admin user by username
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Check if user is HR admin
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		searching := c.QueryParam("searching")
+
+		var employees []models.Employee
+		query := db.Where("is_client = ? AND is_exit = ?", false, false).
+			Order("id DESC").
+			Offset(offset).
+			Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where(
+				db.Where("full_name ILIKE ?", searchPattern).
+					Or("designation ILIKE ?", searchPattern).
+					Or("contact_number ILIKE ?", searchPattern).
+					Or("gender ILIKE ?", searchPattern).
+					Or("country ILIKE ?", searchPattern).
+					Or("role ILIKE ?", searchPattern))
+		}
+
+		if err := query.Find(&employees).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching employees"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Get all related data in batch
+		var shiftIDs, roleIDs, departmentIDs, designationIDs []uint
+		for _, emp := range employees {
+			shiftIDs = append(shiftIDs, emp.ShiftID)
+			roleIDs = append(roleIDs, emp.RoleID)
+			departmentIDs = append(departmentIDs, emp.DepartmentID)
+			designationIDs = append(designationIDs, emp.DesignationID)
+		}
+
+		var shifts []models.Shift
+		var roles []models.Role
+		var departments []models.Department
+		var designations []models.Designation
+
+		db.Where("id IN (?)", shiftIDs).Find(&shifts)
+		db.Where("id IN (?)", roleIDs).Find(&roles)
+		db.Where("id IN (?)", departmentIDs).Find(&departments)
+		db.Where("id IN (?)", designationIDs).Find(&designations)
+
+		// Create maps for quick lookup
+		shiftMap := make(map[uint]string)
+		for _, shift := range shifts {
+			shiftMap[shift.ID] = shift.ShiftName
+		}
+
+		roleMap := make(map[uint]string)
+		for _, role := range roles {
+			roleMap[role.ID] = role.RoleName
+		}
+
+		departmentMap := make(map[uint]string)
+		for _, department := range departments {
+			departmentMap[department.ID] = department.DepartmentName
+		}
+
+		designationMap := make(map[uint]string)
+		for _, designation := range designations {
+			designationMap[designation.ID] = designation.DesignationName
+		}
+
+		// Assign related data to employees and update database
+		tx := db.Begin()
+		for i := range employees {
+			if name, ok := shiftMap[employees[i].ShiftID]; ok {
+				employees[i].Shift = name
+			}
+			if name, ok := roleMap[employees[i].RoleID]; ok {
+				employees[i].Role = name
+			}
+			if name, ok := departmentMap[employees[i].DepartmentID]; ok {
+				employees[i].Department = name
+			}
+			if name, ok := designationMap[employees[i].DesignationID]; ok {
+				employees[i].Designation = name
+			}
+			if err := tx.Save(&employees[i]).Error; err != nil {
+				tx.Rollback()
+				errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error saving employee data"}
+				return c.JSON(http.StatusInternalServerError, errorResponse)
+			}
+		}
+		tx.Commit()
+
+		var employeesResponse []helper.EmployeeResponse
+		for _, emp := range employees {
+			employeeResponse := helper.EmployeeResponse{
+				ID:                       emp.ID,
+				PayrollID:                emp.PayrollID,
+				FirstName:                emp.FirstName,
+				LastName:                 emp.LastName,
+				ContactNumber:            emp.ContactNumber,
+				Gender:                   emp.Gender,
+				Email:                    emp.Email,
+				BirthdayDate:             emp.BirthdayDate,
+				Username:                 emp.Username,
+				Password:                 emp.Password,
+				ShiftID:                  emp.ShiftID,
+				Shift:                    emp.Shift,
+				RoleID:                   emp.RoleID,
+				Role:                     emp.Role,
+				DepartmentID:             emp.DepartmentID,
+				Department:               emp.Department,
+				DesignationID:            emp.DesignationID,
+				Designation:              emp.Designation,
+				BasicSalary:              emp.BasicSalary,
+				HourlyRate:               emp.HourlyRate,
+				PaySlipType:              emp.PaySlipType,
+				IsActive:                 *emp.IsActive,
+				PaidStatus:               emp.PaidStatus,
+				MaritalStatus:            emp.MaritalStatus,
+				Religion:                 emp.Religion,
+				BloodGroup:               emp.BloodGroup,
+				Nationality:              emp.Nationality,
+				Citizenship:              emp.Citizenship,
+				BpjsKesehatan:            emp.BpjsKesehatan,
+				Address1:                 emp.Address1,
+				Address2:                 emp.Address2,
+				City:                     emp.City,
+				StateProvince:            emp.StateProvince,
+				ZipPostalCode:            emp.ZipPostalCode,
+				Bio:                      emp.Bio,
+				FacebookURL:              emp.FacebookURL,
+				InstagramURL:             emp.InstagramURL,
+				TwitterURL:               emp.TwitterURL,
+				LinkedinURL:              emp.LinkedinURL,
+				AccountTitle:             emp.AccountTitle,
+				AccountNumber:            emp.AccountNumber,
+				BankName:                 emp.BankName,
+				Iban:                     emp.Iban,
+				SwiftCode:                emp.SwiftCode,
+				BankBranch:               emp.BankBranch,
+				EmergencyContactFullName: emp.EmergencyContactFullName,
+				EmergencyContactNumber:   emp.EmergencyContactNumber,
+				EmergencyContactEmail:    emp.EmergencyContactEmail,
+				EmergencyContactAddress:  emp.EmergencyContactAddress,
+				CreatedAt:                emp.CreatedAt,
+				UpdatedAt:                emp.UpdatedAt,
+			}
+			employeesResponse = append(employeesResponse, employeeResponse)
+		}
+
+		var totalCount int64
+		db.Model(&models.Employee{}).Where("is_client = ?", false).Count(&totalCount)
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":      http.StatusOK,
+			"error":     false,
+			"message":   "All employees retrieved successfully",
+			"employees": employeesResponse,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		})
+	}
+}
+
+/*
 func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -695,6 +912,7 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
+*/
 
 /*
 func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
