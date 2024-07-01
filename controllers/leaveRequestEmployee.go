@@ -297,6 +297,167 @@ func GetAllLeaveRequestsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
+		// Batch processing for FullNameEmployee and LeaveType
+		var employeeIDs []uint
+		employeeMap := make(map[uint]string)
+		var leaveTypeIDs []uint
+		leaveTypeMap := make(map[uint]string)
+
+		for _, lr := range leaveRequests {
+			if _, found := employeeMap[lr.EmployeeID]; !found {
+				employeeIDs = append(employeeIDs, lr.EmployeeID)
+			}
+			if _, found := leaveTypeMap[lr.LeaveTypeID]; !found {
+				leaveTypeIDs = append(leaveTypeIDs, lr.LeaveTypeID)
+			}
+		}
+
+		// Fetch full names for employee IDs
+		var employees []models.Employee
+		err = db.Model(&models.Employee{}).Where("id IN (?)", employeeIDs).Find(&employees).Error
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching employees"})
+		}
+
+		// Create map for fast lookup
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
+		// Fetch leave types for leave type IDs
+		var leaveRequestTypes []models.LeaveRequestType
+		err = db.Model(&models.LeaveRequestType{}).Where("id IN (?)", leaveTypeIDs).Find(&leaveRequestTypes).Error
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching leave request types"})
+		}
+
+		// Create map for fast lookup
+		for _, lt := range leaveRequestTypes {
+			leaveTypeMap[lt.ID] = lt.LeaveType
+		}
+
+		// Update FullNameEmployee and LeaveType fields
+		tx := db.Begin()
+		for i := range leaveRequests {
+			leaveRequests[i].FullNameEmployee = employeeMap[leaveRequests[i].EmployeeID]
+			leaveRequests[i].LeaveType = leaveTypeMap[leaveRequests[i].LeaveTypeID]
+
+			if err := tx.Save(&leaveRequests[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving leave requests"})
+			}
+		}
+		tx.Commit()
+
+		// Get total count of leave request records for the employee
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Map leave requests to LeaveRequestResponse format
+		var leaveRequestsResponse []LeaveRequestResponse
+		for _, leaveRequest := range leaveRequests {
+			leaveRequestsResponse = append(leaveRequestsResponse, LeaveRequestResponse{
+				ID:               leaveRequest.ID,
+				EmployeeID:       leaveRequest.EmployeeID,
+				Username:         leaveRequest.Username,
+				FullNameEmployee: leaveRequest.FullNameEmployee,
+				LeaveTypeID:      leaveRequest.LeaveTypeID,
+				LeaveType:        leaveRequest.LeaveType,
+				StartDate:        leaveRequest.StartDate,
+				EndDate:          leaveRequest.EndDate,
+				IsHalfDay:        leaveRequest.IsHalfDay,
+				Remarks:          leaveRequest.Remarks,
+				LeaveReason:      leaveRequest.LeaveReason,
+				Days:             leaveRequest.Days,
+				Status:           leaveRequest.Status,
+				CreatedAt:        leaveRequest.CreatedAt,
+				UpdatedAt:        leaveRequest.UpdatedAt,
+			})
+		}
+
+		// Return the leave request data with pagination info
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Leave requests fetched successfully",
+			"data":    leaveRequestsResponse,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllLeaveRequestsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Retrieve employee details
+		var employee models.Employee
+		result := db.Where("username = ?", username).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Searching parameter
+		searching := c.QueryParam("searching")
+
+		// Build the query
+		query := db.Model(&models.LeaveRequest{}).Where("employee_id = ?", employee.ID)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(full_name_employee) LIKE ? OR LOWER(leave_type) LIKE ? OR LOWER(start_date) LIKE ? OR LOWER(end_date) LIKE ? OR LOWER(status) LIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern,
+			)
+		}
+
+		// Retrieve leave requests for the employee with pagination
+		var leaveRequests []models.LeaveRequest
+		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&leaveRequests)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch leave requests"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
 		// Map leave requests to LeaveRequestResponse format
 		var leaveRequestsResponse []LeaveRequestResponse
 		for _, leaveRequest := range leaveRequests {
@@ -338,6 +499,7 @@ func GetAllLeaveRequestsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 func GetAllLeaveRequestsByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {

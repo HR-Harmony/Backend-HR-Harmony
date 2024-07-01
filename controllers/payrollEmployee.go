@@ -84,6 +84,34 @@ func GetPayrollInfoByEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		var totalCount int64
 		query.Count(&totalCount)
 
+		// Batch fetch employee full names
+		var employeeIDs []uint
+		employeeMap := make(map[uint]string)
+		for _, pi := range payrollInfos {
+			employeeIDs = append(employeeIDs, pi.EmployeeID)
+			employeeMap[pi.EmployeeID] = ""
+		}
+
+		var employees []models.Employee
+		db.Where("id IN (?)", employeeIDs).Find(&employees)
+
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
+		// Assign full names to payroll info and update database
+		tx := db.Begin()
+		for i := range payrollInfos {
+			if fullName, ok := employeeMap[payrollInfos[i].EmployeeID]; ok {
+				payrollInfos[i].FullNameEmployee = fullName
+			}
+			if err := tx.Save(&payrollInfos[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving payroll information"})
+			}
+		}
+		tx.Commit()
+
 		// Return the payroll info data with pagination info
 		successResponse := map[string]interface{}{
 			"code":    http.StatusOK,
@@ -99,6 +127,94 @@ func GetPayrollInfoByEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+
+/*
+func GetPayrollInfoByEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		// Retrieve the employee based on the username
+		var employee models.Employee
+		result := db.Where("username = ?", username).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch employee data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Searching parameter
+		searching := c.QueryParam("searching")
+
+		// Build the query
+		query := db.Model(&models.PayrollInfo{}).Where("employee_id = ?", employee.ID)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(full_name_employee) LIKE ? OR LOWER(pay_slip_type) LIKE ?",
+				searchPattern, searchPattern,
+			)
+		}
+
+		// Retrieve payroll info data for the employee with pagination
+		var payrollInfos []models.PayrollInfo
+		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&payrollInfos)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusInternalServerError, Message: "Failed to fetch payroll info data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Get total count of payroll info records for the employee
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Return the payroll info data with pagination info
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Payroll info data retrieved successfully",
+			"data":    payrollInfos,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+*/
 
 func GetPayrollInfoByIDAndEmployeeID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -643,6 +759,125 @@ func GetAllRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusUnauthorized, errorResponse)
 		}
 
+		// Retrieve the employee based on the username
+		var employee models.Employee
+		result := db.Where("username = ?", username).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch employee data"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Pagination parameters
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10 // Default per page
+		}
+
+		// Calculate offset and limit for pagination
+		offset := (page - 1) * perPage
+
+		// Searching parameter
+		searching := c.QueryParam("searching")
+
+		// Build the query
+		query := db.Model(&models.RequestLoan{}).Where("employee_id = ?", employee.ID)
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(fullname_employee) LIKE ? OR amount = ? OR emi = ? OR LOWER(status) LIKE ?",
+				searchPattern, searching, searching, searchPattern,
+			)
+		}
+
+		// Retrieve request loans for the employee with pagination
+		var requestLoans []models.RequestLoan
+		result = query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch request loans"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Get unique employee IDs for batch processing
+		var employeeIDs []uint
+		employeeMap := make(map[uint]string)
+		for _, loan := range requestLoans {
+			if _, found := employeeMap[loan.EmployeeID]; !found {
+				employeeIDs = append(employeeIDs, loan.EmployeeID)
+			}
+		}
+
+		// Fetch full names for employee IDs
+		var employees []models.Employee
+		err = db.Model(&models.Employee{}).Where("id IN (?)", employeeIDs).Find(&employees).Error
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching employees"})
+		}
+
+		// Create map for fast lookup
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
+		// Update FullnameEmployee field and save to database
+		tx := db.Begin()
+		for i := range requestLoans {
+			requestLoans[i].FullnameEmployee = employeeMap[requestLoans[i].EmployeeID]
+			if err := tx.Save(&requestLoans[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving request loans"})
+			}
+		}
+		tx.Commit()
+
+		// Get total count of request loans records for the employee
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Return the request loans data with pagination info
+		successResponse := map[string]interface{}{
+			"code":    http.StatusOK,
+			"error":   false,
+			"message": "Request loans retrieved successfully",
+			"data":    requestLoans,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Extract and verify the JWT token
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
 		var employee models.Employee
 		result := db.Where("username = ?", username).First(&employee)
 		if result.Error != nil {
@@ -704,6 +939,7 @@ func GetAllRequestLoanByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func GetRequestLoanByIDByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

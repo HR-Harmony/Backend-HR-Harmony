@@ -207,6 +207,111 @@ func CreateHelpdeskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 }
 */
 
+// GetAllHelpdeskByEmployee handles the retrieval of helpdesk data by employee
+func GetAllHelpdeskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var employee models.Employee
+		result := db.Where("username = ?", username).First(&employee)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Employee not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		var helpdeskList []models.Helpdesk
+		db.Where("employee_id = ?", employee.ID).Order("id DESC").Find(&helpdeskList)
+
+		// Batch processing for Department and Employee data
+		departmentIDs := make([]uint, len(helpdeskList))
+		employeeIDs := make([]uint, len(helpdeskList))
+
+		for i, helpdesk := range helpdeskList {
+			departmentIDs[i] = helpdesk.DepartmentID
+			employeeIDs[i] = helpdesk.EmployeeID
+		}
+
+		var departments []models.Department
+		db.Model(&models.Department{}).Where("id IN (?)", departmentIDs).Find(&departments)
+
+		departmentMap := make(map[uint]models.Department)
+		for _, dep := range departments {
+			departmentMap[dep.ID] = dep
+		}
+
+		var employees []models.Employee
+		db.Model(&models.Employee{}).Where("id IN (?)", employeeIDs).Find(&employees)
+
+		employeeMap := make(map[uint]models.Employee)
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp
+		}
+
+		// Update DepartmentName and FullNameEmployee fields
+		tx := db.Begin()
+		for i := range helpdeskList {
+			department := departmentMap[helpdeskList[i].DepartmentID]
+			employee := employeeMap[helpdeskList[i].EmployeeID]
+
+			helpdeskList[i].DepartmentName = department.DepartmentName
+			helpdeskList[i].EmployeeFullName = employee.FullName
+
+			if err := tx.Save(&helpdeskList[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving helpdesk data"})
+			}
+		}
+
+		tx.Commit()
+
+		// Map Helpdesk to HelpdeskResponse
+		helpdeskResponses := make([]HelpdeskResponse, len(helpdeskList))
+		for i, helpdesk := range helpdeskList {
+			helpdeskResponses[i] = HelpdeskResponse{
+				ID:               helpdesk.ID,
+				Subject:          helpdesk.Subject,
+				Priority:         helpdesk.Priority,
+				DepartmentID:     helpdesk.DepartmentID,
+				DepartmentName:   helpdesk.DepartmentName,
+				EmployeeID:       helpdesk.EmployeeID,
+				EmployeeUsername: helpdesk.EmployeeUsername,
+				EmployeeFullName: helpdesk.EmployeeFullName,
+				Description:      helpdesk.Description,
+				Status:           helpdesk.Status,
+				CreatedAt:        helpdesk.CreatedAt,
+				UpdatedAt:        helpdesk.UpdatedAt,
+			}
+		}
+
+		successResponse := map[string]interface{}{
+			"code":     http.StatusOK,
+			"error":    false,
+			"message":  "Helpdesk data retrieved successfully",
+			"helpdesk": helpdeskResponses,
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetAllHelpdeskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -267,6 +372,7 @@ func GetAllHelpdeskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 func GetAllHelpdeskByEmployee(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
