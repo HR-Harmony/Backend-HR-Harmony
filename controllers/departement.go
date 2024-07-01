@@ -249,6 +249,129 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var departments []models.Department
+		query := db.Order("id DESC").Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("department_name ILIKE ? OR full_name ILIKE ?", searchPattern, searchPattern)
+		}
+
+		if err := query.Find(&departments).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch Department records"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Get all employee IDs for batch processing
+		var employeeIDs []uint
+		for _, dep := range departments {
+			employeeIDs = append(employeeIDs, dep.EmployeeID)
+		}
+
+		// Batch fetch employees
+		var employees []models.Employee
+		db.Where("id IN (?)", employeeIDs).Find(&employees)
+
+		// Create a map for quick lookup of employee full names
+		employeeMap := make(map[uint]string)
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
+		// Assign full names to departments
+		for i, dep := range departments {
+			if fullName, ok := employeeMap[dep.EmployeeID]; ok {
+				departments[i].FullName = fullName
+			}
+		}
+
+		var totalCount int64
+		countQuery := db.Model(&models.Department{})
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			countQuery = countQuery.Where("department_name ILIKE ? OR full_name ILIKE ?", searchPattern, searchPattern)
+		}
+		countQuery.Count(&totalCount)
+
+		// Map departments to DepartmentResponse
+		var departmentsResponse []DepartmentResponse
+		for _, dep := range departments {
+			departmentResp := DepartmentResponse{
+				ID:             dep.ID,
+				DepartmentName: dep.DepartmentName,
+				EmployeeID:     dep.EmployeeID,
+				FullName:       dep.FullName,
+				CreatedAt:      dep.CreatedAt,
+				UpdatedAt:      dep.UpdatedAt,
+			}
+			departmentsResponse = append(departmentsResponse, departmentResp)
+		}
+
+		successResponse := map[string]interface{}{
+			"code":        http.StatusOK,
+			"error":       false,
+			"message":     "Departments retrieved successfully",
+			"departments": departmentsResponse,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		// Handle search parameters
+		searching := c.QueryParam("searching")
+
+		var departments []models.Department
 		query := db.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
@@ -305,6 +428,7 @@ func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 func GetAllDepartmentsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {

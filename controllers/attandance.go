@@ -296,6 +296,111 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		query.Count(&totalCount)
 
 		var attendance []models.Attendance
+		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&attendance)
+
+		// Batch fetch employee full names
+		var employeeIDs []uint
+		employeeMap := make(map[uint]string)
+		for _, att := range attendance {
+			employeeIDs = append(employeeIDs, att.EmployeeID)
+			employeeMap[att.EmployeeID] = ""
+		}
+
+		var employees []models.Employee
+		db.Where("id IN (?)", employeeIDs).Find(&employees)
+
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
+		// Assign full names to attendance
+		for i, att := range attendance {
+			if fullName, ok := employeeMap[att.EmployeeID]; ok {
+				attendance[i].FullNameEmployee = fullName
+			}
+		}
+
+		successResponse := map[string]interface{}{
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "Attendance data retrieved successfully",
+			"data":       attendance,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		date := c.QueryParam("date")
+		employeeID := c.QueryParam("employee_id")
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.Attendance{})
+
+		if date != "" {
+			query = query.Where("attendance_date = ?", date)
+		}
+
+		if employeeID != "" {
+			query = query.Where("employee_id = ?", employeeID)
+		}
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("full_name_employee ILIKE ? OR attendance_date ILIKE ?", searchPattern, searchPattern)
+		}
+
+		var totalCount int64
+		query.Count(&totalCount)
+
+		var attendance []models.Attendance
 		query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&attendance)
 
 		successResponse := map[string]interface{}{
@@ -308,6 +413,7 @@ func GetAllAttendanceByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func GetAttendanceByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -957,6 +1063,111 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		query.Count(&totalCount)
 
 		var overtime []models.OvertimeRequest
+		query.Order("id DESC").Offset(offset).Limit(perPage).Find(&overtime)
+
+		// Batch fetch employee full names
+		var employeeIDs []uint
+		employeeMap := make(map[uint]string)
+		for _, ot := range overtime {
+			employeeIDs = append(employeeIDs, ot.EmployeeID)
+			employeeMap[ot.EmployeeID] = ""
+		}
+
+		var employees []models.Employee
+		db.Where("id IN (?)", employeeIDs).Find(&employees)
+
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
+		// Assign full names to overtime requests
+		for i, ot := range overtime {
+			if fullName, ok := employeeMap[ot.EmployeeID]; ok {
+				overtime[i].FullNameEmployee = fullName
+			}
+		}
+
+		successResponse := map[string]interface{}{
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "Overtime Request data retrieved successfully",
+			"data":       overtime,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		date := c.QueryParam("date")
+		employeeID := c.QueryParam("employee_id")
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.OvertimeRequest{})
+
+		if date != "" {
+			query = query.Where("date = ?", date)
+		}
+
+		if employeeID != "" {
+			query = query.Where("employee_id = ?", employeeID)
+		}
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("full_name_employee ILIKE ? OR date ILIKE ? OR status ILIKE ?", searchPattern, searchPattern, searchPattern)
+		}
+
+		var totalCount int64
+		query.Count(&totalCount)
+
+		var overtime []models.OvertimeRequest
 		query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&overtime)
 
 		successResponse := map[string]interface{}{
@@ -969,6 +1180,7 @@ func GetAllOvertimeRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func GetOvertimeRequestByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

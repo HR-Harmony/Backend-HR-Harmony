@@ -246,6 +246,128 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		searching := c.QueryParam("searching")
 
 		var designations []models.Designation
+		query := db.Preload("Department").Order("id DESC").Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("designation_name ILIKE ?", searchPattern)
+		}
+
+		if err := query.Find(&designations).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to fetch Designation records"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Batch fetch department names
+		var departmentIDs []uint
+		departmentMap := make(map[uint]string)
+		for _, d := range designations {
+			departmentIDs = append(departmentIDs, d.DepartmentID)
+			departmentMap[d.DepartmentID] = ""
+		}
+
+		var departments []models.Department
+		db.Where("id IN (?)", departmentIDs).Find(&departments)
+
+		for _, dep := range departments {
+			departmentMap[dep.ID] = dep.DepartmentName
+		}
+
+		// Assign department names to designations
+		for i, des := range designations {
+			if departmentName, ok := departmentMap[des.DepartmentID]; ok {
+				designations[i].DepartmentName = departmentName
+			}
+		}
+
+		var totalCount int64
+		countQuery := db.Model(&models.Designation{})
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			countQuery = countQuery.Where("designation_name ILIKE ?", searchPattern)
+		}
+		countQuery.Count(&totalCount)
+
+		// Map to slice of DesignationResponse
+		var designationResponses []DesignationResponse
+		for _, d := range designations {
+			response := DesignationResponse{
+				ID:              d.ID,
+				DepartmentID:    d.DepartmentID,
+				DepartmentName:  d.DepartmentName,
+				DesignationName: d.DesignationName,
+				Description:     d.Description,
+				CreatedAt:       d.CreatedAt,
+			}
+			designationResponses = append(designationResponses, response)
+		}
+
+		successResponse := map[string]interface{}{
+			"code":         http.StatusOK,
+			"error":        false,
+			"message":      "Designations retrieved successfully",
+			"designations": designationResponses,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		// Handle search parameters
+		searching := c.QueryParam("searching")
+
+		var designations []models.Designation
 		query := db.Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
@@ -294,6 +416,7 @@ func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 func GetAllDesignationsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
