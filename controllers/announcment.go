@@ -395,6 +395,126 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			searchPattern := "%" + searching + "%"
 			query = query.Where(
 				db.Where("title ILIKE ?", searchPattern).
+					Or("description ILIKE ?", searchPattern).
+					Or("start_date::text ILIKE ?", searchPattern).
+					Or("end_date::text ILIKE ?", searchPattern))
+		}
+
+		if err := query.Find(&announcements).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching announcements"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Batch fetch department names
+		var departmentIDs []uint
+		departmentMap := make(map[uint]string)
+		for _, ann := range announcements {
+			departmentIDs = append(departmentIDs, ann.DepartmentID)
+			departmentMap[ann.DepartmentID] = ""
+		}
+
+		var departments []models.Department
+		db.Where("id IN (?)", departmentIDs).Find(&departments)
+
+		for _, dep := range departments {
+			departmentMap[dep.ID] = dep.DepartmentName
+		}
+
+		// Assign department names to announcements
+		for i, ann := range announcements {
+			if departmentName, ok := departmentMap[ann.DepartmentID]; ok {
+				announcements[i].DepartmentName = departmentName
+			}
+		}
+
+		var totalCount int64
+		db.Model(&models.Announcement{}).Count(&totalCount)
+
+		// Prepare AnnouncementResponse slice for JSON response
+		var announcementsResponse []AnnouncementResponse
+		for _, announcement := range announcements {
+			announcementResp := AnnouncementResponse{
+				ID:             announcement.ID,
+				Title:          announcement.Title,
+				DepartmentID:   announcement.DepartmentID,
+				DepartmentName: announcement.DepartmentName,
+				Summary:        announcement.Summary,
+				Description:    announcement.Description,
+				StartDate:      announcement.StartDate,
+				EndDate:        announcement.EndDate,
+				CreatedAt:      announcement.CreatedAt,
+			}
+			announcementsResponse = append(announcementsResponse, announcementResp)
+		}
+
+		successResponse := map[string]interface{}{
+			"code":          http.StatusOK,
+			"error":         false,
+			"message":       "Announcements retrieved successfully",
+			"announcements": announcementsResponse,
+			"pagination":    map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		searching := c.QueryParam("searching")
+
+		var announcements []models.Announcement
+		query := db.Order("id DESC").Offset(offset).Limit(perPage)
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where(
+				db.Where("title ILIKE ?", searchPattern).
 					Or("department_name ILIKE ?", searchPattern).
 					Or("description ILIKE ?", searchPattern).
 					Or("start_date::text ILIKE ?", searchPattern).
@@ -437,6 +557,7 @@ func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 func GetAnnouncementsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
