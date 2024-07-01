@@ -1045,71 +1045,66 @@ func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		searching := c.QueryParam("searching")
 
-		query := db.Model(&models.Employee{}).Where("is_client = ? AND is_exit = ?", false, false)
+		query := db.Model(&models.PayrollInfo{})
+
 		if searching != "" {
-			searchPattern := "%" + strings.ToLower(searching) + "%"
-			query = query.Where("LOWER(full_name) LIKE ?", searchPattern)
-		}
-
-		var employees []models.Employee
-		result = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&employees)
-		if result.Error != nil {
-			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve employees"}
-			return c.JSON(http.StatusInternalServerError, errorResponse)
-		}
-
-		var payrollInfoList []map[string]interface{}
-		var employeeIDs []uint
-		employeeMap := make(map[uint]string)
-
-		for _, employee := range employees {
-			payrollInfo := map[string]interface{}{
-				"payroll_id":   employee.PayrollID,
-				"username":     employee.Username,
-				"full_name":    employee.FullName,
-				"employee_id":  employee.ID,
-				"payslip_type": employee.PaySlipType,
-				"basic_salary": employee.BasicSalary,
-				"hourly_rate":  employee.HourlyRate,
-				"paid_status":  employee.PaidStatus,
-			}
-			payrollInfoList = append(payrollInfoList, payrollInfo)
-			employeeIDs = append(employeeIDs, employee.ID)
-			employeeMap[employee.ID] = ""
-		}
-
-		// Batch fetch employee full names
-		var employeesFullNames []struct {
-			ID       uint   `json:"id"`
-			FullName string `json:"full_name"`
-		}
-		db.Model(&models.Employee{}).Select("id, full_name").Where("id IN (?)", employeeIDs).Scan(&employeesFullNames)
-
-		for _, emp := range employeesFullNames {
-			employeeMap[emp.ID] = emp.FullName
-		}
-
-		// Assign full names to payrollInfoList
-		for i, payrollInfo := range payrollInfoList {
-			if fullName, ok := employeeMap[payrollInfo["employee_id"].(uint)]; ok {
-				payrollInfoList[i]["full_name_employee"] = fullName
-			}
+			searchPattern := "%" + searching + "%"
+			query = query.Where("full_name_employee ILIKE ?", searchPattern)
 		}
 
 		var totalCount int64
 		query.Count(&totalCount)
 
+		// Fetch payroll information
+		var payrollInfoList []models.PayrollInfo
+		if err := query.Order("id DESC").Offset(offset).Limit(perPage).Find(&payrollInfoList).Error; err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching payroll information"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Prepare full names using batch processing
+		var employeeIDs []uint
+		employeeMap := make(map[uint]string)
+
+		// Collect unique employee IDs
+		for _, payroll := range payrollInfoList {
+			if _, found := employeeMap[payroll.EmployeeID]; !found {
+				employeeIDs = append(employeeIDs, payroll.EmployeeID)
+			}
+		}
+
+		// Batch fetch full names for employees
+		var employees []models.Employee
+		err = db.Model(&models.Employee{}).Select("id, full_name").Where("id IN (?)", employeeIDs).Find(&employees).Error
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching employees"}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
+		}
+
+		// Populate employeeMap with full names
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
+		// Update full_name_employee field in payrollInfoList
+		for i, payroll := range payrollInfoList {
+			if fullName, ok := employeeMap[payroll.EmployeeID]; ok {
+				payrollInfoList[i].FullNameEmployee = fullName
+			}
+		}
+
 		successResponse := map[string]interface{}{
-			"Code":        http.StatusOK,
-			"Error":       false,
-			"Message":     "Employee payroll information retrieved successfully",
-			"PayrollInfo": payrollInfoList,
-			"Pagination": map[string]interface{}{
+			"code":              http.StatusOK,
+			"error":             false,
+			"message":           "Payroll information retrieved successfully",
+			"payroll_info_list": payrollInfoList,
+			"pagination": map[string]interface{}{
 				"total_count": totalCount,
 				"page":        page,
 				"per_page":    perPage,
 			},
 		}
+
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
