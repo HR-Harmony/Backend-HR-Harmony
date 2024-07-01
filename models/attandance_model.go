@@ -3,9 +3,9 @@ package models
 import "time"
 
 type Attendance struct {
-	ID                  uint       `gorm:"primaryKey" json:"id"`
-	EmployeeID          uint       `json:"employee_id"`
-	Employee            Employee   `gorm:"foreignKey:EmployeeID;references:ID" json:"employee"`
+	ID         uint `gorm:"primaryKey" json:"id"`
+	EmployeeID uint `json:"employee_id"`
+	//Employee            Employee   `gorm:"foreignKey:EmployeeID;references:ID" json:"employee"`
 	Username            string     `json:"username"`
 	FullNameEmployee    string     `json:"full_name_employee"`
 	AttendanceDate      string     `json:"attendance_date"` // Format: yyyy-mm-dd
