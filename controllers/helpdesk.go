@@ -294,6 +294,157 @@ func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		var helpdesks []models.Helpdesk
 		var totalCount int64
 		db.Model(&models.Helpdesk{}).Count(&totalCount)
+
+		// Fetch helpdesk data with preloaded employee and department data
+		err = db.Model(&models.Helpdesk{}).
+			Preload("Employee", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id, username, full_name")
+			}).
+			Preload("Department", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id, department_name")
+			}).
+			Order("id DESC").
+			Offset(offset).
+			Limit(perPage).
+			Find(&helpdesks).Error
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching helpdesk data"})
+		}
+
+		// Batch processing for Employee and Department data
+		employeeMap := make(map[uint]models.Employee)
+		departmentMap := make(map[uint]models.Department)
+
+		// Collect unique employee IDs and department IDs
+		employeeIDs := make([]uint, 0, len(helpdesks))
+		departmentIDs := make([]uint, 0, len(helpdesks))
+
+		for _, helpdesk := range helpdesks {
+			if _, found := employeeMap[helpdesk.EmployeeID]; !found {
+				employeeIDs = append(employeeIDs, helpdesk.EmployeeID)
+			}
+			if _, found := departmentMap[helpdesk.DepartmentID]; !found {
+				departmentIDs = append(departmentIDs, helpdesk.DepartmentID)
+			}
+		}
+
+		// Fetch employees and departments
+		var employees []models.Employee
+		var departments []models.Department
+
+		db.Model(&models.Employee{}).Where("id IN (?)", employeeIDs).Find(&employees)
+		db.Model(&models.Department{}).Where("id IN (?)", departmentIDs).Find(&departments)
+
+		// Create maps for fast lookup
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp
+		}
+		for _, dep := range departments {
+			departmentMap[dep.ID] = dep
+		}
+
+		// Update FullNameEmployee and department_name fields
+		tx := db.Begin()
+		for i := range helpdesks {
+			employee := employeeMap[helpdesks[i].EmployeeID]
+			department := departmentMap[helpdesks[i].DepartmentID]
+
+			helpdesks[i].EmployeeFullName = employee.FullName
+			helpdesks[i].DepartmentName = department.DepartmentName
+
+			if err := tx.Save(&helpdesks[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving helpdesk data"})
+			}
+		}
+
+		tx.Commit()
+
+		// Map Helpdesk to HelpdeskResponse
+		helpdeskResponses := make([]HelpdeskResponse, len(helpdesks))
+		for i, helpdesk := range helpdesks {
+			helpdeskResponses[i] = HelpdeskResponse{
+				ID:               helpdesk.ID,
+				Subject:          helpdesk.Subject,
+				Priority:         helpdesk.Priority,
+				DepartmentID:     helpdesk.DepartmentID,
+				DepartmentName:   helpdesk.DepartmentName,
+				EmployeeID:       helpdesk.EmployeeID,
+				EmployeeUsername: helpdesk.EmployeeUsername,
+				EmployeeFullName: helpdesk.EmployeeFullName,
+				Description:      helpdesk.Description,
+				Status:           helpdesk.Status,
+				CreatedAt:        helpdesk.CreatedAt,
+				UpdatedAt:        helpdesk.UpdatedAt,
+			}
+		}
+
+		successResponse := map[string]interface{}{
+			"code":      http.StatusOK,
+			"error":     false,
+			"message":   "Helpdesk data retrieved successfully",
+			"helpdesks": helpdeskResponses,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+// GetAllHelpdeskByAdmin handles the retrieval of all helpdesk data by admin with pagination
+func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		var helpdesks []models.Helpdesk
+		var totalCount int64
+		db.Model(&models.Helpdesk{}).Count(&totalCount)
 		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&helpdesks)
 
 		// Map Helpdesk to HelpdeskResponse
@@ -329,6 +480,7 @@ func GetAllHelpdeskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 // GetAllHelpdeskByAdmin handles the retrieval of all helpdesk data by admin with pagination
