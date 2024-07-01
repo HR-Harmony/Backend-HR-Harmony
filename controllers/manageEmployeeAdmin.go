@@ -557,6 +557,29 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 					Or("role ILIKE ?", searchPattern))
 		}
 
+		// Update data
+		for _, emp := range employees {
+			var shift models.Shift
+			if err := db.First(&shift, emp.ShiftID).Error; err == nil {
+				db.Model(&emp).Update("Shift", shift.ShiftName)
+			}
+
+			var role models.Role
+			if err := db.First(&role, emp.RoleID).Error; err == nil {
+				db.Model(&emp).Update("Role", role.RoleName)
+			}
+
+			var department models.Department
+			if err := db.First(&department, emp.DepartmentID).Error; err == nil {
+				db.Model(&emp).Update("Department", department.DepartmentName)
+			}
+
+			var designation models.Designation
+			if err := db.First(&designation, emp.DesignationID).Error; err == nil {
+				db.Model(&emp).Update("Designation", designation.DesignationName)
+			}
+		}
+
 		if err := query.Find(&employees).Error; err != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Error fetching employees"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
