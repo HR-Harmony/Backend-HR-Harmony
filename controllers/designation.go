@@ -750,6 +750,14 @@ func DeleteDesignationByID(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		// cek asosiasi dengan table employee
+		var count int64
+		db.Model(&models.Employee{}).Where("designation_id = ?", designationID).Count(&count)
+		if count > 0 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Cannot delete designation because it is associated with one or more employees"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		db.Delete(&existingDesignation)
 
 		successResponse := helper.Response{

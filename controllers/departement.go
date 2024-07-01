@@ -753,6 +753,14 @@ func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		//Cek penghapusan yang telah berasosiasi dengan employee
+		var count int64
+		db.Model(&models.Employee{}).Where("department_id = ?", departmentID).Count(&count)
+		if count > 0 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Cannot delete department because it is associated with one or more employees"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		db.Delete(&department)
 
 		successResponse := map[string]interface{}{
