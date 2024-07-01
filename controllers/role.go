@@ -359,6 +359,14 @@ func DeleteRoleByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		// Pengecekan sebelum menghapus role
+		var count int64
+		db.Model(&models.Employee{}).Where("role_id = ?", roleID).Count(&count)
+		if count > 0 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Cannot delete role because it is associated with one or more employees"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		db.Delete(&role)
 
 		successResponse := helper.Response{

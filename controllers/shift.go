@@ -393,6 +393,14 @@ func DeleteShiftByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		// Pengecekan untuk delete shift
+		var count int64
+		db.Model(&models.Employee{}).Where("shift_id = ?", shiftID).Count(&count)
+		if count > 0 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Cannot delete shift because it is associated with one or more employees"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		db.Delete(&shift)
 
 		successResponse := helper.Response{
