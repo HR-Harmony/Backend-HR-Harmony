@@ -1351,6 +1351,115 @@ func CreateKPIIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllKPIIndicatorsByAdmin handles the retrieval of all KPI indicators by admin with pagination
+func GetAllKPIIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.KPIIndicator{})
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(title) LIKE ? OR LOWER(designation_name) LIKE ? OR LOWER(admin_name) LIKE ?",
+				searchPattern, searchPattern, searchPattern,
+			)
+		}
+
+		var totalCount int64
+		query.Count(&totalCount)
+
+		var kpiIndicators []models.KPIIndicator
+		if err := query.Order("id DESC").Offset(offset).Limit(perPage).Find(&kpiIndicators).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching KPI indicators"})
+		}
+
+		// Batch processing for designation_name
+		designationMap := make(map[uint]string)
+		designationIDs := make([]uint, 0, len(kpiIndicators))
+
+		for _, kpi := range kpiIndicators {
+			if _, found := designationMap[kpi.DesignationID]; !found {
+				designationIDs = append(designationIDs, kpi.DesignationID)
+			}
+		}
+
+		var designations []models.Designation
+		db.Model(&models.Designation{}).Where("id IN (?)", designationIDs).Find(&designations)
+
+		// Create map for fast lookup
+		for _, des := range designations {
+			designationMap[des.ID] = des.DesignationName
+		}
+
+		// Update designation_name field
+		tx := db.Begin()
+		for i := range kpiIndicators {
+			kpiIndicators[i].DesignationName = designationMap[kpiIndicators[i].DesignationID]
+
+			if err := tx.Save(&kpiIndicators[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving KPI indicators"})
+			}
+		}
+
+		tx.Commit()
+
+		successResponse := map[string]interface{}{
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "KPI indicators fetched successfully",
+			"data":       kpiIndicators,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetAllKPIIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -1426,6 +1535,7 @@ func GetAllKPIIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func GetKPIIndicatorsByIdByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -1721,6 +1831,115 @@ func CreateKPAIndicatorByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	}
 }
 
+// GetAllKPAIndicatorsByAdmin handles the retrieval of all KPA indicators by admin with pagination
+func GetAllKPAIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.KPAIndicator{})
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where(
+				"LOWER(title) LIKE ? OR LOWER(employee_name) LIKE ? OR LOWER(admin_name) LIKE ? OR appraisal_date LIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern,
+			)
+		}
+
+		var totalCount int64
+		query.Count(&totalCount)
+
+		var kpaIndicators []models.KPAIndicator
+		if err := query.Order("id DESC").Offset(offset).Limit(perPage).Find(&kpaIndicators).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching KPA indicators"})
+		}
+
+		// Batch processing for employee_name
+		employeeMap := make(map[uint]string)
+		employeeIDs := make([]uint, 0, len(kpaIndicators))
+
+		for _, kpa := range kpaIndicators {
+			if _, found := employeeMap[kpa.EmployeeID]; !found {
+				employeeIDs = append(employeeIDs, kpa.EmployeeID)
+			}
+		}
+
+		var employees []models.Employee
+		db.Model(&models.Employee{}).Where("id IN (?)", employeeIDs).Find(&employees)
+
+		// Create map for fast lookup
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName // Menggunakan FullName, bukan FullNameEmployee
+		}
+
+		// Update employee_name field
+		tx := db.Begin()
+		for i := range kpaIndicators {
+			kpaIndicators[i].EmployeeName = employeeMap[kpaIndicators[i].EmployeeID]
+
+			if err := tx.Save(&kpaIndicators[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving KPA indicators"})
+			}
+		}
+
+		tx.Commit()
+
+		successResponse := map[string]interface{}{
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "KPA indicators fetched successfully",
+			"data":       kpaIndicators,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
 func GetAllKPAIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
@@ -1796,6 +2015,7 @@ func GetAllKPAIndicatorsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 func GetKPAIndicatorsByIdByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {

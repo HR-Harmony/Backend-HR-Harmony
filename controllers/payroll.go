@@ -1055,6 +1055,34 @@ func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching payroll information"})
 		}
 
+		// Batch fetch employee full names
+		var employeeIDs []uint
+		employeeMap := make(map[uint]string)
+		for _, pi := range payrollInfoList {
+			employeeIDs = append(employeeIDs, pi.EmployeeID)
+			employeeMap[pi.EmployeeID] = ""
+		}
+
+		var employees []models.Employee
+		db.Where("id IN (?)", employeeIDs).Find(&employees)
+
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
+		// Assign full names to payroll info and update database
+		tx := db.Begin()
+		for i := range payrollInfoList {
+			if fullName, ok := employeeMap[payrollInfoList[i].EmployeeID]; ok {
+				payrollInfoList[i].FullNameEmployee = fullName
+			}
+			if err := tx.Save(&payrollInfoList[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving payroll information"})
+			}
+		}
+		tx.Commit()
+
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"code":              http.StatusOK,
 			"error":             false,
@@ -1068,6 +1096,80 @@ func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		})
 	}
 }
+
+/*
+func GetAllPayrollHistory(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": http.StatusUnauthorized, "error": true, "message": "Authorization token is missing"})
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": http.StatusUnauthorized, "error": true, "message": "Invalid token format"})
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, map[string]interface{}{"code": http.StatusUnauthorized, "error": true, "message": "Invalid token"})
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"code": http.StatusNotFound, "error": true, "message": "Admin user not found"})
+		}
+
+		if !adminUser.IsAdminHR {
+			return c.JSON(http.StatusForbidden, map[string]interface{}{"code": http.StatusForbidden, "error": true, "message": "Access denied"})
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.PayrollInfo{})
+
+		if searching != "" {
+			searchPattern := "%" + searching + "%"
+			query = query.Where("full_name_employee ILIKE ?", searchPattern)
+		}
+
+		var totalCount int64
+		query.Count(&totalCount)
+
+		var payrollInfoList []models.PayrollInfo
+		if err := query.Order("id DESC").Offset(offset).Limit(perPage).Find(&payrollInfoList).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching payroll information"})
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"code":              http.StatusOK,
+			"error":             false,
+			"message":           "Payroll information retrieved successfully",
+			"payroll_info_list": payrollInfoList,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		})
+	}
+}
+*/
 
 func CreateAdvanceSalaryByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -1636,6 +1738,115 @@ func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			employeeMap[emp.ID] = emp.FullName
 		}
 
+		// Update FullnameEmployee field and save to database
+		tx := db.Begin()
+		for i := range requestLoans {
+			requestLoans[i].FullnameEmployee = employeeMap[requestLoans[i].EmployeeID]
+			if err := tx.Save(&requestLoans[i]).Error; err != nil {
+				tx.Rollback()
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error saving request loans"})
+			}
+		}
+		tx.Commit()
+
+		successResponse := map[string]interface{}{
+			"code":       http.StatusOK,
+			"error":      false,
+			"message":    "Request Loan history retrieved successfully",
+			"data":       requestLoans,
+			"pagination": map[string]interface{}{"total_count": totalCount, "page": page, "per_page": perPage},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.Response{Code: http.StatusUnauthorized, Error: true, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.Response{Code: http.StatusForbidden, Error: true, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
+		searching := c.QueryParam("searching")
+
+		query := db.Model(&models.RequestLoan{})
+
+		if searching != "" {
+			searchPattern := "%" + strings.ToLower(searching) + "%"
+			query = query.Where("LOWER(fullname_employee) LIKE ? OR amount = ? OR LOWER(status) LIKE ?", searchPattern, helper.ParseStringToInt(searching), searchPattern)
+		}
+
+		var totalCount int64
+		query.Count(&totalCount)
+
+		// Batch fetch employee full names
+		var requestLoans []models.RequestLoan
+		err = query.Preload("Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&requestLoans).Error
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching request loans"})
+		}
+
+		// Collect unique employee IDs
+		var employeeIDs []uint
+		employeeMap := make(map[uint]string)
+		for _, loan := range requestLoans {
+			if _, found := employeeMap[loan.EmployeeID]; !found {
+				employeeIDs = append(employeeIDs, loan.EmployeeID)
+			}
+		}
+
+		// Fetch full names for employee IDs
+		var employees []models.Employee
+		err = db.Model(&models.Employee{}).Where("id IN (?)", employeeIDs).Find(&employees).Error
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching employees"})
+		}
+
+		// Create map for fast lookup
+		for _, emp := range employees {
+			employeeMap[emp.ID] = emp.FullName
+		}
+
 		// Update FullnameEmployee field
 		for i := range requestLoans {
 			requestLoans[i].FullnameEmployee = employeeMap[requestLoans[i].EmployeeID]
@@ -1651,6 +1862,7 @@ func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 func GetAllRequestLoanByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {

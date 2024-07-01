@@ -278,6 +278,95 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		// Retrieve all new jobs
+		var newJobs []models.NewJob
+		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&newJobs)
+
+		// Count total number of new jobs
+		var totalCount int64
+		db.Model(&models.NewJob{}).Count(&totalCount)
+
+		// Prepare response
+		var newJobResponses []NewJobResponse
+		for _, job := range newJobs {
+			newJobResponses = append(newJobResponses, NewJobResponse{
+				ID:                job.ID,
+				Title:             job.Title,
+				JobType:           job.JobType,
+				DesignationID:     job.DesignationID,
+				DesignationName:   job.DesignationName,
+				NumberOfPosition:  job.NumberOfPosition,
+				IsPublish:         job.IsPublish,
+				DateClosing:       job.DateClosing,
+				MinimumExperience: job.MinimumExperience,
+				ShortDescription:  job.ShortDescription,
+				LongDescription:   job.LongDescription,
+				CreatedAt:         job.CreatedAt,
+			})
+		}
+
+		successResponse := map[string]interface{}{
+			"code":     http.StatusOK,
+			"error":    false,
+			"message":  "All new jobs retrieved successfully",
+			"new_jobs": newJobResponses,
+			"pagination": map[string]interface{}{
+				"total_count": totalCount,
+				"page":        page,
+				"per_page":    perPage,
+			},
+		}
+		return c.JSON(http.StatusOK, successResponse)
+	}
+}
+
+/*
+func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenString := c.Request().Header.Get("Authorization")
+		if tokenString == "" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Authorization token is missing"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		authParts := strings.SplitN(tokenString, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token format"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		tokenString = authParts[1]
+
+		username, err := middleware.VerifyToken(tokenString, secretKey)
+		if err != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusUnauthorized, Message: "Invalid token"}
+			return c.JSON(http.StatusUnauthorized, errorResponse)
+		}
+
+		var adminUser models.Admin
+		result := db.Where("username = ?", username).First(&adminUser)
+		if result.Error != nil {
+			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "Admin user not found"}
+			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		if !adminUser.IsAdminHR {
+			errorResponse := helper.ErrorResponse{Code: http.StatusForbidden, Message: "Access denied"}
+			return c.JSON(http.StatusForbidden, errorResponse)
+		}
+
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		perPage, err := strconv.Atoi(c.QueryParam("per_page"))
+		if err != nil || perPage <= 0 {
+			perPage = 10
+		}
+
+		offset := (page - 1) * perPage
+
 		var newJobs []models.NewJob
 		db.Order("id DESC").Offset(offset).Limit(perPage).Find(&newJobs)
 
@@ -316,6 +405,7 @@ func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
+*/
 
 /*
 func GetAllNewJobsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
