@@ -321,6 +321,14 @@ func DeleteGoalTypeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		// Check if the goal type is associated with any goals
+		var goalCount int64
+		db.Model(&models.Goal{}).Where("goal_type_id = ?", goalTypeID).Count(&goalCount)
+		if goalCount > 0 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Cannot delete goal type because it is associated with one or more goals"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		db.Delete(&goalType)
 
 		response := map[string]interface{}{
