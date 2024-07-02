@@ -220,7 +220,9 @@ func CreateTaskByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		db.Create(&task)
 
-		db.Preload("Project.Employee").First(&task, task.ID)
+		/*
+			db.Preload("Project.Employee").First(&task, task.ID)
+		*/
 
 		successResponse := helper.Response{
 			Code:    http.StatusCreated,
@@ -278,8 +280,17 @@ func GetAllTasksByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
+		/*
+			var tasks []models.Task
+			result = db.Preload("Notes").Preload("Project.Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&tasks)
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
+				return c.JSON(http.StatusInternalServerError, errorResponse)
+			}
+		*/
+
 		var tasks []models.Task
-		result = db.Preload("Notes").Preload("Project.Employee").Order("id DESC").Offset(offset).Limit(perPage).Find(&tasks)
+		result = db.Preload("Notes").Order("id DESC").Offset(offset).Limit(perPage).Find(&tasks)
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusInternalServerError, Error: true, Message: "Failed to retrieve tasks"}
 			return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -344,8 +355,17 @@ func GetTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		/*
+			var task models.Task
+			result = db.Preload("Notes").Preload("Project.Employee").First(&task, uint(taskID))
+			if result.Error != nil {
+				errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
+				return c.JSON(http.StatusNotFound, errorResponse)
+			}
+		*/
+
 		var task models.Task
-		result = db.Preload("Notes").Preload("Project.Employee").First(&task, uint(taskID))
+		result = db.Preload("Notes").First(&task, uint(taskID))
 		if result.Error != nil {
 			errorResponse := helper.Response{Code: http.StatusNotFound, Error: true, Message: "Task not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
@@ -514,8 +534,10 @@ func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 
 		db.Save(&existingTask)
 
-		db.Preload("Notes").Preload("Project.Employee").First(&existingTask, existingTask.ID)
-
+		/*
+			db.Preload("Notes").Preload("Project.Employee").First(&existingTask, existingTask.ID)
+		*/
+		
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,
