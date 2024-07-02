@@ -1024,6 +1024,12 @@ func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		// Delete all announcements associated with the department
+		db.Where("department_id = ?", departmentID).Delete(&models.Announcement{})
+
+		// Delete the department
+		db.Delete(&department)
+
 		db.Delete(&department)
 
 		successResponse := map[string]interface{}{
