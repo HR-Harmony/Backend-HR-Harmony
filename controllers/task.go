@@ -537,7 +537,7 @@ func UpdateTaskByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 		/*
 			db.Preload("Notes").Preload("Project.Employee").First(&existingTask, existingTask.ID)
 		*/
-		
+
 		successResponse := helper.Response{
 			Code:    http.StatusOK,
 			Error:   false,

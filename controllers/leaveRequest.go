@@ -656,9 +656,18 @@ func GetAllLeaveRequestsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 		}
 		query.Count(&totalCount)
 
+		/*
+			// Fetch leave requests with preloaded employee and leave request type data
+			var leaveRequests []models.LeaveRequest
+			err = query.Preload("Employee").Preload("LeaveRequestType").Order("id DESC").Offset(offset).Limit(perPage).Find(&leaveRequests).Error
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching leave requests"})
+			}
+		*/
+
 		// Fetch leave requests with preloaded employee and leave request type data
 		var leaveRequests []models.LeaveRequest
-		err = query.Preload("Employee").Preload("LeaveRequestType").Order("id DESC").Offset(offset).Limit(perPage).Find(&leaveRequests).Error
+		err = query.Order("id DESC").Offset(offset).Limit(perPage).Find(&leaveRequests).Error
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"code": http.StatusInternalServerError, "error": true, "message": "Error fetching leave requests"})
 		}

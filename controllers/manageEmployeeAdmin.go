@@ -2002,8 +2002,13 @@ func GetAllExitEmployees(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			query := db.Order("id DESC").Offset(offset).Limit(perPage)
 		*/
 
+		/*
+			var exitEmployees []models.ExitEmployee
+			query := db.Preload("Exit").Order("id DESC").Offset(offset).Limit(perPage)
+		*/
+
 		var exitEmployees []models.ExitEmployee
-		query := db.Preload("Exit").Order("id DESC").Offset(offset).Limit(perPage)
+		query := db.Order("id DESC").Offset(offset).Limit(perPage)
 
 		if searching != "" {
 			searchPattern := "%" + searching + "%"
