@@ -1024,6 +1024,14 @@ func DeleteDepartmentByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
+		// Check if the department is associated with any designations
+		var designationCount int64
+		db.Model(&models.Designation{}).Where("department_id = ?", departmentID).Count(&designationCount)
+		if designationCount > 0 {
+			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Cannot delete department because it is associated with one or more designations"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		// Delete all announcements associated with the department
 		db.Where("department_id = ?", departmentID).Delete(&models.Announcement{})
 
