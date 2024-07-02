@@ -461,7 +461,7 @@ func GetDisciplinaryByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 			UsernameEmployee: disciplinary.UsernameEmployee,
 			FullNameEmployee: disciplinary.FullNameEmployee,
 			CaseID:           disciplinary.CaseID,
-			CaseName:         disciplinary.Case.CaseName,
+			CaseName:         disciplinary.CaseName,
 			Subject:          disciplinary.Subject,
 			CaseDate:         disciplinary.CaseDate,
 			Description:      disciplinary.Description,
