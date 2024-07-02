@@ -346,9 +346,26 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
-		if len(employee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.LastName) {
-			errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last Name Max 30 characters and contain only letters"}
-			return c.JSON(http.StatusBadRequest, errorResponse)
+		/*
+			if len(employee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.LastName) {
+				errorResponse := helper.Response{Code: http.StatusBadRequest, Error: true, Message: "Last Name Max 30 characters and contain only letters"}
+				return c.JSON(http.StatusBadRequest, errorResponse)
+			}
+		*/
+
+		if len(employee.LastName) > 0 {
+			if len(employee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employee.LastName) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name max 30 characters and contain only letters"})
+			}
+		}
+
+		employee.LastName = employee.LastName
+
+		// Update full name
+		if len(employee.LastName) > 0 {
+			employee.FullName = employee.FirstName + " " + employee.LastName
+		} else {
+			employee.FullName = employee.FirstName
 		}
 
 		if len(employee.Username) < 5 || len(employee.Username) > 15 || !regexp.MustCompile(`^[a-zA-Z0-9_]+$`).MatchString(employee.Username) {
