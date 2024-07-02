@@ -107,8 +107,6 @@ func CreateClientAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc 
 
 		employee.IsClient = true
 
-		*employee.IsActive = true
-
 		db.Create(&employee)
 
 		err = helper.SendClientAccountNotificationWithPlainTextPassword(employee.Email, employee.FirstName+" "+employee.LastName, employee.Username, passwordWithNoHash)
