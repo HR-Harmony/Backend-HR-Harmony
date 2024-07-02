@@ -24,15 +24,15 @@ type TrainingSkill struct {
 }
 
 type Training struct {
-	ID               uint       `gorm:"primaryKey" json:"id"`
-	TrainerID        uint       `json:"trainer_id"`
-	Trainer          Trainer    `gorm:"foreignKey:TrainerID;references:ID" json:"trainer"`
-	FullNameTrainer  string     `json:"full_name_trainer"`
-	TrainingSkillID  uint       `json:"training_skill_id"`
-	TrainingSkill    string     `json:"training_skill"`
-	TrainingCost     int        `json:"training_cost"`
-	EmployeeID       uint       `json:"employee_id"`
-	Employee         Employee   `gorm:"foreignKey:EmployeeID;references:ID" json:"employee"`
+	ID        uint `gorm:"primaryKey" json:"id"`
+	TrainerID uint `json:"trainer_id"`
+	//Trainer          Trainer    `gorm:"foreignKey:TrainerID;references:ID" json:"trainer"`
+	FullNameTrainer string `json:"full_name_trainer"`
+	TrainingSkillID uint   `json:"training_skill_id"`
+	TrainingSkill   string `json:"training_skill"`
+	TrainingCost    int    `json:"training_cost"`
+	EmployeeID      uint   `json:"employee_id"`
+	//Employee         Employee   `gorm:"foreignKey:EmployeeID;references:ID" json:"employee"`
 	FullNameEmployee string     `json:"full_name_employee"`
 	GoalTypeID       uint       `json:"goal_type_id"`
 	GoalType         string     `json:"goal_type"`
