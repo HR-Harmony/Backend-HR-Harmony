@@ -1453,14 +1453,21 @@ func UpdateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
 
-		// Validate LastName
-		if updatedEmployee.LastName != "" {
-			if len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
-				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name max 30 characters and contain only letters"})
+		/*
+			// Validate LastName
+			if updatedEmployee.LastName != "" {
+				if len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
+					return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name max 30 characters and contain only letters"})
+				}
+				existingEmployee.LastName = updatedEmployee.LastName
+				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 			}
-			existingEmployee.LastName = updatedEmployee.LastName
-			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+		*/
+		if len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name max 30 characters and contain only letters"})
 		}
+		existingEmployee.LastName = updatedEmployee.LastName
+		existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 
 		/*
 			if updatedEmployee.ContactNumber != "" {
