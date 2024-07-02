@@ -8,6 +8,7 @@ import (
 	"hrsale/middleware"
 	"hrsale/models"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -135,17 +136,48 @@ func UpdateEmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid request body"})
 		}
 
+		// Validate FirstName
 		if updatedEmployee.FirstName != "" {
+			if len(updatedEmployee.FirstName) < 3 || len(updatedEmployee.FirstName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.FirstName) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "First name must be between 3 and 30 characters and contain only letters"})
+			}
 			existingEmployee.FirstName = updatedEmployee.FirstName
 			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
 		}
-		if updatedEmployee.LastName != "" {
-			existingEmployee.LastName = updatedEmployee.LastName
-			existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+
+		/*
+			if updatedEmployee.FirstName != "" {
+				existingEmployee.FirstName = updatedEmployee.FirstName
+				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+			}
+		*/
+
+		/*
+			if updatedEmployee.LastName != "" {
+				existingEmployee.LastName = updatedEmployee.LastName
+				existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+			}
+		*/
+
+		if len(updatedEmployee.LastName) > 30 || !regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(updatedEmployee.LastName) {
+			return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Last name max 30 characters and contain only letters"})
 		}
+		existingEmployee.LastName = updatedEmployee.LastName
+		existingEmployee.FullName = existingEmployee.FirstName + " " + existingEmployee.LastName // Update full name
+
+		/*
+			if updatedEmployee.ContactNumber != "" {
+				existingEmployee.ContactNumber = updatedEmployee.ContactNumber
+			}
+		*/
+
 		if updatedEmployee.ContactNumber != "" {
+			if len(updatedEmployee.ContactNumber) < 10 || len(updatedEmployee.ContactNumber) > 14 || !regexp.MustCompile(`^[0-9]+$`).MatchString(updatedEmployee.ContactNumber) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Contact number must be between 10 and 14 digits and contain only numbers"})
+			}
 			existingEmployee.ContactNumber = updatedEmployee.ContactNumber
 		}
+
 		if updatedEmployee.Gender != "" {
 			existingEmployee.Gender = updatedEmployee.Gender
 		}
@@ -159,9 +191,19 @@ func UpdateEmployeeProfile(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			existingEmployee.BirthdayDate = startDate.Format("2006-01-02")
 		}
 
+		/*
+			if updatedEmployee.Email != "" {
+				existingEmployee.Email = updatedEmployee.Email
+			}
+		*/
+
 		if updatedEmployee.Email != "" {
+			if !regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`).MatchString(updatedEmployee.Email) {
+				return c.JSON(http.StatusBadRequest, helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Invalid email format"})
+			}
 			existingEmployee.Email = updatedEmployee.Email
 		}
+
 		if updatedEmployee.Username != "" {
 			existingEmployee.Username = updatedEmployee.Username
 		}
