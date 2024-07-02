@@ -435,6 +435,14 @@ func DeleteTrainerByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		// Check if the trainer is associated with any trainings
+		var trainingCount int64
+		db.Model(&models.Training{}).Where("trainer_id = ?", trainerID).Count(&trainingCount)
+		if trainingCount > 0 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Cannot delete trainer because they are associated with one or more trainings"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		db.Delete(&trainer)
 
 		successResponse := map[string]interface{}{
@@ -729,6 +737,14 @@ func DeleteTrainingSkillByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerF
 		if err := db.First(&trainingSkill, "id = ?", id).Error; err != nil {
 			errorResponse := helper.ErrorResponse{Code: http.StatusNotFound, Message: "TrainingSkill not found"}
 			return c.JSON(http.StatusNotFound, errorResponse)
+		}
+
+		// Check if the TrainingSkill is associated with any trainings
+		var trainingCount int64
+		db.Model(&models.Training{}).Where("training_skill_id = ?", id).Count(&trainingCount)
+		if trainingCount > 0 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Cannot delete TrainingSkill because it is associated with one or more trainings"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
 		if err := db.Delete(&trainingSkill).Error; err != nil {

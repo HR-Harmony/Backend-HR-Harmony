@@ -331,6 +331,14 @@ func DeleteLeaveRequestTypeByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFu
 			return c.JSON(http.StatusNotFound, errorResponse)
 		}
 
+		// Check if the leave request type is associated with any leave requests
+		var leaveRequestCount int64
+		db.Model(&models.LeaveRequest{}).Where("leave_type_id = ?", leaveRequestTypeID).Count(&leaveRequestCount)
+		if leaveRequestCount > 0 {
+			errorResponse := helper.ErrorResponse{Code: http.StatusBadRequest, Message: "Cannot delete leave request type because it is associated with one or more leave requests"}
+			return c.JSON(http.StatusBadRequest, errorResponse)
+		}
+
 		db.Delete(&leaveRequestType)
 
 		successResponse := map[string]interface{}{
