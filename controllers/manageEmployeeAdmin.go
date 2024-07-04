@@ -21,6 +21,22 @@ import (
 	"time"
 )
 
+type EmployeeResponse struct {
+	ID            uint    `json:"id"`
+	FirstName     string  `json:"first_name"`
+	LastName      string  `json:"last_name"`
+	FullName      string  `json:"full_name"`
+	ContactNumber string  `json:"contact_number"`
+	Email         string  `json:"email"`
+	Gender        string  `json:"gender"`
+	Shift         string  `json:"shift"`
+	Role          string  `json:"role"`
+	Department    string  `json:"department"`
+	Designation   string  `json:"designation"`
+	HourlyRate    float64 `json:"hourly_rate"`
+	PaySlipType   string  `json:"pay_slip_type"`
+}
+
 // CreateMultipleEmployeeAccountsByAdmin handles the creation of multiple employee accounts by admin from an Excel file
 func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -281,8 +297,34 @@ func CreateMultipleEmployeeAccountsByAdmin(db *gorm.DB, secretKey []byte) echo.H
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		log.Println("Successfully created employees:", createdEmployees)
-		successResponse := map[string]interface{}{"Code": http.StatusOK, "Error": false, "Message": "Employee accounts created successfully", "Data": createdEmployees}
+		var employeeResponses []EmployeeResponse
+		for _, emp := range createdEmployees {
+			employeeResponse := EmployeeResponse{
+				ID:            emp.ID,
+				FirstName:     emp.FirstName,
+				LastName:      emp.LastName,
+				FullName:      emp.FullName,
+				ContactNumber: emp.ContactNumber,
+				Email:         emp.Email,
+				Gender:        emp.Gender,
+				Shift:         emp.Shift,
+				Role:          emp.Role,
+				Department:    emp.Department,
+				Designation:   emp.Designation,
+				HourlyRate:    emp.HourlyRate,
+				PaySlipType:   emp.PaySlipType,
+			}
+			employeeResponses = append(employeeResponses, employeeResponse)
+		}
+
+		/*
+			log.Println("Successfully created employees:", createdEmployees)
+			successResponse := map[string]interface{}{"Code": http.StatusOK, "Error": false, "Message": "Employee accounts created successfully", "Data": createdEmployees}
+			return c.JSON(http.StatusOK, successResponse)
+		*/
+
+		log.Println("Successfully created employees:", employeeResponses)
+		successResponse := map[string]interface{}{"Code": http.StatusOK, "Error": false, "Message": "Employee accounts created successfully", "Data": employeeResponses}
 		return c.JSON(http.StatusOK, successResponse)
 	}
 }
@@ -499,14 +541,59 @@ func CreateEmployeeAccountByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFun
 			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 
-		// Respond with success
-		successResponse := helper.Response{
-			Code:     http.StatusCreated,
-			Error:    false,
-			Message:  "Employee account created successfully",
-			Employee: &employee,
+		/*
+			// Respond with success
+			successResponse := helper.Response{
+				Code:     http.StatusCreated,
+				Error:    false,
+				Message:  "Employee account created successfully",
+				Employee: &employee,
+			}
+			return c.JSON(http.StatusCreated, successResponse)
+		*/
+
+		/*
+			// Prepare response data without password
+			response := helper.EmployeeResponse{
+				ID:            employee.ID,
+				FirstName:     employee.FirstName,
+				LastName:      employee.LastName,
+				FullName:      employee.FullName,
+				ContactNumber: employee.ContactNumber,
+				Email:         employee.Email,
+				Gender:        employee.Gender,
+				Shift:         employee.Shift,
+				Role:          employee.Role,
+				Department:    employee.Department,
+				Designation:   employee.Designation,
+				HourlyRate:    employee.HourlyRate,
+				PaySlipType:   employee.PaySlipType,
+			}
+
+			// Return success response
+			successResponse := helper.Response{Code: http.StatusCreated, Error: false, Message: "Employee account created successfully", Data: response}
+			return c.JSON(http.StatusCreated, successResponse)
+		*/
+
+		employeeResponse := EmployeeResponse{
+			ID:            employee.ID,
+			FirstName:     employee.FirstName,
+			LastName:      employee.LastName,
+			FullName:      employee.FullName,
+			ContactNumber: employee.ContactNumber,
+			Email:         employee.Email,
+			Gender:        employee.Gender,
+			Shift:         employee.Shift,
+			Role:          employee.Role,
+			Department:    employee.Department,
+			Designation:   employee.Designation,
+			HourlyRate:    employee.HourlyRate,
+			PaySlipType:   employee.PaySlipType,
 		}
-		return c.JSON(http.StatusCreated, successResponse)
+
+		log.Println("Successfully created employee:", employeeResponse)
+		successResponse := map[string]interface{}{"Code": http.StatusOK, "Error": false, "Message": "Employee account created successfully", "Data": employeeResponse}
+		return c.JSON(http.StatusOK, successResponse)
 	}
 }
 
@@ -663,7 +750,6 @@ func GetAllEmployeesByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 				Email:                    emp.Email,
 				BirthdayDate:             emp.BirthdayDate,
 				Username:                 emp.Username,
-				Password:                 emp.Password,
 				ShiftID:                  emp.ShiftID,
 				Shift:                    emp.Shift,
 				RoleID:                   emp.RoleID,
@@ -1352,7 +1438,6 @@ func GetEmployeeByIDByAdmin(db *gorm.DB, secretKey []byte) echo.HandlerFunc {
 			Gender:                   employee.Gender,
 			Email:                    employee.Email,
 			Username:                 employee.Username,
-			Password:                 employee.Password,
 			ShiftID:                  employee.ShiftID,
 			Shift:                    employee.Shift,
 			RoleID:                   employee.RoleID,
