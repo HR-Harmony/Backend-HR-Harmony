@@ -28,7 +28,6 @@ type EmployeeResponse struct {
 	Email         string  `json:"email"`
 	BirthdayDate  string  `json:"birthday_date"`
 	Username      string  `json:"username"`
-	Password      string  `json:"password"`
 	ShiftID       uint    `json:"shift_id"`
 	Shift         string  `json:"shift"`
 	RoleID        uint    `json:"role_id"`

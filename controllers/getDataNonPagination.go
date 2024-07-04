@@ -323,7 +323,6 @@ func GetAllEmployeesByAdminNonPagination(db *gorm.DB, secretKey []byte) echo.Han
 				Email:                    emp.Email,
 				BirthdayDate:             emp.BirthdayDate,
 				Username:                 emp.Username,
-				Password:                 emp.Password,
 				ShiftID:                  emp.ShiftID,
 				Shift:                    emp.Shift,
 				RoleID:                   emp.RoleID,
